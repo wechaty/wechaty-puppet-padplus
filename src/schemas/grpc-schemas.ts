@@ -5,10 +5,10 @@ import {
   ContactOperationBitVal,
   ContactOperationCmdId,
   GrpcSelfAvatarType,
-  PadproMessageStatus,
-  PadproMessageType,
-  PadproRoomMemberFlag,
-} from './padpro-enums'
+  PadplusMessageStatus,
+  PadplusMessageType,
+  PadplusRoomMemberFlag,
+} from './padplus-enums'
 
 /**
  * ******************************************************************************************************************
@@ -83,7 +83,7 @@ export interface GrpcContactRawPayload {
   ContactType    : number,
   EncryptUsername: string,
   LabelLists     : string,
-  MsgType        : PadproMessageType,
+  MsgType        : PadplusMessageType,
   NickName       : string,
   Province       : string,
   Remark         : string,
@@ -134,9 +134,9 @@ export interface GrpcMessagePayload {
   MsgId: number,
   FromUserName: string,
   ToUserName: string,
-  MsgType: PadproMessageType,
+  MsgType: PadplusMessageType,
   Content: string,
-  Status: PadproMessageStatus,
+  Status: PadplusMessageStatus,
   ImgStatus: number,
   ImgBuf: string | null,
   CreateTime: number,
@@ -148,7 +148,7 @@ export interface GrpcMessagePayload {
 export interface GrpcSelfInfoPayload {
   Alias: string,                           // "",             -> weixin id
   BindUin: string,                         // 251642490,      -> QQ number
-  MsgType: PadproMessageType,              // 101,
+  MsgType: PadplusMessageType,              // 101,
   Signature: string,                       // "",
   UserName: string,                        // "lylezhuifeng", -> unique id
   NickName: string,                        // "高原ོ",
@@ -160,7 +160,7 @@ export interface GrpcSelfInfoPayload {
 }
 
 export interface GrpcSelfAvatarPayload {
-  MsgType: PadproMessageType,                      // 35,
+  MsgType: PadplusMessageType,                      // 35,
   ImgType: GrpcSelfAvatarType,                     // 1,
   ImgLen: number,                                  // 4218,
   ImgBuf: string,                                  // "/5FQ9qFCup5OcSStjioHU0GNcbDPiSmkusuMq6kqHtQoUoTjVpATIcA7KwKftA0KFZ2WIkou2APWkl/vLohKtwBnFChQXYZE5DJCRUk0TmhQqIguCcUKFCmAf/Z",
@@ -170,7 +170,7 @@ export interface GrpcSelfAvatarPayload {
 }
 
 export interface GrpcDeletedPayload {
-  MsgType: PadproMessageType,
+  MsgType: PadplusMessageType,
   Username: string,
 }
 
@@ -221,7 +221,7 @@ export interface GrpcRoomRawPayload {
   ExtInfo        : string,
   ExtInfoExt     : string,
   LabelLists     : string,
-  MsgType        : PadproMessageType,
+  MsgType        : PadplusMessageType,
   NickName       : string,
   SmallHeadImgUrl: string,
   Ticket         : string,
@@ -255,7 +255,7 @@ export interface GrpcRoomMemberDetail {
   DisplayName: string,
   BigHeadImgUrl: string,
   SmallHeadImgUrl: string,
-  ChatroomMemberFlag: PadproRoomMemberFlag,
+  ChatroomMemberFlag: PadplusRoomMemberFlag,
   InviterUserName: string,
 }
 

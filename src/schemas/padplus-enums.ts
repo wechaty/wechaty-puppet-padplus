@@ -60,24 +60,24 @@ export enum SearchContactTypeStatus {
   QRCODE         = 30,   // search by scanning qrcode
 }
 
-export enum PadproMessageStatus {
+export enum PadplusMessageStatus {
   One = 1,
 }
 
-export enum PadproStatus {
+export enum PadplusStatus {
   One  = 1,
 }
 
-export enum PadproContinue {
+export enum PadplusContinue {
   Done = 0,   // Load Ready
   Go   = 1,   // NOT Load Ready
 }
 
-export enum PadproPayloadType {
+export enum PadplusPayloadType {
   Logout             = -1, // -1 when logout
-  InvalidPadproToken = -1111, // -1111 when the token pass to Padpro server is invalid
-  OnlinePadproToken  = -1112, // -1112 when the token has already logged in to wechaty
-  ExpirePadproToken  = -1113, // -1113 when the token is expired
+  InvalidPadplusToken = -1111, // -1111 when the token pass to Padplus server is invalid
+  OnlinePadplusToken  = -1112, // -1112 when the token has already logged in to wechaty
+  ExpirePadplusToken  = -1113, // -1113 when the token is expired
 }
 
 export enum WechatAppMessageType {
@@ -103,7 +103,7 @@ export enum WechatAppMessageType {
   ReaderType            = 100001,
 }
 
-export enum PadproEmojiType {
+export enum PadplusEmojiType {
   Unknown = 0,
   Static  = 1,    // emoji that does not have animation
   Dynamic = 2,    // emoji with animation
@@ -131,7 +131,7 @@ export enum PadproEmojiType {
  * @property {number} SYS                 - MsgType.SYS                 (10000) for SYS         | Change Room Topic, Invite into Room, Kick Off from the room
  * @property {number} RECALLED            - MsgType.RECALLED            (10002) for RECALLED
  */
-export enum PadproMessageType {
+export enum PadplusMessageType {
   Text              = 1,
   Contact           = 2,
   Image             = 3,
@@ -159,7 +159,7 @@ export enum PadproMessageType {
 }
 
 // TODO: figure out the meaning of the enum values
-export enum PadproRoomMemberFlag {
+export enum PadplusRoomMemberFlag {
   Zero  = 0,
   One   = 1,
   Eight = 8,
@@ -222,11 +222,11 @@ export enum CDNFileMd5Exist {
   EXIST = 1,
 }
 
-export enum PadproErrorType {
+export enum PadplusErrorType {
   LOGIN = 'LOGIN',
 }
 
-export enum PadproAutoLoginErrorType {
+export enum PadplusAutoLoginErrorType {
   SELF_LOGOUT = 'SELF_LOGOUT',
   TOO_FREQUENT = 'TOO_FREQUENT',
   LOGIN_ANOTHER_DEVICE = 'LOGIN_ANOTHER_DEVICE',
