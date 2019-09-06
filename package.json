@@ -12,5 +12,8 @@
     "wechaty"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "wechaty-puppet": "^0.16.1"
+  }
 }
