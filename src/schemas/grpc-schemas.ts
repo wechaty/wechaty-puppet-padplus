@@ -18,13 +18,13 @@ import {
  */
 
 export interface GrpcCheckQRCode {
-  CheckTime? : number,
-  ExpiredTime: number,                // 238,
-  HeadImgUrl?: string,                // http://wx.qlogo.cn/mmhead/ver_1/NkOvv1rTx3Dsqpicnhe0j7cVOR3psEAVfuhFLbmoAcwaob4eENNZlp3KIEsMgibfH4kRjDicFFXN3qdP6SGRXbo7GBs8YpN52icxSeBUX8xkZBA/0,
-  Nickname?  : string,                // 苏轼,
-  Password?  : string,
-  Status     : CheckQRCodeStatus,     // 2 = success
-  Username?  : string,                // wxid_zj2cahpwzgie12
+  checkTime? : number,
+  expiredTime: number,                // 238,
+  headImgUrl?: string,                // http://wx.qlogo.cn/mmhead/ver_1/NkOvv1rTx3Dsqpicnhe0j7cVOR3psEAVfuhFLbmoAcwaob4eENNZlp3KIEsMgibfH4kRjDicFFXN3qdP6SGRXbo7GBs8YpN52icxSeBUX8xkZBA/0,
+  nickname?  : string,                // 苏轼,
+  password?  : string,
+  status     : CheckQRCodeStatus,     // 2 = success
+  username?  : string,                // wxid_zj2cahpwzgie12
 }
 
 export interface GrpcGetQRCodeType {
@@ -77,22 +77,22 @@ export interface GrpcAutoLoginType {
 //   "VerifyFlag": 0,
 // }]
 export interface GrpcContactRawPayload {
-  Alias          : string,
-  BigHeadImgUrl  : string,
-  City           : string,
-  ContactType    : number,
-  EncryptUsername: string,
-  LabelLists     : string,
-  MsgType        : PadplusMessageType,
-  NickName       : string,
-  Province       : string,
-  Remark         : string,
-  Sex            : ContactGender,
-  Signature      : string,
-  SmallHeadImgUrl: string,
-  Ticket         : string,
-  UserName       : string,
-  VerifyFlag     : number,
+  alias          : string,
+  bigHeadImgUrl  : string,
+  city           : string,
+  contactType    : number,
+  encryptUsername: string,
+  labelLists     : string,
+  msgType        : PadplusMessageType,
+  nickName       : string,
+  province       : string,
+  remark         : string,
+  sex            : ContactGender,
+  signature      : string,
+  smallHeadImgUrl: string,
+  ticket         : string,
+  userName       : string,
+  verifyFlag     : number,
 }
 
 // {
@@ -106,7 +106,7 @@ export interface GrpcContactRawPayload {
 //   }]
 // }
 export interface GrpcWxidItem {
-  Username: string
+  username: string
 }
 
 /**
@@ -131,47 +131,47 @@ export interface GrpcWxidItem {
 //   "NewMsgId": 8342436108662474000
 // }
 export interface GrpcMessagePayload {
-  MsgId: number,
-  FromUserName: string,
-  ToUserName: string,
-  MsgType: PadplusMessageType,
-  Content: string,
-  Status: PadplusMessageStatus,
-  ImgStatus: number,
-  ImgBuf: string | null,
-  CreateTime: number,
-  MsgSource: string,
-  PushContent: string,
-  NewMsgId: number
+  msgId: number,
+  fromUserName: string,
+  toUserName: string,
+  msgType: PadplusMessageType,
+  content: string,
+  status: PadplusMessageStatus,
+  imgStatus: number,
+  imgBuf: string | null,
+  createTime: number,
+  msgSource: string,
+  pushContent: string,
+  newMsgId: number
 }
 
 export interface GrpcSelfInfoPayload {
-  Alias: string,                           // "",             -> weixin id
-  BindUin: string,                         // 251642490,      -> QQ number
-  MsgType: PadplusMessageType,              // 101,
-  Signature: string,                       // "",
-  UserName: string,                        // "lylezhuifeng", -> unique id
-  NickName: string,                        // "高原ོ",
-  Sex: ContactGender,                      // 1,
-  Province: string,                        // "Beijing",
-  City: string,                            // "",
-  BindEmail: string,                       // "lylezhuifeng@qq.com",
-  BindMobile: string,                      // "13999999999"
+  alias: string,                           // "",             -> weixin id
+  bindUin: string,                         // 251642490,      -> QQ number
+  msgType: PadplusMessageType,              // 101,
+  signature: string,                       // "",
+  userName: string,                        // "lylezhuifeng", -> unique id
+  nickName: string,                        // "高原ོ",
+  sex: ContactGender,                      // 1,
+  province: string,                        // "Beijing",
+  city: string,                            // "",
+  bindEmail: string,                       // "lylezhuifeng@qq.com",
+  bindMobile: string,                      // "13999999999"
 }
 
 export interface GrpcSelfAvatarPayload {
-  MsgType: PadplusMessageType,                      // 35,
-  ImgType: GrpcSelfAvatarType,                     // 1,
-  ImgLen: number,                                  // 4218,
-  ImgBuf: string,                                  // "/5FQ9qFCup5OcSStjioHU0GNcbDPiSmkusuMq6kqHtQoUoTjVpATIcA7KwKftA0KFZ2WIkou2APWkl/vLohKtwBnFChQXYZE5DJCRUk0TmhQqIguCcUKFCmAf/Z",
-  ImgMd5: string,                                  // "0144847978f6667ed59cc3d2b4350eb5",
-  BigHeadImgUrl: string,                           // "http://wx.qlogo.cn/mmhead/KDLS0iaeMdibHvaeoZVaPM/132",
-  SmallHeadImgUrl: string,                         // "http://wx.qlogo.cn/mmhead/KDLS0fhbZw1jQScfCqfVaPM/0"
+  msgType: PadplusMessageType,                      // 35,
+  imgType: GrpcSelfAvatarType,                     // 1,
+  imgLen: number,                                  // 4218,
+  imgBuf: string,                                  // "/5FQ9qFCup5OcSStjioHU0GNcbDPiSmkusuMq6kqHtQoUoTjVpATIcA7KwKftA0KFZ2WIkou2APWkl/vLohKtwBnFChQXYZE5DJCRUk0TmhQqIguCcUKFCmAf/Z",
+  imgMd5: string,                                  // "0144847978f6667ed59cc3d2b4350eb5",
+  bigHeadImgUrl: string,                           // "http://wx.qlogo.cn/mmhead/KDLS0iaeMdibHvaeoZVaPM/132",
+  smallHeadImgUrl: string,                         // "http://wx.qlogo.cn/mmhead/KDLS0fhbZw1jQScfCqfVaPM/0"
 }
 
 export interface GrpcDeletedPayload {
-  MsgType: PadplusMessageType,
-  Username: string,
+  msgType: PadplusMessageType,
+  userName: string,
 }
 
 export type GrpcSyncMessagePayload = GrpcMessagePayload
@@ -212,21 +212,21 @@ export type GrpcSyncMessagePayload = GrpcMessagePayload
 //   "VerifyFlag": 1,
 // }
 export interface GrpcRoomRawPayload {
-  Alias          : string,
-  BigHeadImgUrl  : string,
-  ChatRoomOwner  : string,
-  ChatroomVersion: number
-  ContactType    : number,
-  EncryptUsername: string,
-  ExtInfo        : string,
-  ExtInfoExt     : string,
-  LabelLists     : string,
-  MsgType        : PadplusMessageType,
-  NickName       : string,
-  SmallHeadImgUrl: string,
-  Ticket         : string,
-  UserName       : string,
-  VerifyFlag     : number,
+  alias          : string,
+  bigHeadImgUrl  : string,
+  chatRoomOwner  : string,
+  chatroomVersion: number
+  contactType    : number,
+  encryptUsername: string,
+  extInfo        : string,
+  extInfoExt     : string,
+  labelLists     : string,
+  msgType        : PadplusMessageType,
+  nickName       : string,
+  smallHeadImgUrl: string,
+  ticket         : string,
+  userName       : string,
+  verifyFlag     : number,
 }
 
 // Room member payload
@@ -244,19 +244,19 @@ export interface GrpcRoomRawPayload {
 //   }]
 // }
 export interface GrpcRoomMemberRawPayload {
-  ChatroomUsername: string,
-  ServerVersion: number,
-  MemberDetails: GrpcRoomMemberDetail[] | null,
+  chatroomUsername: string,
+  serverVersion: number,
+  memberDetails: GrpcRoomMemberDetail[] | null,
 }
 
 export interface GrpcRoomMemberDetail {
-  Username: string,
-  NickName: string,
-  DisplayName: string,
-  BigHeadImgUrl: string,
-  SmallHeadImgUrl: string,
-  ChatroomMemberFlag: PadplusRoomMemberFlag,
-  InviterUserName: string,
+  userName: string,
+  nickName: string,
+  displayName: string,
+  bigHeadImgUrl: string,
+  smallHeadImgUrl: string,
+  chatroomMemberFlag: PadplusRoomMemberFlag,
+  inviterUserName: string,
 }
 
 export interface GrpcContactOperationOption {
@@ -274,12 +274,12 @@ export interface GrpcContactOperationOption {
 //   }]
 // }
 export interface GrpcCreateRoomMemberPayload {
-  MemberName: string,
-  MemberStatus: number,
+  memberName: string,
+  memberStatus: number,
 }
 export interface GrpcCreateRoomPayload {
-  Roomeid: string,
-  Members: GrpcCreateRoomMemberPayload[]
+  roomeid: string,
+  members: GrpcCreateRoomMemberPayload[]
 }
 
 export interface GrpcGetMsgImageType {
@@ -291,14 +291,14 @@ export interface GrpcGetMsgVoiceType {
 }
 
 export interface GrpcGetA8KeyType {
-  Url: string,
-  XWechatKey: string,
-  XWechatUin: string,
+  url: string,
+  xWechatKey: string,
+  xWechatUin: string,
 }
 
 export interface GrpcGetContactQrcodePayload {
-  QrcodeBuf: string,
-  FoterWording: string,
+  qrcodeBuf: string,
+  foterWording: string,
 }
 
 export interface GrpcGetCdnDnsPayload {
