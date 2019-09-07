@@ -21,7 +21,7 @@ export class RequestClient {
     log.silly(PRE, `request()`)
     const result = await retry(async (retryException) => {
       const res = await this.grpcGateway.request(option.apiType, option.data)
-      if (res && !res.err) {
+      if (res) {
         return res
       }
       return retryException(new Error('tryRawPayload empty'))
