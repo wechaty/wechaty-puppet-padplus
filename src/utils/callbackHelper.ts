@@ -1,8 +1,5 @@
 import { StreamResponse } from '../server-manager/proto-ts/PadPlusServer_pb';
 
-// import { v4 as uuid } from 'uuid';
-
-
 export class CallbackPool {
   private static _instance?: CallbackPool = undefined;
   private constructor() {
