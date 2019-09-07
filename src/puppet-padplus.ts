@@ -17,20 +17,17 @@ import {
 }                           from 'wechaty-puppet'
 
 import {
-  GRPC_ENDPOINT,
   log,
   macproToken,
 }                                   from './config'
-import { GrpcGateway } from './server-manager/grpc-gateway'
-import { StreamResponse, ResponseType } from './server-manager/proto-ts/PadPlusServer_pb';
+
+import PadplusManager from './padplus-manager/padplus-manager'
 
 const PRE = 'PUPPET_MACPRO'
 
 export class PuppetMacpro extends Puppet {
 
-  private loopTimer?: NodeJS.Timer
-
-  private grpcGateway: GrpcGateway
+  private manager: PadplusManager
 
   constructor (
     public options: PuppetOptions = {},
@@ -39,7 +36,9 @@ export class PuppetMacpro extends Puppet {
 
     const token = options.token || macproToken()
     if (token) {
-      this.grpcGateway = new GrpcGateway(token, GRPC_ENDPOINT)
+      this.manager = new PadplusManager({
+        token,
+      })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
       throw new Error(`can not get token info.`)
@@ -51,28 +50,21 @@ export class PuppetMacpro extends Puppet {
 
     this.state.on('pending')
 
+    await this.startManager(this.manager)
 
-    await this.grpcGateway.initGrpcGateway()
-    await this.managerGrpc()
     this.state.on(true)
   }
 
-  private managerGrpc () {
-    this.grpcGateway.on('data', async (data: StreamResponse) => {
-      const type = data.getResponsetype()
-      switch (type) {
-        case ResponseType.LOGIN_QRCODE :
-          // TODO: 获取到二维码，将二维码发送到puppet
-          const url = data.getData()
-          if (url) {
-            this.emit('scan', url, ScanStatus.Waiting)
-          }
-          break
-        case ResponseType.ACCOUNT_LOGIN :
-          const loginData = data.getData()
-          break
-      }
+  private async startManager (manager: PadplusManager) {
+    manager.on('scan', async (url: string, status: ScanStatus) => {
+      log.silly(PRE, `scan : ${url}, status: ${status}`)
     })
+
+    manager.on('login', async (loginData: string) => {
+      log.silly(PRE, `scan : ${util.inspect(loginData)}`)
+    })
+
+    await manager.start()
   }
 
   stop(): Promise<void> {
@@ -279,14 +271,6 @@ export class PuppetMacpro extends Puppet {
   public ding (data?: string): void {
     log.silly(PRE, 'ding(%s)', data || '')
     this.emit('dong', data)
-  }
-
-  public unref (): void {
-    log.verbose(PRE, 'unref()')
-    super.unref()
-    if (this.loopTimer) {
-      this.loopTimer.unref()
-    }
   }
 
 }
