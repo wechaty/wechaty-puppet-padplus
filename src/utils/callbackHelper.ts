@@ -3,10 +3,10 @@
 
 export class CallbackPool {
   private static _instance?: CallbackPool = undefined;
-  private constructor () {
-    
+  private constructor() {
+
   }
-  public static get Instance () {
+  public static get Instance() {
     if (!this._instance) {
       this._instance = new CallbackPool();
     }
@@ -14,10 +14,7 @@ export class CallbackPool {
   }
   private poolMap: { [requestId: string]: (data: any) => void } = {};
   pushCallbackToPool = async (requestId: string, callback: (data: any) => void) => {
-    return new Promise((resolve,reject) => {
-      this.poolMap[requestId] = callback;
-      resolve();
-    })
+    this.poolMap[requestId] = callback;
   };
   getCallback = async (requestId: string) => {
     return this.poolMap[requestId];
