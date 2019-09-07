@@ -69,7 +69,7 @@ export class GrpcGateway extends EventEmitter {
   }
 
 
-  public async request (apiType: number, data?: any): Promise<any> {
+  public async request (apiType: number, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
     request.setToken(this.token)
     // TODO: set 其余字段
@@ -78,8 +78,10 @@ export class GrpcGateway extends EventEmitter {
       const result = await this._request(request)
       if (result) {
         const requestId = uuid()
-        CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
-          this.emit('data', data)
+        return new Promise<StreamResponse>((resolve, reject) => {
+          CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            resolve(data)
+          })
         })
       } else {
         throw new Error('failed.')
