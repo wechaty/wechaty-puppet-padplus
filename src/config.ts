@@ -2,7 +2,7 @@ import { log }      from 'brolog'
 import { OperationOptions } from 'retry'
 import promiseRetry = require('promise-retry')
 
-export const macproToken = () => {
+export const padplusToken = () => {
   const token = process.env.WECHATY_PUPPET_PADPLUS_TOKEN as string
   if (!token) {
     log.error('PuppetPadplusConfig', `

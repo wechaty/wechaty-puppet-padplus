@@ -18,12 +18,12 @@ import {
 
 import {
   log,
-  macproToken,
+  padplusToken,
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
 
-const PRE = 'PUPPET_MACPRO'
+const PRE = 'PUPPET_PADPLUD'
 
 export class PuppetPadplus {
 
@@ -34,7 +34,7 @@ export class PuppetPadplus {
   ) {
     // super(options)
 
-    const token = options.token || macproToken()
+    const token = options.token || padplusToken()
     if (token) {
       this.manager = new PadplusManager({
         token,

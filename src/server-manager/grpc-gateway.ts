@@ -1,7 +1,7 @@
 import grpc from 'grpc'
 import util from 'util'
 import { v4 as uuid } from 'uuid'
-import { log, macproToken } from '../config'
+import { log, padplusToken } from '../config'
 
 import { PadPlusServerClient } from './proto-ts/PadPlusServer_grpc_pb' // add proto file from Gao
 import { CallbackPool } from '../utils/callbackHelper'
@@ -102,7 +102,7 @@ export class GrpcGateway extends EventEmitter {
     } catch (err) {
       log.silly(PRE, `error : ${util.inspect(err)}`)
       if (err.details === 'INVALID_TOKEN') {
-        macproToken()
+        padplusToken()
       }
       throw new Error(`Can not get data from Transmit Server`)
     }

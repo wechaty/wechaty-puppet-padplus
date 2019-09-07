@@ -34,14 +34,14 @@
     "wechat",
     "sdk",
     "puppet",
-    "macpro"
+    "padplus"
   ],
   "author": "G.CH. S.C.",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/botorange/wechaty-puppet-macpro/issues"
+    "url": "https://github.com/botorange/wechaty-puppet-padplus/issues"
   },
-  "homepage": "https://github.com/botorange/wechaty-puppet-macpro#readme",
+  "homepage": "https://github.com/botorange/wechaty-puppet-padplus#readme",
   "devDependencies": {
     "@chatie/eslint-config": "^0.8.1",
     "@chatie/git-scripts": "^0.2.5",
