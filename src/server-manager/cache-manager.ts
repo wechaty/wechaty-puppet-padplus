@@ -4,14 +4,13 @@ import path   from 'path'
 
 import { FlashStore } from 'flash-store'
 
-import { log } from './config'
+import { log } from '../config'
 import {
-  FileCache,
   PadplusContactPayload,
   PadplusRoomPayload,
   PadplusRoomInvitationPayload,
   PadplusRoomMemberPayload,
-} from './schemas'
+} from '../schemas'
 import { FriendshipPayload } from 'wechaty-puppet'
 
 const PRE = 'CacheManager'
@@ -65,7 +64,6 @@ export class CacheManager {
   private cacheRoomRawPayload?       : FlashStore<string, PadplusRoomPayload>
   private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
   private cacheFriendshipRawPayload? : FlashStore<string, FriendshipPayload>
-  private cacheFile? : FlashStore<string, FileCache>
 
   /**
    * -------------------------------
@@ -168,7 +166,7 @@ export class CacheManager {
    */
   public async getRoom (
     roomId: string,
-  ): Promise<padplusRoomPayload | undefined> {
+  ): Promise<PadplusRoomPayload | undefined> {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} getRoom() has no cache.`)
     }
@@ -177,7 +175,7 @@ export class CacheManager {
 
   public async setRoom (
     roomId: string,
-    payload: padplusRoomPayload
+    payload: PadplusRoomPayload
   ): Promise<void> {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} setRoom() has no cache.`)
@@ -225,7 +223,7 @@ export class CacheManager {
    */
   public async getRoomMember (
     roomId: string,
-  ): Promise<{ [contactId: string]: padplusRoomMemberPayload } | undefined> {
+  ): Promise<{ [contactId: string]: PadplusRoomMemberPayload } | undefined> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} getRoomMember() has no cache.`)
     }
@@ -234,7 +232,7 @@ export class CacheManager {
 
   public async setRoomMember (
     roomId: string,
-    payload: { [contactId: string]: padplusRoomMemberPayload }
+    payload: { [contactId: string]: PadplusRoomMemberPayload }
   ): Promise<void> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
@@ -258,7 +256,7 @@ export class CacheManager {
    */
   public async getRoomInvitation (
     messageId: string,
-  ): Promise<padplusRoomInvitationPayload | undefined> {
+  ): Promise<PadplusRoomInvitationPayload | undefined> {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} getRoomInvitationRawPayload() has no cache.`)
     }
@@ -267,7 +265,7 @@ export class CacheManager {
 
   public async setRoomInvitation (
     messageId: string,
-    payload: padplusRoomInvitationPayload,
+    payload: PadplusRoomInvitationPayload,
   ): Promise<void> {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} setRoomInvitationRawPayload() has no cache.`)
@@ -282,37 +280,6 @@ export class CacheManager {
       throw new Error(`${PRE} deleteRoomInvitation() has no cache.`)
     }
     await this.cacheRoomInvitationRawPayload.delete(messageId)
-  }
-  /**
-   * -------------------------------
-   * CDN File Cache Section
-   * --------------------------------
-   */
-  public async getFileCache (
-    fileId: string
-  ): Promise<FileCache | undefined> {
-    if (!this.cacheFile) {
-      throw new Error(`${PRE} getFileCache() has no cache.`)
-    }
-
-    const fileCache = await this.cacheFile.get(fileId)
-
-    if (!fileCache) {
-      return fileCache
-    }
-
-    return this.parseJSON(JSON.stringify(fileCache))
-  }
-
-  public async setFileCache (
-    fileId: string,
-    cache: FileCache
-  ): Promise<void> {
-    if (!this.cacheFile) {
-      throw new Error(`${PRE} setFileCache() has no cache.`)
-    }
-    log.silly(PRE, `setFileCache(${fileId}, ${JSON.stringify(cache)})`)
-    await this.cacheFile.set(fileId, cache)
   }
 
   /**
@@ -343,31 +310,12 @@ export class CacheManager {
    * --------------------------------
    */
 
-  private parseJSON (payload: any) {
-    log.silly(PRE, `parseJSON(${payload})`)
-    return JSON.parse(payload, (_, v) => {
-      if (
-        v !== null
-        && typeof v === 'object'
-        && 'type' in v
-        && v.type === 'Buffer'
-        && 'data' in v
-        && Array.isArray(v.data)
-      ) {
-        return Buffer.from(v.data)
-      }
-      return v
-    })
-  }
-
   private async initCache (
     userId: string,
   ): Promise<void> {
     log.verbose(PRE, 'initCache(%s)', userId)
 
-    if (this.cacheContactRawPayload
-        || this.cacheFile
-    ) {
+    if (this.cacheContactRawPayload) {
       throw new Error('cache exists')
     }
 
@@ -392,7 +340,6 @@ export class CacheManager {
     this.cacheContactRawPayload        = new FlashStore(path.join(baseDir, 'contact-raw-payload'))
     this.cacheRoomMemberRawPayload     = new FlashStore(path.join(baseDir, 'room-member-raw-payload'))
     this.cacheRoomRawPayload           = new FlashStore(path.join(baseDir, 'room-raw-payload'))
-    this.cacheFile                     = new FlashStore(path.join(baseDir, 'file-cache'))
     this.cacheFriendshipRawPayload     = new FlashStore(path.join(baseDir, 'friendship'))
 
     const contactTotal = this.cacheContactRawPayload.size
@@ -406,7 +353,6 @@ export class CacheManager {
     if (this.cacheContactRawPayload
         && this.cacheRoomMemberRawPayload
         && this.cacheRoomRawPayload
-        && this.cacheFile
         && this.cacheFriendshipRawPayload
     ) {
       log.silly(PRE, 'releaseCache() closing caches ...')
@@ -415,14 +361,12 @@ export class CacheManager {
         this.cacheContactRawPayload.close(),
         this.cacheRoomMemberRawPayload.close(),
         this.cacheRoomRawPayload.close(),
-        this.cacheFile.close(),
         this.cacheFriendshipRawPayload.close(),
       ])
 
       this.cacheContactRawPayload    = undefined
       this.cacheRoomMemberRawPayload = undefined
       this.cacheRoomRawPayload       = undefined
-      this.cacheFile                 = undefined
       this.cacheFriendshipRawPayload = undefined
 
       log.silly(PRE, 'releaseCache() cache closed.')

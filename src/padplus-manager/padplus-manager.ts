@@ -2,14 +2,16 @@ import {
   DelayQueueExecutor,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-
+import util from 'util'
 import { log, GRPC_ENDPOINT } from '../config'
-import { CacheManager } from '../server-manager/cache-manager'
+// import { CacheManager } from '../server-manager/cache-manager'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway';
 import { EventEmitter } from 'events';
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
 import { ScanStatus } from 'wechaty-puppet';
+import { RequestClient } from './api-request/request';
+import { PadplusUser } from './api-request/user-api';
 
 export interface ManagerOptions {
   token    : string,
@@ -23,9 +25,9 @@ export class PadplusManager extends EventEmitter {
 
   private grpcGateway      : GrpcGateway
   private readonly state   : StateSwitch
-
   private syncQueueExecutor: DelayQueueExecutor
-
+  private request          : RequestClient
+  private padplusUser      : PadplusUser
   constructor (
     public options: ManagerOptions,
   ) {
@@ -34,8 +36,10 @@ export class PadplusManager extends EventEmitter {
 
     this.state = new StateSwitch('PadplusManager')
     this.grpcGateway = new GrpcGateway(options.token, GRPC_ENDPOINT)
-
+    this.request = new RequestClient(this.grpcGateway)
+    this.padplusUser = new PadplusUser(this.request)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
+    log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
@@ -73,6 +77,7 @@ export class PadplusManager extends EventEmitter {
 
   public async start (): Promise<void> {
     await this.grpcGateway.initGrpcGateway()
+    await this.padplusUser.getQrcode()
 
     await this.parseGrpcData()
   }
@@ -91,7 +96,7 @@ export class PadplusManager extends EventEmitter {
         case ResponseType.QRCODE_SCAN :
           const scanRawData = data.getData()
           // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
-
+          log.silly(PRE, ` : ${util.inspect(scanRawData)}`)
           break
         case ResponseType.ACCOUNT_LOGIN :
           const loginRawData = data.getData()

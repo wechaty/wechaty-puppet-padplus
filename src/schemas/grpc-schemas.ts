@@ -1,7 +1,6 @@
 import { ContactGender } from 'wechaty-puppet'
 
 import {
-  CheckQRCodeStatus,
   ContactOperationBitVal,
   ContactOperationCmdId,
   GrpcSelfAvatarType,
@@ -81,7 +80,6 @@ export interface GrpcDeletedPayload {
 }
 
 export type GrpcSyncMessagePayload = GrpcMessagePayload
-                                   | GrpcContactRawPayload
                                    | GrpcRoomRawPayload
                                    | GrpcSelfInfoPayload
                                    | GrpcSelfAvatarPayload

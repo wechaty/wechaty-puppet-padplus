@@ -21,7 +21,7 @@ export const padplusToken = () => {
 /**
  * GRPC server
  */
-export const GRPC_ENDPOINT = '' // Padpuls-Server Endpoint
+export const GRPC_ENDPOINT = '52.80.223.226:50051' // Padpuls-Server Endpoint
 
 export {
   log,

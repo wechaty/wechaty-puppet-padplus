@@ -2,6 +2,7 @@
   "extends": "@chatie/tsconfig",
   "compilerOptions": {
     "outDir": "dist",
+    "noUnusedParameters": false,
   },
   "exclude": [
     "node_modules/",

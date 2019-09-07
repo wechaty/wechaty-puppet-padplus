@@ -14,6 +14,7 @@ import {
   ApiType,
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
+import FileBox from 'file-box';
 
 export interface CallBackBuffer {
   [id: string]: (buf: any) => void
@@ -72,14 +73,18 @@ export class GrpcGateway extends EventEmitter {
 
   public async request (apiType: ApiType, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
+    const requestId = uuid()
+    log.silly(`==P==A==D==P==L==U==S==<>==P==A==D==P==L==U==S==`)
+    log.silly(PRE, `GRPC : ${this.token}, ${data}, ${apiType}`)
     request.setToken(this.token)
-    // TODO: set 其余字段
+    request.setApitype(apiType)
+    request.setParams(data)
+    request.setRequestid(requestId)
 
     try {
       const result = await this._request(request)
       if (result) {
-        const requestId = uuid()
-        return new Promise<StreamResponse>((resolve, reject) => {
+        return new Promise<StreamResponse>((resolve) => {
           CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
             resolve(data)
           })
@@ -112,9 +117,10 @@ export class GrpcGateway extends EventEmitter {
             reject(err)
           } else {
             const flag = response.getResult()
+
             if (flag) {
-              const temp: ResultObject = JSON.parse(flag)
-              resolve(temp.code === 200)
+              // const temp: ResultObject = JSON.parse(flag)
+              resolve(true)
             } else {
               reject('can not get result from response.')
             }
@@ -130,6 +136,7 @@ export class GrpcGateway extends EventEmitter {
     initConfig.setToken(this.token)
     try {
       const result = this.client.init(initConfig)
+      log.silly(JSON.stringify(result))
 
       result.on('error', (err: any) => {
         log.error(PRE, err.stack)
@@ -141,30 +148,17 @@ export class GrpcGateway extends EventEmitter {
         log.error(PRE, 'grpc server close')
       })
       result.on('data', async (data: StreamResponse) => {
-        const requestId = data.getRequestid()
-        if (requestId) { // 只是短连接中请求的内容
-          const callback = await CallbackPool.Instance.getCallback(requestId)
-          callback(data)
-        } else { // 长连接推送的内容
-          this.emit('data', data)
-        }
-      })
-      await new Promise((resolve, reject) => {
-        result.once('error', (err: any) => {
-          log.silly(PRE, 'grpc server error', err)
-          return reject(new Error('ERROR'))
-        })
-        result.once('end', () => {
-          log.silly(PRE, 'grpc server end')
-          return reject(new Error('END'))
-        })
-        result.once('close', () => {
-          log.silly(PRE, 'grpc server close')
-          return reject(new Error('CLOSE'))
-        })
-        result.once('data', (dataStr: string) => {
-          resolve(dataStr)
-        })
+        // const requestId = data.getRequestid()
+        log.silly(PRE, `data : ${util.inspect(data.toObject())}`)
+        const fileBox = FileBox.fromBase64(JSON.parse(data.getData()!).qrcode, 'qrcode.png')
+        await fileBox.toFile()
+        // if (requestId) { // 只是短连接中请求的内容
+        //   const callback = await CallbackPool.Instance.getCallback(requestId)
+        //   callback(data)
+        // } else { // 长连接推送的内容
+        //   log.silly(PRE, `data : ${util.inspect(data)}`)
+        //   this.emit('data', data)
+        // }
       })
     } catch (err) {
       log.silly(PRE, `error : ${err}`)

@@ -24,7 +24,7 @@
 	"====line====": {
 		"scope": "javascript,typescript",
 		"prefix": "line",
-		"body": "log.silly(`==M==A==C==P==R==O==<$1>==M==A==C==P==R==O==`)",
+		"body": "log.silly(`==P==A==D==P==L==U==S==<$1>==P==A==D==P==L==U==S==`)",
 		"description": "line for split"
 	}
 }
