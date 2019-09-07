@@ -15,6 +15,7 @@ import {
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
 import FileBox from 'file-box';
+import { GrpcEventEmitter } from './grpc-event-emitter';
 
 export interface CallBackBuffer {
   [id: string]: (buf: any) => void
@@ -31,15 +32,41 @@ export type GrpcGatewayEvent = 'data'
 
 export class GrpcGateway extends EventEmitter {
 
-  private token: string
-  private endpoint: string
+  private static _instance?: GrpcGateway = undefined;
+
+  public static get Instance () {
+    return this._instance
+  }
+
+  private eventEmitterMap: { [name: string]: GrpcEventEmitter } = {}
+
+  public static init (
+    token: string,
+    endpoint: string,
+    name: string,
+  ): GrpcEventEmitter {
+    if (!this._instance) {
+      this._instance = new GrpcGateway(token, endpoint)
+    }
+    return this._instance.addNewInstance(name);
+  }
+
   private client: PadPlusServerClient
 
-  constructor (token: string, endpoint: string) {
+  private constructor (
+    private token: string,
+    private endpoint: string,
+  ) {
     super()
-    this.endpoint = endpoint
-    this.token = token
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
+  }
+
+  private addNewInstance (
+    name: string,
+  ): GrpcEventEmitter {
+    const eventEmitter = new GrpcEventEmitter()
+    this.eventEmitterMap[name] = eventEmitter
+    return eventEmitter
   }
 
   public emit (event: 'data', data: StreamResponse): boolean
@@ -148,17 +175,17 @@ export class GrpcGateway extends EventEmitter {
         log.error(PRE, 'grpc server close')
       })
       result.on('data', async (data: StreamResponse) => {
-        // const requestId = data.getRequestid()
+        const requestId = data.getRequestid()
         log.silly(PRE, `data : ${util.inspect(data.toObject())}`)
         const fileBox = FileBox.fromBase64(JSON.parse(data.getData()!).qrcode, 'qrcode.png')
         await fileBox.toFile()
-        // if (requestId) { // 只是短连接中请求的内容
-        //   const callback = await CallbackPool.Instance.getCallback(requestId)
-        //   callback(data)
-        // } else { // 长连接推送的内容
-        //   log.silly(PRE, `data : ${util.inspect(data)}`)
-        //   this.emit('data', data)
-        // }
+        if (requestId) { // 只是短连接中请求的内容
+          const callback = await CallbackPool.Instance.getCallback(requestId)
+          callback(data)
+        } else { // 长连接推送的内容
+          log.silly(PRE, `data : ${util.inspect(data)}`)
+          this.emit('data', data)
+        }
       })
     } catch (err) {
       log.silly(PRE, `error : ${err}`)

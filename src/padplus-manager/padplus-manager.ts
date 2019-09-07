@@ -7,35 +7,37 @@ import { log, GRPC_ENDPOINT } from '../config'
 // import { CacheManager } from '../server-manager/cache-manager'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway';
-import { EventEmitter } from 'events';
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
 import { ScanStatus } from 'wechaty-puppet';
 import { RequestClient } from './api-request/request';
 import { PadplusUser } from './api-request/user-api';
+import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter';
 
 export interface ManagerOptions {
-  token    : string,
+  token: string,
+  name: unknown,
 }
 
 const PRE = 'PadplusManager'
 
 export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list'
 
-export class PadplusManager extends EventEmitter {
+export class PadplusManager {
 
-  private grpcGateway      : GrpcGateway
-  private readonly state   : StateSwitch
-  private syncQueueExecutor: DelayQueueExecutor
-  private request          : RequestClient
-  private padplusUser      : PadplusUser
+  private grpcGatewayEmmiter : GrpcEventEmitter
+  private grpcGateway       : GrpcGateway
+  private readonly state     : StateSwitch
+  private syncQueueExecutor  : DelayQueueExecutor
+  private request            : RequestClient
+  private padplusUser        : PadplusUser
   constructor (
     public options: ManagerOptions,
   ) {
-    super()
     log.verbose(PRE, 'constructor()')
 
     this.state = new StateSwitch('PadplusManager')
-    this.grpcGateway = new GrpcGateway(options.token, GRPC_ENDPOINT)
+    this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
+    this.grpcGateway = GrpcGateway.Instance!
     this.request = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.request)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
@@ -52,7 +54,7 @@ export class PadplusManager extends EventEmitter {
     event: PadplusManagerEvent,
     ...args: any[]
   ): boolean {
-    return super.emit(event, ...args)
+    return this.grpcGatewayEmmiter.emit(event, ...args)
   }
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
@@ -64,7 +66,7 @@ export class PadplusManager extends EventEmitter {
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
     log.verbose(PRE, `on(${event}, ${typeof listener}) registered`)
 
-    super.on(event, (...args: any[]) => {
+    this.grpcGatewayEmmiter.on(event, (...args: any[]) => {
       try {
         listener.apply(this, args)
       } catch (e) {
@@ -83,7 +85,7 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async parseGrpcData () {
-    this.grpcGateway.on('data', (data: StreamResponse) => {
+    this.grpcGatewayEmmiter.on('data', (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :

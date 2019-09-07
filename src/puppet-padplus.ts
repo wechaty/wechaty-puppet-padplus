@@ -35,9 +35,11 @@ export class PuppetPadplus {
     // super(options)
 
     const token = options.token || padplusToken()
+    const name = options.name
     if (token) {
       this.manager = new PadplusManager({
         token,
+        name,
       })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
