@@ -37,7 +37,10 @@ export class PadplusManager {
 
     this.state = new StateSwitch('PadplusManager')
     this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
-    this.grpcGateway = GrpcGateway.Instance!
+    if (!GrpcGateway.Instance) {
+      throw new Error(`The grpc gateway has no instance.`)
+    }
+    this.grpcGateway = GrpcGateway.Instance
     this.request = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.request)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
@@ -78,7 +81,6 @@ export class PadplusManager {
   }
 
   public async start (): Promise<void> {
-    await this.grpcGateway.initGrpcGateway()
     await this.padplusUser.getQrcode()
 
     await this.parseGrpcData()

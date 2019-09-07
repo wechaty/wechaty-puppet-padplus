@@ -12,6 +12,7 @@ import {
   StreamResponse,
   ResponseObject,
   ApiType,
+  ResponseType,
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
 import FileBox from 'file-box';
@@ -59,6 +60,7 @@ export class GrpcGateway extends EventEmitter {
   ) {
     super()
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
+    this.initGrpcGateway()
   }
 
   private addNewInstance (
@@ -119,13 +121,6 @@ export class GrpcGateway extends EventEmitter {
       } else {
         throw new Error('failed.')
       }
-
-      log.silly(PRE, `
-      ===============================================================
-      API Type : ${apiType}
-      Request data : ${util.inspect(data)}
-      ===============================================================
-      `)
     } catch (err) {
       log.silly(PRE, `error : ${util.inspect(err)}`)
       if (err.details === 'INVALID_TOKEN') {
@@ -146,7 +141,6 @@ export class GrpcGateway extends EventEmitter {
             const flag = response.getResult()
 
             if (flag) {
-              // const temp: ResultObject = JSON.parse(flag)
               resolve(true)
             } else {
               reject('can not get result from response.')
@@ -176,15 +170,24 @@ export class GrpcGateway extends EventEmitter {
       })
       result.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
+        const responseType = data.getResponsetype()
+
         log.silly(PRE, `data : ${util.inspect(data.toObject())}`)
-        const fileBox = FileBox.fromBase64(JSON.parse(data.getData()!).qrcode, 'qrcode.png')
+        const fileBox = FileBox.fromBase64(JSON.parse(data.getData()!).qrcode, `qrcode${(Math.random() * 1000).toFixed()}.png`)
         await fileBox.toFile()
         if (requestId) { // 只是短连接中请求的内容
           const callback = await CallbackPool.Instance.getCallback(requestId)
           callback(data)
         } else { // 长连接推送的内容
           log.silly(PRE, `data : ${util.inspect(data)}`)
-          this.emit('data', data)
+          if (responseType === ResponseType.LOGIN_QRCODE) {
+            // TODO: 轮询查找只有 name 没有 userName 和 uin 的 Emmitter，发送该 qrcode
+          } else {
+            // TODO: 根据消息中的 uin 找到对应的name，从而找到对应的 Emmitter
+            const name = ''
+            this.eventEmitterMap[name].emit('data', data)
+          }
+
         }
       })
     } catch (err) {
