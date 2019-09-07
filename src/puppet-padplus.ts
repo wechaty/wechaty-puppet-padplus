@@ -1,3 +1,4 @@
+import util from 'util'
 import { FileBox } from 'file-box'
 
 import {
@@ -49,7 +50,7 @@ export class PuppetMacpro extends Puppet {
     this.state.on('pending')
 
 
-    await this.grpcGateway.notify('getLoginUserInfo')
+    await this.grpcGateway.initGrpcGateway()
 
     this.state.on(true)
   }
@@ -83,6 +84,7 @@ export class PuppetMacpro extends Puppet {
   contactAlias(contactId: string): Promise<string>
   contactAlias(contactId: string, alias: string | null): Promise<void>
   contactAlias(contactId: any, alias?: any) {
+    log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
     throw new Error("Method not implemented.")
   }
 

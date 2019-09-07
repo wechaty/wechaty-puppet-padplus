@@ -36,7 +36,7 @@ export class GrpcGateway extends EventEmitter {
     this.callbackPool = Object.create(null)
   }
 
-  public async request (apiName: string, data?: any): Promise<any> {
+  public async request (apiType: number, data?: any): Promise<any> {
     const request = new RequestObject()
     request.setToken(this.token)
     // TODO set 其余字段
@@ -48,7 +48,7 @@ export class GrpcGateway extends EventEmitter {
 
       log.silly(PRE, `
       ===============================================================
-      API Name : ${apiName}
+      API Type : ${apiType}
       Request data : ${util.inspect(data)}
       ===============================================================
       `)
@@ -139,8 +139,8 @@ export class GrpcGateway extends EventEmitter {
     return this
   }
 
-  public async notify (apiName: string, data?: any) {
-    log.silly(PRE, `notify(${apiName}, ${data})`)
+  public async initGrpcGateway () {
+    log.silly(PRE, `notify()`)
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
     try {
