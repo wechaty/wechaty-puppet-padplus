@@ -17,7 +17,7 @@ export interface ManagerOptions {
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'scan' | 'login'
+export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list'
 
 export class PadplusManager extends EventEmitter {
 
@@ -40,6 +40,8 @@ export class PadplusManager extends EventEmitter {
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
   public emit (event: 'login', userIdOrReasonOrData: string): boolean
+  public emit (event: 'logout', userIdOrReasonOrData: string): boolean
+  public emit (event: 'contact-list', data: string): boolean
   public emit (event: never, listener: never): never
 
   public emit (
@@ -51,6 +53,8 @@ export class PadplusManager extends EventEmitter {
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
+  public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
+  public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -78,17 +82,36 @@ export class PadplusManager extends EventEmitter {
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
-          const url = data.getData()
+          const qrcodeRawData = data.getData()
           // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
-          if (url) {
-            this.emit('scan', url, ScanStatus.Waiting)
+          if (qrcodeRawData) {
+            this.emit('scan', qrcodeRawData, ScanStatus.Waiting)
           }
           break
+        case ResponseType.QRCODE_SCAN :
+          const scanRawData = data.getData()
+          // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
+
+          break
         case ResponseType.ACCOUNT_LOGIN :
-          const loginData = data.getData()
+          const loginRawData = data.getData()
           // TODO: convert data from grpc to padplus
-          if (loginData) {
-            this.emit('login', loginData)
+          if (loginRawData) {
+            this.emit('login', loginRawData)
+          }
+          break
+        case ResponseType.ACCOUNT_LOGOUT :
+          const looutRawData = data.getData()
+          // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
+          if (looutRawData) {
+            this.emit('logout', looutRawData)
+          }
+          break
+        case ResponseType.CONTACT_LIST :
+          const contactList = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (contactList) {
+            this.emit('contact-list', contactList)
           }
           break
       }

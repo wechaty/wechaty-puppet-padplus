@@ -11,6 +11,7 @@ import {
   InitConfig,
   StreamResponse,
   ResponseObject,
+  ApiType,
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
 
@@ -69,7 +70,7 @@ export class GrpcGateway extends EventEmitter {
   }
 
 
-  public async request (apiType: number, data?: any): Promise<any> {
+  public async request (apiType: ApiType, data?: any): Promise<any> {
     const request = new RequestObject()
     request.setToken(this.token)
     // TODO: set 其余字段
@@ -139,9 +140,11 @@ export class GrpcGateway extends EventEmitter {
       })
       result.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
-        if (requestId) {
+        if (requestId) { // 只是短连接中请求的内容
           const callback = await CallbackPool.Instance.getCallback(requestId)
           callback(data)
+        } else { // 长连接推送的内容
+          this.emit('data', data)
         }
       })
       await new Promise((resolve, reject) => {
