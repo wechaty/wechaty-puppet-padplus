@@ -1,6 +1,6 @@
 import grpc from 'grpc'
 import util from 'util'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { log, macproToken } from '../config'
 
 import { PadPlusServerClient } from './proto-ts/PadPlusServer_grpc_pb' // add proto file from Gao
