@@ -1,75 +1,76 @@
-syntax = "proto2"
+syntax = "proto2";
 
-package PadPlusServer
+package PadPlusServer;
 
 enum ApiType {
-    GET_QRCODE = 0
-    RECONNECT = 1
-    LOGOUT = 2
+    GET_QRCODE = 0;
+    RECONNECT = 1;
+    LOGOUT = 2;
 
-    GET_CONTACT = 10
-    SEARCH_CONTACT = 11
-    ADD_CONTACT = 12
-    ACCEPT_CONTACT = 13
-    SYNC_CONTACT = 14
-    CONTACT_ALIAS = 15
-    ADD_CHATROOM_CONTACT = 16
+    GET_CONTACT = 10;
+    SEARCH_CONTACT = 11;
+    ADD_CONTACT = 12;
+    ACCEPT_CONTACT = 13;
+    SYNC_CONTACT = 14;
+    CONTACT_ALIAS = 15;
+    ADD_CHATROOM_CONTACT = 16;
 
-    CREATE_ROOM = 30
-    GET_ROOM_MEMBER = 31
-    ADD_ROOM_MEMBER = 32
-    REMOVE_ROOM_MEMBER = 33
-    CHANGE_TOPIC = 34
+    CREATE_ROOM = 30;
+    GET_ROOM_MEMBER = 31;
+    ADD_ROOM_MEMBER = 32;
+    REMOVE_ROOM_MEMBER = 33;
+    CHANGE_TOPIC = 34;
 
-    SEND_MESSAGE = 50
-    SEND_FILE = 51
-    REVOKE_MESSAGE = 52
-    GET_MESSAGE_MEDIA = 53
+    SEND_MESSAGE = 50;
+    SEND_FILE = 51;
+    REVOKE_MESSAGE = 52;
+    GET_MESSAGE_MEDIA = 53;
 
-    GET_ALL_LABEL = 70
-    ADD_LABEL = 71
-    MODIFY_LABEL = 72
+    GET_ALL_LABEL = 70;
+    ADD_LABEL = 71;
+    MODIFY_LABEL = 72;
 }
 
 message RequestObject {
-    required string requestId = 10
-    required string token = 20
-    required ApiType apiType = 30
-    optional string params = 40
+    required string requestId = 10;
+    required string token = 20;
+    required ApiType apiType = 30;
+    optional string params = 40;
 }
 
 message ResponseObject {
-    required string result = 10
+    required string result = 10;
 }
 
 message InitConfig {
-    required string token = 10
-    optional string wxid = 20
-    optional int32 uin = 21
+    required string token = 10;
+    optional string wxid = 20;
+    optional int32 uin = 21;
 }
 
 enum ResponseType {
-    REQUEST_RESPONSE = 0
+    REQUEST_RESPONSE = 0;
 
-    LOGIN_QRCODE = 10
-    QRCODE_SCAN = 11
-    ACCOUNT_LOGIN = 12
-    ACCOUNT_LOGOUT = 13
+    LOGIN_QRCODE = 10;
+    QRCODE_SCAN = 11;
+    ACCOUNT_LOGIN = 12;
+    ACCOUNT_LOGOUT = 13;
+    QRCODE_LOGIN = 14;
 
-    CONTACT_LIST = 20
-    CONTACT_MODIFY = 21
-    CONTACT_DELETE = 22
-    ROOM_MEMBER_LIST = 23
-    ROOM_MEMBER_MODIFY = 24
+    CONTACT_LIST = 20;
+    CONTACT_MODIFY = 21;
+    CONTACT_DELETE = 22;
+    ROOM_MEMBER_LIST = 23;
+    ROOM_MEMBER_MODIFY = 24;
 
-    MESSAGE_RECEIVE = 30
-    STATUS_NOTIFY = 31
+    MESSAGE_RECEIVE = 30;
+    STATUS_NOTIFY = 31;
 }
 
 message StreamResponse {
-    required string requestId = 10
-    required string data = 20
-    required ResponseType responseType = 30
+    required string requestId = 10;
+    required string data = 20;
+    required ResponseType responseType = 30;
 }
 
 service PadPlusServer {
