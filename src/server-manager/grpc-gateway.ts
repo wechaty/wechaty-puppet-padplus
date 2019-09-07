@@ -31,6 +31,12 @@ const PRE = 'GRPC_GATEWAY'
 
 export type GrpcGatewayEvent = 'data'
 
+export interface WX_Info {
+  userName?: string,
+  uin?: number,
+  qrcodeId?: number,
+}
+
 export class GrpcGateway extends EventEmitter {
 
   private static _instance?: GrpcGateway = undefined;
@@ -40,6 +46,7 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private eventEmitterMap: { [name: string]: GrpcEventEmitter } = {}
+  private nameMap: { [name:string]: WX_Info } = {}
 
   public static init (
     token: string,
@@ -66,8 +73,13 @@ export class GrpcGateway extends EventEmitter {
   private addNewInstance (
     name: string,
   ): GrpcEventEmitter {
-    const eventEmitter = new GrpcEventEmitter()
+    const eventEmitter = new GrpcEventEmitter(name)
     this.eventEmitterMap[name] = eventEmitter
+    this.nameMap[name] = {
+      userName: eventEmitter.getUserName(),
+      uin: eventEmitter.getUIN(),
+      qrcodeId: 0,
+    }
     return eventEmitter
   }
 
@@ -181,7 +193,13 @@ export class GrpcGateway extends EventEmitter {
         } else { // 长连接推送的内容
           log.silly(PRE, `data : ${util.inspect(data)}`)
           if (responseType === ResponseType.LOGIN_QRCODE) {
-            // TODO: 轮询查找只有 name 没有 userName 和 uin 的 Emmitter，发送该 qrcode
+            Object.keys(this.nameMap).map(name => {
+              const value: WX_Info = this.nameMap[name]
+              if (value && value.qrcodeId === 0 && value.uin === 0 && value.userName === '') {
+                this.eventEmitterMap[name].emit('data', data)
+                // TODO: 绑定name和qrcodeId
+              }
+            })
           } else {
             // TODO: 根据消息中的 uin 找到对应的name，从而找到对应的 Emmitter
             const name = ''

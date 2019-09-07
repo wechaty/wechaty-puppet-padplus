@@ -252,7 +252,7 @@ export class CacheManager {
   /**
    * -------------------------------
    * Room Invitation Section
-   * --------------------------------
+   * -------------------------------
    */
   public async getRoomInvitation (
     messageId: string,
