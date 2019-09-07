@@ -1,4 +1,4 @@
-import { log, AWS_S3, retry } from '../../config'
+import { log } from '../../config'
 import { GrpcGateway } from '../../server-manager/grpc-gateway'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 
@@ -19,14 +19,15 @@ export class RequestClient {
 
   public async request (option: RequestOption) {
     log.silly(PRE, `request()`)
-    const result = await retry(async (retryException) => {
+    /* const result = await retry(async (retryException) => {
       const res = await this.grpcGateway.request(option.apiType, option.data)
       if (res) {
         return res
       }
       return retryException(new Error('tryRawPayload empty'))
-    })
-
-    return result
+    }) */
+    const res = await this.grpcGateway.request(option.apiType, option.data)
+    log.silly(PRE, `REQUEST res : ${JSON.stringify(res)}`)
+    return res
   }
 }

@@ -14,10 +14,10 @@ export class CallbackPool {
     }
     return this._instance;
   }
-  private poolMap: { [requestId: string]: (data: StreamResponse) => void } = {};
+  private poolMap: { [requestId: string]: (data: StreamResponse) => void } = {}
   pushCallbackToPool = async (requestId: string, callback: (data: StreamResponse) => void) => {
     this.poolMap[requestId] = callback;
-  };
+  }
 
   getCallback = async (requestId: string) => {
     return this.poolMap[requestId];
