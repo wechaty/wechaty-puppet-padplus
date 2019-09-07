@@ -12,7 +12,7 @@
   },
   "scripts": {
     "clean": "shx rm -fr dist/*",
-    "dist": "npm run clean && tsc && cp -R src/gateway/proto-ts/ dist/src/gateway/proto-ts/",
+    "dist": "npm run clean && tsc && cp -R src/server-manager/proto-ts/ dist/src/server-manager/proto-ts/",
     "pack": "npm pack",
     "lint": "npm run lint:es && npm run lint:ts && npm run lint:md",
     "lint:md": "markdownlint README.md",
