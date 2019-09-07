@@ -4,12 +4,13 @@ import { v4 as uuid } from 'uuid'
 import { log, macproToken } from '../config'
 
 import { PadPlusServerClient } from './proto-ts/PadPlusServer_grpc_pb' // add proto file from Gao
+import { CallbackPool } from '../utils/callbackHelper'
 
 import {
   RequestObject,
-  ResponseObject,
   InitConfig,
   StreamResponse,
+  ResponseObject,
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
 
@@ -26,14 +27,13 @@ export class GrpcGateway extends EventEmitter {
   private token: string
   private endpoint: string
   private client: PadPlusServerClient
-  private callbackPool: CallBackBuffer
+
 
   constructor (token: string, endpoint: string) {
     super()
     this.endpoint = endpoint
     this.token = token
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
-    this.callbackPool = Object.create(null)
   }
 
   public async request (apiType: number, data?: any): Promise<any> {
@@ -43,7 +43,10 @@ export class GrpcGateway extends EventEmitter {
 
     try {
       const result = await this._request(request)
-
+      const requestId = uuid()
+      CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+  
+      })
       // TODO: 解析请求返回的数据，并返回给API层
 
       log.silly(PRE, `
@@ -61,26 +64,18 @@ export class GrpcGateway extends EventEmitter {
     }
   }
 
-  // TODO: 需要在此处调用封装的callbackPool函数，将所有请求函数放入回调池中，等待长连接中返回数据后，根据requestId调用对应的函数，resolve结果
   private async _request (request: RequestObject): Promise<any> {
-    const requestId = uuid()
-    return new Promise<Buffer>(async (resolve, reject) => {
-      this.callbackPool[requestId] = (buffer: Buffer) => {
-        delete this.callbackPool[requestId]
-        resolve(buffer)
-      }
-
-      try {
-        this.client.request(
-          request,
-          (err: Error | null, response: ResponseObject) => {
-            // TODO: 处理请求返回的状态，如果请求成功则忽略，若失败则需要重试
+    return new Promise<ResponseObject>((resolve, reject) => {
+      this.client.request(
+        request,
+        (err: Error | null, response: ResponseObject) => {
+          if (err !== null) {
+            reject(err)
+          } else {
+            // TODO: 请求成功，resolve 对应的函数
           }
-        )
-      } catch (e) {
-        delete this.callbackPool[requestId]
-        reject(e)
-      }
+        }
+      )
     })
   }
 
