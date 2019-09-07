@@ -130,6 +130,14 @@ export interface GrpcWxidItem {
 //   "PushContent": "",
 //   "NewMsgId": 8342436108662474000
 // }
+
+export interface GrpcQrCodeStatus {
+  head_url: string,
+  user_name: string,
+  nick_name: string,
+  status: number,
+}
+
 export interface GrpcMessagePayload {
   msgId: number,
   fromUserName: string,
