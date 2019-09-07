@@ -1,4 +1,4 @@
-import { log, AWS_S3, retry } from '../../config'
+import { log, retry } from '../../config'
 import { GrpcGateway } from '../../server-manager/grpc-gateway'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 
