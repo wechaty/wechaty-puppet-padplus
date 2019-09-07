@@ -13,6 +13,7 @@ import {
   RoomPayload,
   UrlLinkPayload,
   MiniProgramPayload,
+  ScanStatus,
 }                           from 'wechaty-puppet'
 
 import {
@@ -21,6 +22,7 @@ import {
   macproToken,
 }                                   from './config'
 import { GrpcGateway } from './server-manager/grpc-gateway'
+import { StreamResponse, ResponseType } from './server-manager/proto-ts/PadPlusServer_pb';
 
 const PRE = 'PUPPET_MACPRO'
 
@@ -51,8 +53,25 @@ export class PuppetMacpro extends Puppet {
 
 
     await this.grpcGateway.initGrpcGateway()
-
+    await this.managerGrpc()
     this.state.on(true)
+  }
+
+  private managerGrpc () {
+    this.grpcGateway.on('data', async (data: StreamResponse) => {
+      const type = data.getResponsetype()
+      switch (type) {
+        case ResponseType.LOGIN_QRCODE :
+          // TODO: 获取到二维码，将二维码发送到puppet
+          const url = data.getData()
+          if (url) {
+            this.emit('scan', url, ScanStatus.Waiting)
+          }
+          break
+        case ResponseType.ACCOUNT_LOGIN :
+          break
+      }
+    })
   }
 
   stop(): Promise<void> {
@@ -83,14 +102,14 @@ export class PuppetMacpro extends Puppet {
 
   contactAlias(contactId: string): Promise<string>
   contactAlias(contactId: string, alias: string | null): Promise<void>
-  contactAlias(contactId: any, alias?: any) {
+  contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
     log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
     throw new Error("Method not implemented.")
   }
 
   contactAvatar(contactId: string): Promise<FileBox>
   contactAvatar(contactId: string, file: FileBox): Promise<void>
-  contactAvatar(contactId: any, file?: any) {
+  contactAvatar(contactId: string, file?: FileBox): Promise<FileBox | void> {
     throw new Error("Method not implemented.")
   }
 
@@ -218,7 +237,7 @@ export class PuppetMacpro extends Puppet {
   roomTopic(roomId: string): Promise<string>
   roomTopic(roomId: string, topic: string): Promise<void>
   roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
-  roomTopic(roomId: any, topic?: any) {
+  roomTopic(roomId: any, topic?: any): Promise<string | void> {
     throw new Error("Method not implemented.")
   }
 
@@ -252,7 +271,7 @@ export class PuppetMacpro extends Puppet {
 
   roomAnnounce(roomId: string): Promise<string>
   roomAnnounce(roomId: string, text: string): Promise<void>
-  roomAnnounce(roomId: any, text?: any) {
+  roomAnnounce(roomId: any, text?: any): Promise<string | void> {
     throw new Error("Method not implemented.")
   }
 

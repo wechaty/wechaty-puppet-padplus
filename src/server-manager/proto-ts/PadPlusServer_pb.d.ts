@@ -5,7 +5,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class RequestObject extends jspb.Message {
+export class RequestObject extends jspb.Message { 
 
     hasRequestid(): boolean;
     clearRequestid(): void;
@@ -50,7 +50,7 @@ export namespace RequestObject {
     }
 }
 
-export class ResponseObject extends jspb.Message {
+export class ResponseObject extends jspb.Message { 
 
     hasResult(): boolean;
     clearResult(): void;
@@ -74,12 +74,24 @@ export namespace ResponseObject {
     }
 }
 
-export class InitConfig extends jspb.Message {
+export class InitConfig extends jspb.Message { 
 
     hasToken(): boolean;
     clearToken(): void;
     getToken(): string | undefined;
     setToken(value: string): void;
+
+
+    hasWxid(): boolean;
+    clearWxid(): void;
+    getWxid(): string | undefined;
+    setWxid(value: string): void;
+
+
+    hasUin(): boolean;
+    clearUin(): void;
+    getUin(): number | undefined;
+    setUin(value: number): void;
 
 
     serializeBinary(): Uint8Array;
@@ -95,10 +107,12 @@ export class InitConfig extends jspb.Message {
 export namespace InitConfig {
     export type AsObject = {
         token?: string,
+        wxid?: string,
+        uin?: number,
     }
 }
 
-export class StreamResponse extends jspb.Message {
+export class StreamResponse extends jspb.Message { 
 
     hasRequestid(): boolean;
     clearRequestid(): void;

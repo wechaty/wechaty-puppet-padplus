@@ -499,7 +499,9 @@ proto.PadPlusServer.InitConfig.prototype.toObject = function(opt_includeInstance
  */
 proto.PadPlusServer.InitConfig.toObject = function(includeInstance, msg) {
   var f, obj = {
-    token: jspb.Message.getField(msg, 10)
+    token: jspb.Message.getField(msg, 10),
+    wxid: jspb.Message.getField(msg, 20),
+    uin: jspb.Message.getField(msg, 21)
   };
 
   if (includeInstance) {
@@ -540,6 +542,14 @@ proto.PadPlusServer.InitConfig.deserializeBinaryFromReader = function(msg, reade
       var value = /** @type {string} */ (reader.readString());
       msg.setToken(value);
       break;
+    case 20:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setWxid(value);
+      break;
+    case 21:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setUin(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -576,6 +586,20 @@ proto.PadPlusServer.InitConfig.serializeBinaryToWriter = function(message, write
       f
     );
   }
+  f = /** @type {string} */ (jspb.Message.getField(message, 20));
+  if (f != null) {
+    writer.writeString(
+      20,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 21));
+  if (f != null) {
+    writer.writeInt32(
+      21,
+      f
+    );
+  }
 };
 
 
@@ -605,6 +629,64 @@ proto.PadPlusServer.InitConfig.prototype.clearToken = function() {
  */
 proto.PadPlusServer.InitConfig.prototype.hasToken = function() {
   return jspb.Message.getField(this, 10) != null;
+};
+
+
+/**
+ * optional string wxid = 20;
+ * @return {string}
+ */
+proto.PadPlusServer.InitConfig.prototype.getWxid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 20, ""));
+};
+
+
+/** @param {string} value */
+proto.PadPlusServer.InitConfig.prototype.setWxid = function(value) {
+  jspb.Message.setField(this, 20, value);
+};
+
+
+proto.PadPlusServer.InitConfig.prototype.clearWxid = function() {
+  jspb.Message.setField(this, 20, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.PadPlusServer.InitConfig.prototype.hasWxid = function() {
+  return jspb.Message.getField(this, 20) != null;
+};
+
+
+/**
+ * optional int32 uin = 21;
+ * @return {number}
+ */
+proto.PadPlusServer.InitConfig.prototype.getUin = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 21, 0));
+};
+
+
+/** @param {number} value */
+proto.PadPlusServer.InitConfig.prototype.setUin = function(value) {
+  jspb.Message.setField(this, 21, value);
+};
+
+
+proto.PadPlusServer.InitConfig.prototype.clearUin = function() {
+  jspb.Message.setField(this, 21, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.PadPlusServer.InitConfig.prototype.hasUin = function() {
+  return jspb.Message.getField(this, 21) != null;
 };
 
 
