@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "uuid": "^3.3.3",
     "wechaty-puppet": "^0.16.1"
   }
 }
