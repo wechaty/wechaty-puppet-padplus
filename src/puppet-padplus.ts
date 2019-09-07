@@ -69,6 +69,7 @@ export class PuppetMacpro extends Puppet {
           }
           break
         case ResponseType.ACCOUNT_LOGIN :
+          const loginData = data.getData()
           break
       }
     })
