@@ -74,7 +74,7 @@ export namespace ResponseObject {
     }
 }
 
-export class InitConfig extends jspb.Message { 
+export class InitConfig extends jspb.Message {
 
     hasToken(): boolean;
     clearToken(): void;
@@ -98,7 +98,7 @@ export namespace InitConfig {
     }
 }
 
-export class StreamResponse extends jspb.Message { 
+export class StreamResponse extends jspb.Message {
 
     hasRequestid(): boolean;
     clearRequestid(): void;
