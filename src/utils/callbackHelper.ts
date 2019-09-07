@@ -1,3 +1,5 @@
+import { StreamResponse } from '../server-manager/proto-ts/PadPlusServer_pb';
+
 // import { v4 as uuid } from 'uuid';
 
 
@@ -12,8 +14,8 @@ export class CallbackPool {
     }
     return this._instance;
   }
-  private poolMap: { [requestId: string]: (data: any) => void } = {};
-  pushCallbackToPool = async (requestId: string, callback: (data: any) => void) => {
+  private poolMap: { [requestId: string]: (data: StreamResponse) => void } = {};
+  pushCallbackToPool = async (requestId: string, callback: (data: StreamResponse) => void) => {
     this.poolMap[requestId] = callback;
   };
   getCallback = async (requestId: string) => {
