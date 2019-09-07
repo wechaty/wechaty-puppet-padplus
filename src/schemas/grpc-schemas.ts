@@ -10,126 +10,10 @@ import {
   PadplusRoomMemberFlag,
 } from './padplus-enums'
 
-/**
- * ******************************************************************************************************************
- * ----------------------------------------- Login related interface ------------------------------------------------
- * ******************************************************************************************************************
- * ******************************************************************************************************************
- */
-
-export interface GrpcCheckQRCode {
-  checkTime? : number,
-  expiredTime: number,                // 238,
-  headImgUrl?: string,                // http://wx.qlogo.cn/mmhead/ver_1/NkOvv1rTx3Dsqpicnhe0j7cVOR3psEAVfuhFLbmoAcwaob4eENNZlp3KIEsMgibfH4kRjDicFFXN3qdP6SGRXbo7GBs8YpN52icxSeBUX8xkZBA/0,
-  nickname?  : string,                // 苏轼,
-  password?  : string,
-  status     : CheckQRCodeStatus,     // 2 = success
-  username?  : string,                // wxid_zj2cahpwzgie12
+export interface GrpcQrCode {
+  qrcodeId: string,
+  qrcode: string,
 }
-
-export interface GrpcGetQRCodeType {
-  qrCode : string,
-}
-
-export interface GrpcQrcodeLoginType {
-  status: number,
-  longHost: string,
-  shortHost: string,
-  userName: string,
-}
-
-export interface GrpcAutoLoginType {
-  longHost: string,
-  shortHost: string,
-  status: number,
-  userName: string,
-  payload?: string,
-}
-
-/**
- * ******************************************************************************************************************
- * ----------------------------------------- Contact related interface ----------------------------------------------
- * ******************************************************************************************************************
- * ******************************************************************************************************************
- */
-
-// Contact payload
-// [{
-//   "Alias": "",
-//   "BigHeadImgUrl": "http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/132",
-//   "ChatRoomOwner": "",
-//   "ChatroomVersion": 0
-//   "City": "",
-//   "ContactType": 0,
-//   "EncryptUsername": "",
-//   "ExtInfo": "",
-//   "ExtInfoExt": "",
-//   "LabelLists": "",
-//   "MsgType": 2,
-//   "NickName": "高原ོ",
-//   "Province": "",
-//   "Remark": "",
-//   "Sex": 1,
-//   "Signature": "",
-//   "SmallHeadImgUrl": "http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/0",
-//   "Ticket": "",
-//   "UserName": "lylezhuifeng",
-//   "VerifyFlag": 0,
-// }]
-export interface GrpcContactRawPayload {
-  alias          : string,
-  bigHeadImgUrl  : string,
-  city           : string,
-  contactType    : number,
-  encryptUsername: string,
-  labelLists     : string,
-  msgType        : PadplusMessageType,
-  nickName       : string,
-  province       : string,
-  remark         : string,
-  sex            : ContactGender,
-  signature      : string,
-  smallHeadImgUrl: string,
-  ticket         : string,
-  userName       : string,
-  verifyFlag     : number,
-}
-
-// {
-//   "CurrentWxcontactSeq": 678982076,
-//   "CurrentChatRoomContactSeq": 0,
-//   "ContinueFlag": 1,
-//   "UsernameLists": [{
-//     "Username": "bbb"
-//   }, {
-//     "Username": "aaa"
-//   }]
-// }
-export interface GrpcWxidItem {
-  username: string
-}
-
-/**
- * ******************************************************************************************************************
- * ----------------------------------------- Message related interface ----------------------------------------------
- * ******************************************************************************************************************
- * ******************************************************************************************************************
- */
-
-// {
-//   "MsgId": 1093988990,
-//   "FromUserName": "12511063195@chatroom",
-//   "ToUserName": "lylezhuifeng",
-//   "MsgType": 1,
-//   "Content": "wxid_zovb9ol86m7l22:\n李佳丙-Thu Sep 27 2018 03:51:18 GMT+0000 (Coordinated Universal Time)",
-//   "Status": 3,
-//   "ImgStatus": 1,
-//   "ImgBuf": null,
-//   "CreateTime": 1538020278,
-//   "MsgSource": "<msgsource>\n\t<silence>1</silence>\n\t<membercount>4</membercount>\n</msgsource>\n",
-//   "PushContent": "",
-//   "NewMsgId": 8342436108662474000
-// }
 
 export interface GrpcQrCodeStatus {
   head_url: string,
@@ -138,6 +22,20 @@ export interface GrpcQrCodeStatus {
   status: number,
 }
 
+export interface GrpcQrCodeLogin {
+  headImgUrl: string,
+  nickName: string,
+  status: number,
+  uin: string,
+  userName: string,
+  verifyFlag: string,
+}
+
+/**
+ * 
+ * old
+ * 
+ */
 export interface GrpcMessagePayload {
   msgId: number,
   fromUserName: string,

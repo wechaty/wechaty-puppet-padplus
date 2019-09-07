@@ -1,3 +1,17 @@
+export enum QrcodeStatus {
+  Waiting = 1,
+}
+
+export enum LoginStatus {
+  Logined = 1,
+}
+
+
+/**
+ * 
+ * old
+ * 
+ */
 export enum ContactType {
   Unknown  = 0,
   Personal = 99990,
