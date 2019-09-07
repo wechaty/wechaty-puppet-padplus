@@ -22,4 +22,7 @@ export class CallbackPool {
   getCallback = async (requestId: string) => {
     return this.poolMap[requestId];
   }
+  removeCallback = async (requestId: string) => {
+    delete this.poolMap[requestId];
+  }
 }
