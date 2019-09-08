@@ -12,7 +12,7 @@ import {
 }                 from 'wechaty-puppet-padplus'
 
 async function main () {
-  const puppet = new PuppetPadplus()
+  const puppet = new PuppetPadplus({ token: 'test-token' })
   console.log(`Puppet v${puppet.version()} smoke testing passed.`)
   return 0
 }
