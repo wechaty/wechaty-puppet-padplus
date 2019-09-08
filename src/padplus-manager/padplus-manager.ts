@@ -24,6 +24,7 @@ import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor';
+import { CallbackPool } from '../utils/callbackHelper';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -84,12 +85,11 @@ export class PadplusManager {
     }
     this.grpcGateway = GrpcGateway.Instance
 
-    this.requestClient = new RequestClient(this.grpcGateway)
-    this.padplusUser = new PadplusUser(this.requestClient)
     this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
-    this.padplusMesasge = new PadplusMessage(this.requestClient)
-    this.padplusContact = new PadplusContact(this.requestClient)
-    this.padplusRoom = new PadplusRoom(this.requestClient)
+    this.padplusUser = new PadplusUser(this.requestClient, this.grpcGatewayEmmiter)
+    this.padplusMesasge = new PadplusMessage(this.requestClient, this.grpcGatewayEmmiter)
+    this.padplusContact = new PadplusContact(this.requestClient, this.grpcGatewayEmmiter)
+    this.padplusRoom = new PadplusRoom(this.requestClient, this.grpcGatewayEmmiter)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -222,8 +222,11 @@ export class PadplusManager {
           }
           break
         case ResponseType.AUTO_LOGIN :
-          // 再次登录，同步数据
-          this.syncContacts()
+          const grpcAutoLoginData = data.getData()
+          if (grpcAutoLoginData) {
+            const autoLoginData: GrpcQrCodeLogin = JSON.parse(grpcAutoLoginData)
+            this.emit('login', autoLoginData)
+          }
           break
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
@@ -294,6 +297,16 @@ export class PadplusManager {
             this.emit('status-notify', statusNotify)
           }
           break
+        case ResponseType.REQUEST_RESPONSE :
+          const requestId = data.getRequestid()
+          const responseData = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (responseData) {
+            const callback = await CallbackPool.Instance.getCallback(requestId!)
+            callback && callback(data)
+          }
+          break
+
       }
     })
   }
@@ -308,8 +321,8 @@ export class PadplusManager {
    */
 
   public async sendMessage (wxid: string, receiver: string, text: string, type: PadplusMessageType) {
-    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
     log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${text}, : ${type}`)
+    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
   }
 
   public async sendContact (wxid: string, receiver: string, contactId: string) {

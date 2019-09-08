@@ -3,15 +3,17 @@ import { PadplusContactPayload, GrpcContactPayload } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 import { convertFromGrpcContact } from '../../convert-manager/contact-convertor';
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
 
 const PRE = 'PadplusContact'
 
 export class PadplusContact {
 
   private requestClient: RequestClient
-
-  constructor (requestClient: RequestClient) {
+  private emitter: GrpcEventEmitter
+  constructor (requestClient: RequestClient, emitter: GrpcEventEmitter) {
     this.requestClient = requestClient
+    this.emitter = emitter
   }
   // Query contact list info
   public getContactInfo = async (loginId: string, contactId: string): Promise<PadplusContactPayload> => {
@@ -23,7 +25,7 @@ export class PadplusContact {
     }
     const res = await this.requestClient.request({
       apiType: ApiType.GET_CONTACT,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data,
     })
     log.silly(PRE, `get contact info from API : ${JSON.stringify(res)}`)
@@ -48,7 +50,7 @@ export class PadplusContact {
 
     await this.requestClient.request({
       apiType: ApiType.SEARCH_CONTACT,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data,
     })
     return true
@@ -59,7 +61,7 @@ export class PadplusContact {
 
     await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,
-      uin,
+      uin: this.emitter.getUIN(),
     })
   }
 }

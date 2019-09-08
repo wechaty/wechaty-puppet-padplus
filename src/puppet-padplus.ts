@@ -78,7 +78,8 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
-      this.manager.syncContacts()
+      // this.manager.syncContacts()
+      this.messageSendText({contactId: 'Soul001001'}, '哈哈哈哈哈哈')
       this.emit('login', loginData.userName)
     })
 
@@ -89,9 +90,41 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${util.inspect(message)}`)
-    this.onRoomJoinEvent(message)
-    this.onRoomLeaveEvent(message)
-    this.onRoomTopicEvent(message)
+    const messageType = message.msgType
+    switch(messageType) {
+      case PadplusMessageType.Text:
+      case PadplusMessageType.Contact:
+      case PadplusMessageType.Image:
+      case PadplusMessageType.Deleted:
+      case PadplusMessageType.Voice:
+      case PadplusMessageType.SelfAvatar:
+      case PadplusMessageType.VerifyMsg:
+      case PadplusMessageType.PossibleFriendMsg:
+      case PadplusMessageType.ShareCard:
+      case PadplusMessageType.Video:
+      case PadplusMessageType.Emoticon:
+      case PadplusMessageType.Location:
+      case PadplusMessageType.App:
+      case PadplusMessageType.VoipMsg:
+      case PadplusMessageType.StatusNotify:
+      case PadplusMessageType.VoipNotify:
+      case PadplusMessageType.VoipInvite:
+      case PadplusMessageType.MicroVideo:
+      case PadplusMessageType.SelfInfo:
+      case PadplusMessageType.SysNotice:
+        break
+      case PadplusMessageType.Sys:
+        await Promise.all([
+          this.onRoomJoinEvent(message),
+          this.onRoomLeaveEvent(message),
+          this.onRoomTopicEvent(message),
+        ])
+        break
+      case PadplusMessageType.Recalled:
+      case PadplusMessageType.N11_2048:
+      case PadplusMessageType.N15_32768:
+      default:
+    }
   }
 
   stop(): Promise<void> {
@@ -246,7 +279,7 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
-
+    this.id = 'wxid_v7j3e9kna9l912'
     if (this.id) {
       if (mentionIdList && mentionIdList.length > 0) {
         // TODO: 群中@某人

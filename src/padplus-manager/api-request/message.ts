@@ -1,20 +1,24 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
+import { PadplusMessageType } from '../../schemas'
 
 const PRE = 'PadplusMessage'
 
 export class PadplusMessage {
 
   private requestClient: RequestClient
-
-  constructor (requestClient: RequestClient) {
+  private emitter: GrpcEventEmitter
+  constructor (requestClient: RequestClient, emmiter: GrpcEventEmitter) {
     this.requestClient = requestClient
+    this.emitter = emmiter
     log.silly(PRE, `re : ${this.requestClient}`)
+    log.silly(PRE, `emitter : ${this.emitter}`)
   }
 
   // Send message (text, image, url, video, file, gif)
-  public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: MacproMessageType, fileName?: string): Promise<RequestStatus> => {
+  public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: PadplusMessageType, fileName?: string): Promise<boolean> => {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
@@ -26,14 +30,12 @@ export class PadplusMessage {
 
     const res = await this.requestClient.request({
       apiType: ApiType.SEND_MESSAGE,
+      uin: this.emitter.getUIN(),
       data,
     })
+    log.silly(`==P==A==D==P==L==U==S==<send message callback>==P==A==D==P==L==U==S==`)
     log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
-    if (res.code === RequestStatus.Success) {
-      return RequestStatus.Success
-    } else {
-      return RequestStatus.Fail
-    }
+    return true
   }
 
   // Send url link

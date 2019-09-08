@@ -2,15 +2,17 @@ import { log } from '../../config'
 import { RequestStatus, GrpcRoomRawPayload } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
 
 const PRE = 'PadplusRoom'
 
 export class PadplusRoom {
 
   private requestClient: RequestClient
-
-  constructor (requestClient: RequestClient) {
+  private emitter: GrpcEventEmitter
+  constructor (requestClient: RequestClient, emitter: GrpcEventEmitter) {
     this.requestClient = requestClient
+    this.emitter = emitter
   }
 
   // 修改微信群名称
@@ -25,7 +27,7 @@ export class PadplusRoom {
 
     const res = await this.requestClient.request({
       apiType: ApiType.CHANGE_TOPIC,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data,
     })
     log.silly(PRE, `message : ${JSON.stringify(res)}`)
@@ -40,7 +42,7 @@ export class PadplusRoom {
 
     const res = await this.requestClient.request({
       apiType: ApiType.GET_ROOM_MEMBER,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data,
     })
     const json = res.getData()
@@ -61,7 +63,7 @@ export class PadplusRoom {
 
     await this.requestClient.request({
       apiType: ApiType.CHANGE_TOPIC,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data,
     })
     return RequestStatus.Success

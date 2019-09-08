@@ -28,6 +28,7 @@ export interface ResultObject {
 
 const PRE = 'GRPC_GATEWAY'
 const NEED_CALLBACK_API_LIST: ApiType[] = [
+  ApiType.SEND_MESSAGE,
 ];
 
 export type GrpcGatewayEvent = 'data'
@@ -110,13 +111,13 @@ export class GrpcGateway extends EventEmitter {
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
     const requestId = uuid()
-    log.silly(PRE, `GRPC : ${this.token}, ${data}, ${apiType}, uin : ${uin}`)
+    log.silly(PRE, `GRPC : ${this.token}, ${apiType}, uin : ${uin}, ${JSON.stringify(data)}`)
     request.setToken(this.token)
     if (uin !== '') {
       request.setUin(uin)
     }
     request.setApitype(apiType)
-    request.setParams(data)
+    request.setParams(JSON.stringify(data))
     request.setRequestid(requestId)
 
     try {
