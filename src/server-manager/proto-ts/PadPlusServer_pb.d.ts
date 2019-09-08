@@ -89,18 +89,6 @@ export class InitConfig extends jspb.Message {
     setToken(value: string): void;
 
 
-    hasWxid(): boolean;
-    clearWxid(): void;
-    getWxid(): string | undefined;
-    setWxid(value: string): void;
-
-
-    hasUin(): boolean;
-    clearUin(): void;
-    getUin(): string | undefined;
-    setUin(value: string): void;
-
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitConfig.AsObject;
     static toObject(includeInstance: boolean, msg: InitConfig): InitConfig.AsObject;
@@ -114,8 +102,6 @@ export class InitConfig extends jspb.Message {
 export namespace InitConfig {
     export type AsObject = {
         token?: string,
-        wxid?: string,
-        uin?: string,
     }
 }
 
@@ -168,6 +154,8 @@ export enum ApiType {
     GET_QRCODE = 0,
     RECONNECT = 1,
     LOGOUT = 2,
+    INIT = 3,
+    STOP = 4,
     GET_CONTACT = 10,
     SEARCH_CONTACT = 11,
     ADD_CONTACT = 12,

@@ -1,9 +1,8 @@
 import { log } from '../../config'
-import { PadplusContactPayload } from '../../schemas'
+import { PadplusContactPayload, GrpcContactPayload } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
-import { GrpcContact } from '../../schemas';
-import { convertToRawContact } from '../../convert-manager/contact-convertor';
+import { convertFromGrpcContact } from '../../convert-manager/contact-convertor';
 
 const PRE = 'PadplusContact'
 
@@ -31,8 +30,8 @@ export class PadplusContact {
     if (!json) {
       throw new Error(`can not find contact.`)
     }
-    const rawContact: GrpcContact = JSON.parse(json)
-    const padplusContact = convertToRawContact(rawContact)
+    const rawContact: GrpcContactPayload = JSON.parse(json)
+    const padplusContact = convertFromGrpcContact(rawContact)
     return padplusContact
   }
 

@@ -22,13 +22,13 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): Padp
   return payload
 }
 
-export const convertToPuppetContact = (input: PadplusContactPayload) => {
+export const convertToPuppetContact = (payload: PadplusContactPayload) => {
   const result: ContactPayload = {
-    id     : contactPayload,
+    id     : payload.userName,
     gender : ContactGender.Male,
     type   : ContactType.Personal,
-    name   : contactPayload,
-    avatar : contactPayload,
+    name   : payload.nickName,
+    avatar : payload.smallHeadUrl,
   }
   return result
 }
