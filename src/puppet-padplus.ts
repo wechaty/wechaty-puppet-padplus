@@ -24,8 +24,8 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusContactPayload, PadplusMessageType, PadplusError, PadplusErrorType } from './schemas';
-import { PadplusMessagePayload, PadplusUrlLink } from './schemas/model-message';
+import { PadplusMessageType, PadplusError, PadplusErrorType } from './schemas';
+import { PadplusMessagePayload } from './schemas/model-message';
 import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 
 const PRE = 'PUPPET_PADPLUS'
@@ -105,14 +105,15 @@ export class PuppetPadplus extends Puppet {
   public async contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
     log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
     if (typeof alias === 'undefined') {
-      const payload = await this.contactRawPayload(contactId);
+      const payload = await this.contactPayload(contactId);
       return payload.alias || ''
     }
 
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    // await this.manager.setContactAlias(contactId, alias || '')
+    const selfId = this.selfId()
+    await this.manager.setContactAlias(selfId, contactId, alias || '')
     // await this.manager.updateContact(contactId)
   }
 
@@ -145,27 +146,34 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manager.`)
     }
-    // const contactIds = await this.manager.getContactIdList();
-    const contactIdList: string [] = [];
-    return contactIdList;
+    const selfId = this.selfId()
+    const contactIds = await this.manager.getContactIdList(selfId)
+    return contactIds;
   }
 
-  protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
-    if (!this.id) {
-      throw new Error(`bot not login.`)
-    }
+  // protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
+  //   if (!this.id) {
+  //     throw new Error(`bot not login.`)
+  //   }
 
-  }
+  // }
 
-  protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
-    throw new Error("Method not implemented.")
-  }
+  // protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
+  //   throw new Error("Method not implemented.")
+  // }
 
   public async contactPayload (
     contactId: string,
   ): Promise<ContactPayload> {
-    // const result: ContactPayload = {}
-    // return  result;
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    if (!this.id) {
+      throw new Error(`no bot logined.`)
+    }
+    const selfId = this.selfId()
+    const result: ContactPayload = await this.manager.getContact(selfId, contactId)
+    return  result;
   }
 
   /**
@@ -175,18 +183,22 @@ export class PuppetPadplus extends Puppet {
    */
 
   friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
+    log.silly(PRE, `contactId : ${util.inspect(contactId)}, hello: ${hello}`)
     throw new Error("Method not implemented.")
   }
 
   friendshipAccept(friendshipId: string): Promise<void> {
+    log.silly(PRE, `friendshipId : ${util.inspect(friendshipId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected friendshipRawPayload(friendshipId: string): Promise<any> {
+    log.silly(PRE, `friendshipId : ${util.inspect(friendshipId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected friendshipRawPayloadParser(rawPayload: any): Promise<FriendshipPayload> {
+    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
     throw new Error("Method not implemented.")
   }
 
@@ -197,18 +209,22 @@ export class PuppetPadplus extends Puppet {
    */
 
   messageFile(messageId: string): Promise<FileBox> {
+    log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
     throw new Error("Method not implemented.")
   }
 
   messageUrl(messageId: string): Promise<UrlLinkPayload> {
+    log.silly(PRE, `messageUrl() messageId : ${util.inspect(messageId)}`)
     throw new Error("Method not implemented.")
   }
 
   messageMiniProgram(messageId: string): Promise<MiniProgramPayload> {
+    log.silly(PRE, `messageMiniProgram() messageId : ${util.inspect(messageId)}`)
     throw new Error("Method not implemented.")
   }
 
   messageForward(receiver: Receiver, messageId: string): Promise<void> {
+    log.silly(PRE, `messageForward() receiver: ${receiver}, messageId : ${util.inspect(messageId)}`)
     throw new Error("Method not implemented.")
   }
 
@@ -295,6 +311,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   messageSendMiniProgram(receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void> {
+    log.silly(PRE, `messageSendMiniProgram() receiver : ${util.inspect(receiver)}, miniProgramPayload: ${miniProgramPayload}`)
     throw new Error("Method not implemented.")
   }
 
@@ -323,34 +340,42 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
   roomInvitationAccept(roomInvitationId: string): Promise<void> {
+    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomInvitationRawPayload(roomInvitationId: string): Promise<any> {
+    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomInvitationRawPayloadParser(rawPayload: any): Promise<RoomInvitationPayload> {
+    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
     throw new Error("Method not implemented.")
   }
 
   roomAdd(roomId: string, contactId: string): Promise<void> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
     throw new Error("Method not implemented.")
   }
 
   roomAvatar(roomId: string): Promise<FileBox> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
 
   roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
+    log.silly(PRE, `contactIdList : ${util.inspect(contactIdList)}, topic: ${topic}`)
     throw new Error("Method not implemented.")
   }
 
   roomDel(roomId: string, contactId: string): Promise<void> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
     throw new Error("Method not implemented.")
   }
 
   roomQuit(roomId: string): Promise<void> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
 
@@ -358,10 +383,12 @@ export class PuppetPadplus extends Puppet {
   roomTopic(roomId: string, topic: string): Promise<void>
   roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
   roomTopic(roomId: any, topic?: any): Promise<string | void> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}, topic: ${topic}`)
     throw new Error("Method not implemented.")
   }
 
   roomQrcode(roomId: string): Promise<string> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
 
@@ -370,28 +397,34 @@ export class PuppetPadplus extends Puppet {
   }
 
   roomMemberList(roomId: string): Promise<string[]> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomRawPayload(roomId: string): Promise<any> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomRawPayloadParser(rawPayload: any): Promise<RoomPayload> {
+    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomMemberRawPayload(roomId: string, contactId: string): Promise<any> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
     throw new Error("Method not implemented.")
   }
 
   protected roomMemberRawPayloadParser(rawPayload: any): Promise<RoomMemberPayload> {
+    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
     throw new Error("Method not implemented.")
   }
 
   roomAnnounce(roomId: string): Promise<string>
   roomAnnounce(roomId: string, text: string): Promise<void>
   roomAnnounce(roomId: any, text?: any): Promise<string | void> {
+    log.silly(PRE, `roomId : ${util.inspect(roomId)}, text: ${text}`)
     throw new Error("Method not implemented.")
   }
 

@@ -3,7 +3,7 @@ import { RequestClient } from './request'
 
 const PRE = 'PadplusMessage'
 
-export default class PadplusMessage {
+export class PadplusMessage {
 
   private requestClient: RequestClient
 
