@@ -87,9 +87,40 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${util.inspect(message)}`)
-    this.onRoomJoinEvent(message)
-    this.onRoomLeaveEvent(message)
-    this.onRoomTopicEvent(message)
+    const messageType = message.msgType
+    switch(messageType) {
+      case PadplusMessageType.Text:
+      case PadplusMessageType.Contact:
+      case PadplusMessageType.Image:
+      case PadplusMessageType.Deleted:
+      case PadplusMessageType.Voice:
+      case PadplusMessageType.SelfAvatar:
+      case PadplusMessageType.VerifyMsg:
+      case PadplusMessageType.PossibleFriendMsg:
+      case PadplusMessageType.ShareCard:
+      case PadplusMessageType.Video:
+      case PadplusMessageType.Emoticon:
+      case PadplusMessageType.Location:
+      case PadplusMessageType.App:
+      case PadplusMessageType.VoipMsg:
+      case PadplusMessageType.StatusNotify:
+      case PadplusMessageType.VoipNotify:
+      case PadplusMessageType.VoipInvite:
+      case PadplusMessageType.MicroVideo:
+      case PadplusMessageType.SelfInfo:
+      case PadplusMessageType.SysNotice:
+      case PadplusMessageType.Sys:
+        await Promise.all([
+          this.onRoomJoinEvent(message),
+          this.onRoomLeaveEvent(message),
+          this.onRoomTopicEvent(message),
+        ])
+        break
+      case PadplusMessageType.Recalled:
+      case PadplusMessageType.N11_2048:
+      case PadplusMessageType.N15_32768:
+      default:
+    }
   }
 
   stop(): Promise<void> {
