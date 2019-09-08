@@ -46,6 +46,7 @@ export class PuppetPadplus extends Puppet {
     if (token) {
       this.manager = new PadplusManager({
         token,
+        memory: this.memory,
         name,
       })
     } else {

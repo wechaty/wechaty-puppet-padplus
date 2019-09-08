@@ -172,11 +172,9 @@ export class PadplusManager {
           if (qrcodeRawData) {
             // log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
             const qrcodeData = JSON.parse(qrcodeRawData)
-            this.memorySlot.qrcodeId = qrcodeData.qrcodeId
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
-            await fileBox.toFile()
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
@@ -191,11 +189,8 @@ export class PadplusManager {
             QRCODE_SCAN MSG : ${scanData.msg || '已确认'}
             =================================================
             `)
-            const status = scanData.status
             this.grpcGatewayEmmiter.setQrcodeId(scanData.user_name)
-            if (status !== 1) {
-              this.memorySlot.qrcodeId = ''
-            }
+
           }
           break
         case ResponseType.QRCODE_LOGIN :
@@ -211,6 +206,16 @@ export class PadplusManager {
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
 
+            if (this.options.memory) {
+              this.memorySlot = {
+                userName: loginData.userName,
+                uin: loginData.uin,
+                qrcodeId: '',
+              }
+              log.silly(PRE, `memory slot : ${util.inspect(this.memorySlot)}`)
+              await this.options.memory.set(MEMORY_SLOT_NAME, this.memorySlot)
+              await this.options.memory.save()
+            }
             this.emit('login', loginData)
           }
           break
