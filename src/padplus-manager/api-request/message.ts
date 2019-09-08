@@ -1,10 +1,9 @@
-import { log } from '../config'
-import { RequestStatus, MacproMessageType, MiniProgram, MacproUrlLink } from '../schemas'
-import { RequestClient } from '../utils/request'
+import { log } from '../../config'
+import { RequestClient } from './request'
 
-const PRE = 'MacproMessage'
+const PRE = 'PadplusMessage'
 
-export default class MacproMessage {
+export default class PadplusMessage {
 
   private requestClient: RequestClient
 

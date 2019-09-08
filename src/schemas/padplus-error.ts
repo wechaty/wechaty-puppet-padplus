@@ -1,6 +1,6 @@
 import { PadplusErrorType } from './padplus-enums'
 
-export abstract class PadplusError extends Error {
+export class PadplusError extends Error {
 
   public readonly type: PadplusErrorType
 
@@ -14,9 +14,6 @@ export abstract class PadplusError extends Error {
   }
 
   public toString (): string {
-    return `PADPLUS_ERROR ${this.toSubString()}`
+    return `PADPLUS_ERROR ${this.toString()}`
   }
-
-  protected abstract toSubString (): string
-
 }

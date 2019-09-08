@@ -9,14 +9,15 @@ import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
 
-import { GrpcGateway } from '../server-manager/grpc-gateway';
-import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
-import { ScanStatus } from 'wechaty-puppet';
-import { RequestClient } from './api-request/request';
-import { PadplusUser } from './api-request/user-api';
-import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter';
-import { PadplusMessagePayload } from '../schemas';
-import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor';
+import { GrpcGateway } from '../server-manager/grpc-gateway'
+import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
+import { ScanStatus, UrlLinkPayload } from 'wechaty-puppet'
+import { RequestClient } from './api-request/request'
+import PadplusUser from './api-request/user'
+import PadplusMessage from './api-request/message'
+import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
+import { PadplusMessagePayload, PadplusMessageType, GrpcMessagePayload, PadplusUrlLink, PadplusErrorType } from '../schemas'
+import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -39,11 +40,12 @@ export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list' |
 export class PadplusManager {
 
   private grpcGatewayEmmiter : GrpcEventEmitter
-  private grpcGateway       : GrpcGateway
+  private grpcGateway        : GrpcGateway
   private readonly state     : StateSwitch
   private syncQueueExecutor  : DelayQueueExecutor
-  private request            : RequestClient
+  private requestClient      : RequestClient
   private padplusUser        : PadplusUser
+  private padplusMesasge     : PadplusMessage
 
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
@@ -73,8 +75,10 @@ export class PadplusManager {
       qrcodeId: 0,
     }
     this.grpcGateway = GrpcGateway.Instance
-    this.request = new RequestClient(this.grpcGateway)
-    this.padplusUser = new PadplusUser(this.request)
+    this.requestClient = new RequestClient(this.grpcGateway)
+
+    this.padplusUser = new PadplusUser(options.token, this.requestClient)
+    this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -125,7 +129,7 @@ export class PadplusManager {
   }
 
   public async start (): Promise<void> {
-    await this.padplusUser.getQrcode()
+    await this.padplusUser.getWeChatQRCode()
     if (this.options.memory) {
       this.memorySlot = {
         ...this.memorySlot,
@@ -199,9 +203,10 @@ export class PadplusManager {
           }
           break
           case ResponseType.MESSAGE_RECEIVE :
-            const rawMessage = data.getData()
+            const rawMessageStr = data.getData()
             // TODO: convert data from grpc to padplus
-            if (rawMessage) {
+            if (rawMessageStr) {
+              const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
               const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
               this.emit('message', message)
             }
@@ -240,13 +245,39 @@ export class PadplusManager {
    * Message Section
    */
 
-  private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
-    // TODO: 处理所有消息信息 1. 数据转换  2. 类型处理
-    const messageId = ''
-    const payload: PadplusMessagePayload = convertMessageFromGrpcToPadplus(rawMessage)
-    this.cachePadplusMessagePayload.set(messageId, payload)
-    return {} as PadplusMessagePayload
+  public async sendMessage (wxid: string, receiver: string, text: string, type: PadplusMessageType) {
+    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
   }
+
+  public async sendContact (wxid: string, receiver: string, contactId: string) {
+    await this.padplusMesasge.sendContact(wxid, receiver, contactId)
+  }
+
+  public async generatorFileUrl (file: FileBox): Promise<string> {
+    log.verbose(PRE, 'generatorFileUrl(%s)', file)
+    const url = await this.requestClient.uploadFile(file.name, await file.toStream())
+    return url
+  }
+
+  public async sendUrlLink (wxid: string, receiver: string, urlLinkPayload: UrlLinkPayload) {
+    const { url, title, thumbnailUrl, description } = urlLinkPayload
+
+    const payload: PadplusUrlLink = {
+      description,
+      thumbnailUrl,
+      title,
+      url,
+    }
+
+    await this.padplusMesasge.sendUrlLink(wxid, receiver, payload)
+  }
+
+  private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
+    const payload: PadplusMessagePayload = await convertMessageFromGrpcToPadplus(rawMessage)
+    this.cachePadplusMessagePayload.set(payload.msgId, payload)
+    return payload
+  }
+
   /**
    * 
    * contact
