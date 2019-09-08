@@ -30,7 +30,7 @@ export async function convertMessageFromPadplusToPuppet (
 
   const payloadBase = {
     id        : rawPayload.msgId,
-    timestamp : rawPayload.createTime,   // Padchat message timestamp is seconds
+    timestamp : rawPayload.createTime,
     type,
   } as {
     id        : string,
