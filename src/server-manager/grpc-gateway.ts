@@ -28,7 +28,6 @@ export interface ResultObject {
 
 const PRE = 'GRPC_GATEWAY'
 const NEED_CALLBACK_API_LIST: ApiType[] = [
-  ApiType.GET_CONTACT,
 ];
 
 export type GrpcGatewayEvent = 'data'
@@ -148,8 +147,6 @@ export class GrpcGateway extends EventEmitter {
 
   private async _request (request: RequestObject): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      log.silly(`==P==A==D==P==L==U==S==<request in ______>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `request in _request : ${util.inspect(request.toObject())}`)
       this.client.request(
         request,
         (err: Error | null, response: ResponseObject) => {
@@ -226,5 +223,4 @@ export class GrpcGateway extends EventEmitter {
       log.silly(PRE, `error : ${err}`)
     }
   }
-
 }
