@@ -5,7 +5,7 @@ import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 
 const PRE = 'MAC_API_USER'
 
-export default class MacproUser {
+export default class PadplusUser {
 
   private requestClient: RequestClient
   private token: string
