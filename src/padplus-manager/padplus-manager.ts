@@ -1,10 +1,12 @@
+import util from 'util'
 import {
   DelayQueueExecutor,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import util from 'util'
 import { log, GRPC_ENDPOINT } from '../config'
 // import { CacheManager } from '../server-manager/cache-manager'
+import { MemoryCard } from 'memory-card'
+import FileBox from 'file-box'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway';
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
@@ -13,14 +15,23 @@ import { RequestClient } from './api-request/request';
 import { PadplusUser } from './api-request/user-api';
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter';
 
+const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
+
+export interface PadplusMemorySlot {
+  userName  : string,
+  uin : number,
+  qrcodeId: number,
+}
+
 export interface ManagerOptions {
+  memory?: MemoryCard,
   token: string,
   name: unknown,
 }
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list'
+export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify'
 
 export class PadplusManager {
 
@@ -30,6 +41,9 @@ export class PadplusManager {
   private syncQueueExecutor  : DelayQueueExecutor
   private request            : RequestClient
   private padplusUser        : PadplusUser
+
+  private memorySlot: PadplusMemorySlot
+
   constructor (
     public options: ManagerOptions,
   ) {
@@ -39,6 +53,11 @@ export class PadplusManager {
     this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
     if (!GrpcGateway.Instance) {
       throw new Error(`The grpc gateway has no instance.`)
+    }
+    this.memorySlot = {
+      userName: '',
+      uin: 0,
+      qrcodeId: 0,
     }
     this.grpcGateway = GrpcGateway.Instance
     this.request = new RequestClient(this.grpcGateway)
@@ -51,6 +70,12 @@ export class PadplusManager {
   public emit (event: 'login', userIdOrReasonOrData: string): boolean
   public emit (event: 'logout', userIdOrReasonOrData: string): boolean
   public emit (event: 'contact-list', data: string): boolean
+  public emit (event: 'contact-modify', data: string): boolean
+  public emit (event: 'contact-delete', data: string): boolean
+  public emit (event: 'message', data: string): boolean
+  public emit (event: 'room-member-list', data: string): boolean
+  public emit (event: 'room-member-modify', data: string): boolean
+  public emit (event: 'status-notify', data: string): boolean
   public emit (event: never, listener: never): never
 
   public emit (
@@ -64,6 +89,12 @@ export class PadplusManager {
   public on (event: 'login', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
   public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'contact-modify', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'contact-delete', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'message', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'room-member-list', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'room-member-modify', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -82,25 +113,42 @@ export class PadplusManager {
 
   public async start (): Promise<void> {
     await this.padplusUser.getQrcode()
-
+    if (this.options.memory) {
+      this.memorySlot = {
+        ...this.memorySlot,
+        ...await this.options.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
+      }
+    }
     await this.parseGrpcData()
   }
 
   public async parseGrpcData () {
-    this.grpcGatewayEmmiter.on('data', (data: StreamResponse) => {
+    this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
-          // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
           if (qrcodeRawData) {
-            this.emit('scan', qrcodeRawData, ScanStatus.Waiting)
+            log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
+            const qrcodeData = JSON.parse(qrcodeRawData)
+            this.memorySlot.qrcodeId = qrcodeData.qrcodeId
+            this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
+            // 保存QRCode
+            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 1000).toFixed()}.png`)
+            await fileBox.toFile()
+            this.emit('scan', qrcodeData, ScanStatus.Waiting)
           }
           break
         case ResponseType.QRCODE_SCAN :
           const scanRawData = data.getData()
-          // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
-          log.silly(PRE, ` : ${util.inspect(scanRawData)}`)
+          if (scanRawData) {
+            log.silly(PRE, `QRCODE_SCAN : ${util.inspect(scanRawData)}`)
+            const scanData = JSON.parse(scanRawData)
+            const status = scanData.status
+            if (status !== 1) {
+              this.memorySlot.qrcodeId = 0
+            }
+          }
           break
         case ResponseType.ACCOUNT_LOGIN :
           const loginRawData = data.getData()
@@ -123,6 +171,48 @@ export class PadplusManager {
             this.emit('contact-list', contactList)
           }
           break
+        case ResponseType.CONTACT_MODIFY :
+          const contactModify = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (contactModify) {
+            this.emit('contact-modify', contactModify)
+          }
+          break
+        case ResponseType.CONTACT_DELETE :
+          const contactDelete = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (contactDelete) {
+            this.emit('contact-delete', contactDelete)
+          }
+          break
+          case ResponseType.MESSAGE_RECEIVE :
+            const rawMessage = data.getData()
+            // TODO: convert data from grpc to padplus
+            if (rawMessage) {
+              this.emit('message', rawMessage)
+            }
+            break
+          case ResponseType.ROOM_MEMBER_LIST :
+            const roomMemberList = data.getData()
+            // TODO: convert data from grpc to padplus
+            if (roomMemberList) {
+              this.emit('room-member-list', roomMemberList)
+            }
+            break
+          case ResponseType.ROOM_MEMBER_MODIFY :
+            const roomMemberModify = data.getData()
+            // TODO: convert data from grpc to padplus
+            if (roomMemberModify) {
+              this.emit('room-member-modify', roomMemberModify)
+            }
+            break
+          case ResponseType.STATUS_NOTIFY :
+            const statusNotify = data.getData()
+            // TODO: convert data from grpc to padplus
+            if (statusNotify) {
+              this.emit('status-notify', statusNotify)
+            }
+            break
       }
     })
   }

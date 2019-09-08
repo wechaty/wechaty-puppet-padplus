@@ -15,8 +15,7 @@ import {
   ResponseType,
 } from './proto-ts/PadPlusServer_pb'
 import { EventEmitter } from 'events'
-import FileBox from 'file-box';
-import { GrpcEventEmitter } from './grpc-event-emitter';
+import { GrpcEventEmitter } from './grpc-event-emitter'
 
 export interface CallBackBuffer {
   [id: string]: (buf: any) => void
@@ -75,11 +74,11 @@ export class GrpcGateway extends EventEmitter {
   ): GrpcEventEmitter {
     const eventEmitter = new GrpcEventEmitter(name)
     this.eventEmitterMap[name] = eventEmitter
-    this.nameMap[name] = {
+    /* this.nameMap[name] = {
       userName: eventEmitter.getUserName(),
       uin: eventEmitter.getUIN(),
-      qrcodeId: 0,
-    }
+      qrcodeId: eventEmitter.getQrcodeId(),
+    } */
     return eventEmitter
   }
 
@@ -183,23 +182,22 @@ export class GrpcGateway extends EventEmitter {
       result.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
-
-        log.silly(PRE, `data : ${util.inspect(data.toObject())}`)
-        const fileBox = FileBox.fromBase64(JSON.parse(data.getData()!).qrcode, `qrcode${(Math.random() * 1000).toFixed()}.png`)
-        await fileBox.toFile()
-        if (requestId) { // 只是短连接中请求的内容
+        // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
+        if (requestId) {
           const callback = await CallbackPool.Instance.getCallback(requestId)
           callback(data)
         } else { // 长连接推送的内容
-          log.silly(PRE, `data : ${util.inspect(data)}`)
+          log.silly(PRE, `StreamResponse data : ${util.inspect(data.toObject())}`)
           if (responseType === ResponseType.LOGIN_QRCODE) {
-            Object.keys(this.nameMap).map(name => {
-              const value: WX_Info = this.nameMap[name]
-              if (value && value.qrcodeId === 0 && value.uin === 0 && value.userName === '') {
-                this.eventEmitterMap[name].emit('data', data)
-                // TODO: 绑定name和qrcodeId
-              }
+            const name = Object.keys(this.eventEmitterMap).find(name => {
+              const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
+              const uin = this.eventEmitterMap[name].getUIN()
+              const userName = this.eventEmitterMap[name].getUserName()
+              return qrcodeId === 0 && uin === 0 && userName === ''
             })
+            if (name) {
+              this.eventEmitterMap[name].emit('data', data)
+            }
           } else {
             // TODO: 根据消息中的 uin 找到对应的name，从而找到对应的 Emmitter
             const name = ''
