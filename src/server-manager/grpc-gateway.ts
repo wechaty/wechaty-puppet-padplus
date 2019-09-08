@@ -48,7 +48,6 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private eventEmitterMap: { [name: string]: GrpcEventEmitter } = {}
-  private nameMap: { [name:string]: WX_Info } = {}
 
   public static init (
     token: string,
@@ -77,11 +76,6 @@ export class GrpcGateway extends EventEmitter {
   ): GrpcEventEmitter {
     const eventEmitter = new GrpcEventEmitter(name)
     this.eventEmitterMap[name] = eventEmitter
-    /* this.nameMap[name] = {
-      userName: eventEmitter.getUserName(),
-      uin: eventEmitter.getUIN(),
-      qrcodeId: eventEmitter.getQrcodeId(),
-    } */
     return eventEmitter
   }
 
