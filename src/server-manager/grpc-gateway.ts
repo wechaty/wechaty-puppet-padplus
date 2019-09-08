@@ -27,6 +27,9 @@ export interface ResultObject {
 }
 
 const PRE = 'GRPC_GATEWAY'
+const NEED_CALLBACK_API_LIST: ApiType[] = [
+  ApiType.GET_CONTACT,
+];
 
 export type GrpcGatewayEvent = 'data'
 
@@ -125,9 +128,13 @@ export class GrpcGateway extends EventEmitter {
       const result = await this._request(request)
       if (result) {
         return new Promise<StreamResponse>((resolve) => {
-          CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
-            resolve(data)
-          })
+          if (NEED_CALLBACK_API_LIST.includes(apiType)) {
+            CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+              resolve(data)
+            })
+          } else {
+            resolve();
+          }
         })
       } else {
         throw new Error('failed.')
