@@ -148,6 +148,8 @@ export class GrpcGateway extends EventEmitter {
 
   private async _request (request: RequestObject): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      log.silly(`==P==A==D==P==L==U==S==<request in ______>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `request in _request : ${util.inspect(request.toObject())}`)
       this.client.request(
         request,
         (err: Error | null, response: ResponseObject) => {
@@ -185,6 +187,8 @@ export class GrpcGateway extends EventEmitter {
         log.error(PRE, 'grpc server close')
       })
       result.on('data', async (data: StreamResponse) => {
+        log.silly(`==P==A==D==P==L==U==S==<receive data test>==P==A==D==P==L==U==S==`)
+        log.silly(PRE, `receive data : ${util.inspect(data.toObject())}`)
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
         log.silly(`==P==A==D==P==L==U==S==<type>==P==A==D==P==L==U==S==`)
