@@ -4,7 +4,6 @@ import {
   ContactOperationBitVal,
   ContactOperationCmdId,
   GrpcSelfAvatarType,
-  PadplusMessageStatus,
   PadplusMessageType,
   PadplusRoomMemberFlag,
 } from './padplus-enums'
@@ -31,28 +30,42 @@ export interface GrpcQrCodeLogin {
 }
 
 export interface GrpcContact {
-  
+
 }
 
+export interface GrpcMessagePayload {
+  AppMsgType?: string,
+  Content: string,
+  CreateTime: number,
+  fileName?: string,
+  FileName?: string,
+  fromMemberNickName?: string,
+  FromMemberNickName?: string,
+  FromMemberUserName?: string,
+  fromMemberUserName?: string,
+  FromUserName: string,
+  ImgBuf?: string,
+  ImgStatus: number,
+  L1MsgType: number,
+  MsgId: string,
+  MsgSource: string,
+  msgSourceCd: number,
+  MsgType: number,
+  NewMsgId: number,
+  PushContent: string,
+  Status: number,
+  ToUserName: string,
+  Uin: string
+  Url?: string,
+  url?: string,
+  wechatUserName: string,
+}
 /**
  * 
  * old
  * 
  */
-export interface GrpcMessagePayload {
-  msgId: number,
-  fromUserName: string,
-  toUserName: string,
-  msgType: PadplusMessageType,
-  content: string,
-  status: PadplusMessageStatus,
-  imgStatus: number,
-  imgBuf: string | null,
-  createTime: number,
-  msgSource: string,
-  pushContent: string,
-  newMsgId: number
-}
+
 
 export interface GrpcSelfInfoPayload {
   alias: string,                           // "",             -> weixin id

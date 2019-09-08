@@ -15,11 +15,10 @@ import { ScanStatus, UrlLinkPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
-import { PadplusMessage } from './api-request/message'
+// import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { convertToPuppetContact } from '../convert-manager/contact-convertor';
 import { GrpcMessagePayload } from '../schemas/grpc-schemas';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
@@ -48,7 +47,7 @@ export class PadplusManager {
   private syncQueueExecutor  : DelayQueueExecutor
   private requestClient      : RequestClient
   private padplusUser        : PadplusUser
-  private padplusMesasge     : PadplusMessage
+  // private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
 
   private memorySlot: PadplusMemorySlot
@@ -81,9 +80,9 @@ export class PadplusManager {
     this.grpcGateway = GrpcGateway.Instance
     this.requestClient = new RequestClient(this.grpcGateway)
 
-    this.padplusUser = new PadplusUser(options.token, this.requestClient)
+    this.padplusUser = new PadplusUser(this.requestClient)
     this.requestClient = new RequestClient(this.grpcGateway)
-    this.padplusMesasge = new PadplusMessage(this.requestClient)
+    // this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
@@ -135,6 +134,7 @@ export class PadplusManager {
   }
 
   public async start (): Promise<void> {
+    await this.parseGrpcData()
     await this.padplusUser.getWeChatQRCode()
     if (this.options.memory) {
       this.memorySlot = {
@@ -142,10 +142,11 @@ export class PadplusManager {
         ...await this.options.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
       }
     }
-    await this.parseGrpcData()
+    await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 
   public async parseGrpcData () {
+    log.silly(PRE, `grpc emmiter name : ${util.inspect(this.grpcGatewayEmmiter.getName())}`)
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
@@ -154,6 +155,8 @@ export class PadplusManager {
           if (qrcodeRawData) {
             log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
             const qrcodeData = JSON.parse(qrcodeRawData)
+            log.silly(`==P==A==D==P==L==U==S==<qrcode id>==P==A==D==P==L==U==S==`)
+            log.silly(PRE, `qrcodeData : ${util.inspect(qrcodeData.qrcodeId)}`)
             this.memorySlot.qrcodeId = qrcodeData.qrcodeId
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
             // 保存QRCode
@@ -166,8 +169,9 @@ export class PadplusManager {
           const scanRawData = data.getData()
           if (scanRawData) {
             log.silly(PRE, `QRCODE_SCAN : ${util.inspect(scanRawData)}`)
-            const scanData = JSON.parse(scanRawData)
+            const scanData: ScanData = JSON.parse(scanRawData)
             const status = scanData.status
+            this.grpcGatewayEmmiter.setQrcodeId(scanData.qrcodeId)
             if (status !== 1) {
               this.memorySlot.qrcodeId = 0
             }
@@ -252,11 +256,13 @@ export class PadplusManager {
    */
 
   public async sendMessage (wxid: string, receiver: string, text: string, type: PadplusMessageType) {
-    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
+    // await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
+    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${text}, : ${type}`)
   }
 
   public async sendContact (wxid: string, receiver: string, contactId: string) {
-    await this.padplusMesasge.sendContact(wxid, receiver, contactId)
+    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${contactId}`)
+    // await this.padplusMesasge.sendContact(wxid, receiver, contactId)
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -274,8 +280,9 @@ export class PadplusManager {
       title,
       url,
     }
+    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${payload}`)
 
-    await this.padplusMesasge.sendUrlLink(wxid, receiver, payload)
+    // await this.padplusMesasge.sendUrlLink(wxid, receiver, payload)
   }
 
   private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
@@ -301,26 +308,46 @@ export class PadplusManager {
   public async getContactIdList (
     selfId: string,
   ): Promise<string[]> {
+    log.silly(PRE, `selfId : ${util.inspect(selfId)}`)
     // TODO get contact from cache
-    const contacts = await this.padplusContact.contactList(selfId)
-    // TODO: set contact cache
-    const result = contacts.map(c => c.userName)
+    const contacts: string[] = [];
+    // const result = contacts.map(c => c.userName)
+    const result = contacts;
     return result;
   }
 
-  public async getContact (
+  public async getRawContact (
     selfId: string,
     contactId: string,
-  ) {
+  ): Promise<PadplusContactPayload> {
     // TODO: get contact from cache.
     let contact: PadplusContactPayload;
     // if (!contact) {
     contact = await this.padplusContact.getContactInfo(selfId, contactId);
     // }
     // TODO set contact cache.
-    const rawContact = convertToPuppetContact(contact)
-    return rawContact
+    return contact
   }
+
+  public async syncContacts (
+    selfId: string,
+  ) {
+    this.padplusContact.syncContacts(selfId)
+  }
+
+  // public async getContact (
+  //   selfId: string,
+  //   contactId: string,
+  // ) {
+  //   // TODO: get contact from cache.
+  //   let contact: PadplusContactPayload;
+  //   // if (!contact) {
+  //   contact = await this.padplusContact.getContactInfo(selfId, contactId);
+  //   // }
+  //   // TODO set contact cache.
+  //   const rawContact = convertToPuppetContact(contact)
+  //   return rawContact
+  // }
   
   /**
    * 

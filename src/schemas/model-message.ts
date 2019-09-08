@@ -13,34 +13,6 @@ export interface PadplusMessageSource {
   atUserList?: string[],
 }
 
-export interface GrpcMessagePayload {
-  AppMsgType?: string,
-  Content: string,
-  CreateTime: number,
-  fileName?: string,
-  FileName?: string,
-  fromMemberNickName?: string,
-  FromMemberNickName?: string,
-  FromMemberUserName?: string,
-  fromMemberUserName?: string,
-  FromUserName: string,
-  ImgBuf?: string,
-  ImgStatus: number,
-  L1MsgType: number,
-  MsgId: string,
-  MsgSource: string,
-  msgSourceCd: number,
-  MsgType: number,
-  NewMsgId: number,
-  PushContent: string,
-  Status: number,
-  ToUserName: string,
-  Uin: string
-  Url?: string,
-  url?: string,
-  wechatUserName: string,
-}
-
 export interface PadplusMessagePayload {
   appMsgType?: string,
   content: string,

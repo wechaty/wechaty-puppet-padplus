@@ -1,4 +1,3 @@
-export * from './padplus-auto-login-error'
 export * from './padplus-error'
 export * from './padplus-enums'
 export * from './model-contact'

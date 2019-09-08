@@ -32,7 +32,8 @@ enum ApiType {
 }
 
 message RequestObject {
-    required string requestId = 10;
+    optional string uin = 1;
+    optional string requestId = 10;
     required string token = 20;
     required ApiType apiType = 30;
     optional string params = 40;
@@ -45,7 +46,7 @@ message ResponseObject {
 message InitConfig {
     required string token = 10;
     optional string wxid = 20;
-    optional int32 uin = 21;
+    optional string uin = 21;
 }
 
 enum ResponseType {
@@ -56,6 +57,7 @@ enum ResponseType {
     ACCOUNT_LOGIN = 12;
     ACCOUNT_LOGOUT = 13;
     QRCODE_LOGIN = 14;
+    AUTO_LOGIN = 15;
 
     CONTACT_LIST = 20;
     CONTACT_MODIFY = 21;
@@ -68,7 +70,8 @@ enum ResponseType {
 }
 
 message StreamResponse {
-    required string requestId = 10;
+    optional string uin = 1;
+    optional string requestId = 10;
     required string data = 20;
     required ResponseType responseType = 30;
 }

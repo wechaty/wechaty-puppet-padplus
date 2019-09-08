@@ -9,10 +9,11 @@ export class PadplusMessage {
 
   constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
+    log.silly(PRE, `re : ${this.requestClient}`)
   }
 
   // Send message (text, image, url, video, file, gif)
-  public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: MacproMessageType, fileName?: string): Promise<RequestStatus> => {
+  /* public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: MacproMessageType, fileName?: string): Promise<RequestStatus> => {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
@@ -99,7 +100,7 @@ export class PadplusMessage {
     }
 
     const res = await this.requestClient.request({
-      apiName: 'sendApp',
+      apiType: 0,
       data,
     })
     log.silly(PRE, `sendMiniProgram : ${JSON.stringify(res)}`)
@@ -108,6 +109,6 @@ export class PadplusMessage {
     } else {
       return RequestStatus.Fail
     }
-  }
+  } */
 
 }

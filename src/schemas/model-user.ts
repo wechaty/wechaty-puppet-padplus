@@ -1,4 +1,4 @@
-import { QrcodeStatus, LoginStatus } from "./padplus-enums";
+import { QrcodeStatus, LoginStatus } from './padplus-enums'
 
 export interface PadplusQrcode {
   qrcodeId: string,
@@ -19,4 +19,16 @@ export interface PadplusQrcodeLogin {
   uin: string,
   userName: string,
   verifyFlag: string,
+}
+
+export interface ScanData {
+  msg: string,
+  loginer: string,
+  head_url: string,
+  user_name: string,
+  nick_name: string,
+  event: string,
+  qrcodeId: string,
+  serverId: string,
+  status: number,
 }

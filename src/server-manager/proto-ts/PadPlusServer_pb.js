@@ -64,6 +64,7 @@ proto.PadPlusServer.RequestObject.prototype.toObject = function(opt_includeInsta
  */
 proto.PadPlusServer.RequestObject.toObject = function(includeInstance, msg) {
   var f, obj = {
+    uin: jspb.Message.getField(msg, 1),
     requestid: jspb.Message.getField(msg, 10),
     token: jspb.Message.getField(msg, 20),
     apitype: jspb.Message.getField(msg, 30),
@@ -104,6 +105,10 @@ proto.PadPlusServer.RequestObject.deserializeBinaryFromReader = function(msg, re
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUin(value);
+      break;
     case 10:
       var value = /** @type {string} */ (reader.readString());
       msg.setRequestid(value);
@@ -149,6 +154,13 @@ proto.PadPlusServer.RequestObject.prototype.serializeBinary = function() {
  */
 proto.PadPlusServer.RequestObject.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = /** @type {string} */ (jspb.Message.getField(message, 1));
+  if (f != null) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
   f = /** @type {string} */ (jspb.Message.getField(message, 10));
   if (f != null) {
     writer.writeString(
@@ -181,7 +193,36 @@ proto.PadPlusServer.RequestObject.serializeBinaryToWriter = function(message, wr
 
 
 /**
- * required string requestId = 10;
+ * optional string uin = 1;
+ * @return {string}
+ */
+proto.PadPlusServer.RequestObject.prototype.getUin = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.PadPlusServer.RequestObject.prototype.setUin = function(value) {
+  jspb.Message.setField(this, 1, value);
+};
+
+
+proto.PadPlusServer.RequestObject.prototype.clearUin = function() {
+  jspb.Message.setField(this, 1, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.PadPlusServer.RequestObject.prototype.hasUin = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string requestId = 10;
  * @return {string}
  */
 proto.PadPlusServer.RequestObject.prototype.getRequestid = function() {
@@ -547,7 +588,7 @@ proto.PadPlusServer.InitConfig.deserializeBinaryFromReader = function(msg, reade
       msg.setWxid(value);
       break;
     case 21:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {string} */ (reader.readString());
       msg.setUin(value);
       break;
     default:
@@ -593,9 +634,9 @@ proto.PadPlusServer.InitConfig.serializeBinaryToWriter = function(message, write
       f
     );
   }
-  f = /** @type {number} */ (jspb.Message.getField(message, 21));
+  f = /** @type {string} */ (jspb.Message.getField(message, 21));
   if (f != null) {
-    writer.writeInt32(
+    writer.writeString(
       21,
       f
     );
@@ -662,15 +703,15 @@ proto.PadPlusServer.InitConfig.prototype.hasWxid = function() {
 
 
 /**
- * optional int32 uin = 21;
- * @return {number}
+ * optional string uin = 21;
+ * @return {string}
  */
 proto.PadPlusServer.InitConfig.prototype.getUin = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 21, 0));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 21, ""));
 };
 
 
-/** @param {number} value */
+/** @param {string} value */
 proto.PadPlusServer.InitConfig.prototype.setUin = function(value) {
   jspb.Message.setField(this, 21, value);
 };
@@ -737,6 +778,7 @@ proto.PadPlusServer.StreamResponse.prototype.toObject = function(opt_includeInst
  */
 proto.PadPlusServer.StreamResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    uin: jspb.Message.getField(msg, 1),
     requestid: jspb.Message.getField(msg, 10),
     data: jspb.Message.getField(msg, 20),
     responsetype: jspb.Message.getField(msg, 30)
@@ -776,6 +818,10 @@ proto.PadPlusServer.StreamResponse.deserializeBinaryFromReader = function(msg, r
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUin(value);
+      break;
     case 10:
       var value = /** @type {string} */ (reader.readString());
       msg.setRequestid(value);
@@ -817,6 +863,13 @@ proto.PadPlusServer.StreamResponse.prototype.serializeBinary = function() {
  */
 proto.PadPlusServer.StreamResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = /** @type {string} */ (jspb.Message.getField(message, 1));
+  if (f != null) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
   f = /** @type {string} */ (jspb.Message.getField(message, 10));
   if (f != null) {
     writer.writeString(
@@ -842,7 +895,36 @@ proto.PadPlusServer.StreamResponse.serializeBinaryToWriter = function(message, w
 
 
 /**
- * required string requestId = 10;
+ * optional string uin = 1;
+ * @return {string}
+ */
+proto.PadPlusServer.StreamResponse.prototype.getUin = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.PadPlusServer.StreamResponse.prototype.setUin = function(value) {
+  jspb.Message.setField(this, 1, value);
+};
+
+
+proto.PadPlusServer.StreamResponse.prototype.clearUin = function() {
+  jspb.Message.setField(this, 1, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.PadPlusServer.StreamResponse.prototype.hasUin = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string requestId = 10;
  * @return {string}
  */
 proto.PadPlusServer.StreamResponse.prototype.getRequestid = function() {
@@ -965,6 +1047,8 @@ proto.PadPlusServer.ResponseType = {
   QRCODE_SCAN: 11,
   ACCOUNT_LOGIN: 12,
   ACCOUNT_LOGOUT: 13,
+  QRCODE_LOGIN: 14,
+  AUTO_LOGIN: 15,
   CONTACT_LIST: 20,
   CONTACT_MODIFY: 21,
   CONTACT_DELETE: 22,

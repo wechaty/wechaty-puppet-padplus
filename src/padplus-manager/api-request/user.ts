@@ -1,17 +1,14 @@
 import { RequestClient } from './request'
-import { RequestStatus } from '../../schemas'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
-
-const PRE = 'MAC_API_USER'
 
 export class PadplusUser {
 
   private requestClient: RequestClient
-  private token: string
+  // private token: string
 
-  constructor (token: string, requestClient: RequestClient) {
-    this.token = token
+  constructor (requestClient: RequestClient) {
+    // this.token = token
     this.requestClient = requestClient
   }
 
@@ -22,7 +19,7 @@ export class PadplusUser {
     log.silly(`USER API res : ${JSON.stringify(res)}`)
     return res
   }
-
+/*
   // 登出微信
   public logoutWeChat = async (account: string): Promise<RequestStatus> => {
     log.silly(PRE, `logoutWeChat(${account})`)
@@ -110,6 +107,6 @@ export class PadplusUser {
     } else {
       return RequestStatus.Fail
     }
-  }
+  } */
 
 }

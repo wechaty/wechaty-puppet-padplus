@@ -1,5 +1,4 @@
 import { log } from '../../config'
-import { RequestStatus } from '../../schemas'
 import { PadplusContactPayload } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
@@ -38,7 +37,7 @@ export class PadplusContact {
   }
 
   // Set alias for contact
-  public setAlias = async (selfId: string, contactId: string, alias: string): Promise<RequestStatus> => {
+  public setAlias = async (selfId: string, contactId: string, alias: string): Promise<boolean> => {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
@@ -51,28 +50,19 @@ export class PadplusContact {
       apiType: ApiType.SEARCH_CONTACT,
       data,
     })
+    return true
   }
 
-  // config callback endpoint for getting contact list
-  public contactList = async (loginId: string): Promise<PadplusContactPayload[]> => {
-    log.verbose(PRE, `contactList(${loginId})`)
+  public syncContacts = async (uin: string): Promise<void> => {
+    log.verbose(PRE, `contactList(${uin})`)
 
     const data = {
-      my_account: loginId,
+      uin,
     }
 
-    const res = await this.requestClient.request({
+    await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,
       data,
     })
-    const json = res.getData();
-    if (!json) {
-      return []
-    }
-    const grpcContacts: GrpcContact[] = JSON.parse(json)
-    const contacts = grpcContacts.map(c => {
-      return convertToRawContact(c)
-    })
-    return contacts
   }
 }

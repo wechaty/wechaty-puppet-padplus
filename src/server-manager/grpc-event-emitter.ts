@@ -4,26 +4,26 @@ export class GrpcEventEmitter extends EventEmitter {
 
   private name: string
   private userName: string
-  private uin: number
-  private qrcodeId: number
+  private uin: string
+  private qrcodeId: string
 
   constructor(name: string) {
     super()
     this.name = name
     this.userName = ''
-    this.uin = 0
-    this.qrcodeId = 0
+    this.uin = ''
+    this.qrcodeId = ''
   }
 
   public setUserName (userName: string) {
     this.userName = userName
   }
 
-  public setUIN (uin: number) {
+  public setUIN (uin: string) {
     this.uin = uin
   }
 
-  public setQrcodeId (qrcodeId: number) {
+  public setQrcodeId (qrcodeId: string) {
     this.qrcodeId = qrcodeId
   }
 
@@ -33,6 +33,10 @@ export class GrpcEventEmitter extends EventEmitter {
 
   public getUIN () {
     return this.uin
+  }
+
+  public getName () {
+    return this.name
   }
 
   public getQrcodeId () {

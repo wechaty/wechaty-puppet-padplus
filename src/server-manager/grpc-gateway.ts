@@ -111,9 +111,9 @@ export class GrpcGateway extends EventEmitter {
   public async request (apiType: ApiType, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
     const requestId = uuid()
-    log.silly(`==P==A==D==P==L==U==S==<>==P==A==D==P==L==U==S==`)
     log.silly(PRE, `GRPC : ${this.token}, ${data}, ${apiType}`)
     request.setToken(this.token)
+    request.setUin(data.uin)
     request.setApitype(apiType)
     request.setParams(data)
     request.setRequestid(requestId)
@@ -194,14 +194,17 @@ export class GrpcGateway extends EventEmitter {
               const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
               const uin = this.eventEmitterMap[name].getUIN()
               const userName = this.eventEmitterMap[name].getUserName()
-              return qrcodeId === 0 && uin === 0 && userName === ''
+              log.silly(PRE, `event map : ${qrcodeId}, ${uin}, ${userName}, ${name}`)
+              return qrcodeId === '' && uin === '' && userName === ''
             })
+            log.silly(PRE, `name : ${util.inspect(name)}`)
             if (name) {
+              log.silly(PRE, `map : ${util.inspect(this.eventEmitterMap)}`)
               this.eventEmitterMap[name].emit('data', data)
             }
           } else {
             // TODO: 根据消息中的 uin 找到对应的name，从而找到对应的 Emmitter
-            const name = ''
+
             this.eventEmitterMap[name].emit('data', data)
           }
 

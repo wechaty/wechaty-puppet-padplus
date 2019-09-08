@@ -254,3 +254,8 @@ export enum MessageSendType {
   SELF_SENT = 1,
   CONTACT_SENT = 2,
 }
+
+export enum RequestStatus {
+  Fail,
+  Success,
+}

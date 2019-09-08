@@ -7,6 +7,12 @@ import * as jspb from "google-protobuf";
 
 export class RequestObject extends jspb.Message { 
 
+    hasUin(): boolean;
+    clearUin(): void;
+    getUin(): string | undefined;
+    setUin(value: string): void;
+
+
     hasRequestid(): boolean;
     clearRequestid(): void;
     getRequestid(): string | undefined;
@@ -43,6 +49,7 @@ export class RequestObject extends jspb.Message {
 
 export namespace RequestObject {
     export type AsObject = {
+        uin?: string,
         requestid?: string,
         token?: string,
         apitype?: ApiType,
@@ -90,8 +97,8 @@ export class InitConfig extends jspb.Message {
 
     hasUin(): boolean;
     clearUin(): void;
-    getUin(): number | undefined;
-    setUin(value: number): void;
+    getUin(): string | undefined;
+    setUin(value: string): void;
 
 
     serializeBinary(): Uint8Array;
@@ -108,11 +115,17 @@ export namespace InitConfig {
     export type AsObject = {
         token?: string,
         wxid?: string,
-        uin?: number,
+        uin?: string,
     }
 }
 
 export class StreamResponse extends jspb.Message { 
+
+    hasUin(): boolean;
+    clearUin(): void;
+    getUin(): string | undefined;
+    setUin(value: string): void;
+
 
     hasRequestid(): boolean;
     clearRequestid(): void;
@@ -144,6 +157,7 @@ export class StreamResponse extends jspb.Message {
 
 export namespace StreamResponse {
     export type AsObject = {
+        uin?: string,
         requestid?: string,
         data?: string,
         responsetype?: ResponseType,
@@ -181,6 +195,8 @@ export enum ResponseType {
     QRCODE_SCAN = 11,
     ACCOUNT_LOGIN = 12,
     ACCOUNT_LOGOUT = 13,
+    QRCODE_LOGIN = 14,
+    AUTO_LOGIN = 15,
     CONTACT_LIST = 20,
     CONTACT_MODIFY = 21,
     CONTACT_DELETE = 22,

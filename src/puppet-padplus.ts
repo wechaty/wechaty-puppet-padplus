@@ -24,9 +24,10 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
-import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
+// import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
+import { convertToPuppetContact } from './convert-manager/contact-convertor';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -55,11 +56,11 @@ export class PuppetPadplus extends Puppet {
   public async start (): Promise<void> {
     log.silly(PRE, `start()`)
 
-    // this.state.on('pending')
+    this.state.on('pending')
 
     await this.startManager(this.manager)
 
-    // this.state.on(true)
+    this.state.on(true)
   }
 
   private async startManager (manager: PadplusManager) {
@@ -93,10 +94,12 @@ export class PuppetPadplus extends Puppet {
   }
 
   contactSelfName(name: string): Promise<void> {
+    log.silly(PRE, `name : ${util.inspect(name)}`)
     throw new Error("Method not implemented.")
   }
 
   contactSelfSignature(signature: string): Promise<void> {
+    log.silly(PRE, `signature : ${util.inspect(signature)}`)
     throw new Error("Method not implemented.")
   }
 
@@ -148,32 +151,24 @@ export class PuppetPadplus extends Puppet {
     }
     const selfId = this.selfId()
     const contactIds = await this.manager.getContactIdList(selfId)
-    return contactIds;
+    return contactIds
   }
 
-  // protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
-  //   if (!this.id) {
-  //     throw new Error(`bot not login.`)
-  //   }
-
-  // }
-
-  // protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
-  //   throw new Error("Method not implemented.")
-  // }
-
-  public async contactPayload (
-    contactId: string,
-  ): Promise<ContactPayload> {
+  protected async contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
+    if (!this.id) {
+      throw new Error(`bot not login.`)
+    }
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    if (!this.id) {
-      throw new Error(`no bot logined.`)
-    }
     const selfId = this.selfId()
-    const result: ContactPayload = await this.manager.getContact(selfId, contactId)
-    return  result;
+    const payload = await this.manager.getRawContact(selfId, contactId)
+    return payload
+  }
+
+  protected async contactRawPayloadParser(rawPayload: PadplusContactPayload): Promise<ContactPayload> {
+    const payload = convertToPuppetContact(rawPayload)
+    return payload
   }
 
   /**
@@ -329,9 +324,9 @@ export class PuppetPadplus extends Puppet {
   protected async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
     log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
 
-    const payload = await convertMessageFromPadplusToPuppet(rawPayload)
+    // const payload = await convertMessageFromPadplusToPuppet(rawPayload)
 
-    return payload
+    return {} as MessagePayload
   }
 
   /**
