@@ -2,6 +2,7 @@
 import util from 'util'
 import path from 'path'
 import FileBox from 'file-box'
+import flatten from 'array-flatten'
 
 import {
   ContactPayload,
@@ -21,6 +22,7 @@ import {
 import {
   log,
   padplusToken,
+  retry,
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
@@ -29,6 +31,8 @@ import { PadplusMessagePayload } from './schemas/model-message';
 // import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 import { convertToPuppetContact } from './convert-manager/contact-convertor';
 import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manager/room-convertor';
+import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
+import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -75,7 +79,14 @@ export class PuppetPadplus extends Puppet {
       this.manager.syncContacts()
     })
 
+    manager.on('message', message => this.onMessage(message))
+
     await manager.start()
+  }
+
+  async onMessage(message: PadplusMessagePayload) {
+    log.silly(PRE, `receive message : ${util.inspect(message)}`)
+    this.onRoomJoinEvent(message)
   }
 
   stop(): Promise<void> {
@@ -337,6 +348,110 @@ export class PuppetPadplus extends Puppet {
    *      ROOM SECTION
    * ========================
    */
+
+  async onRoomJoinEvent(message: PadplusMessagePayload): Promise<void> {
+    const joinEvent = await roomJoinEventMessageParser(message)
+    if (joinEvent) {
+      const inviteeNameList = joinEvent.inviteeNameList
+      const inviterName     = joinEvent.inviterName
+      const roomId          = joinEvent.roomId
+      const timestamp       = joinEvent.timestamp
+      log.silly(PRE, 'onRoomJoinEvent() roomJoinEvent="%s"', JSON.stringify(joinEvent))
+
+      const inviteeIdList = await retry(async (retryException, attempt) => {
+        log.verbose(PRE, 'onPadproMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
+
+        const tryIdList = flatten<string>(
+          await Promise.all(
+            inviteeNameList.map(
+              inviteeName => this.roomMemberSearch(roomId, inviteeName),
+            ),
+          ),
+        )
+
+        if (tryIdList.length) {
+          return tryIdList
+        }
+
+        if (!this.manager) {
+          throw new Error('no manager')
+        }
+
+        /**
+         * Set Cache Dirty
+         */
+        await this.roomMemberPayloadDirty(roomId)
+
+        return retryException(new Error('roomMemberSearch() not found'))
+
+      }).catch(e => {
+        log.verbose(PRE, 'onPadproMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
+        return [] as string[]
+      })
+
+      const inviterIdList = await this.roomMemberSearch(roomId, inviterName)
+
+      if (inviterIdList.length < 1) {
+        throw new Error('no inviterId found')
+      } else if (inviterIdList.length > 1) {
+        log.verbose(PRE, 'onPadproMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+      }
+
+      const inviterId = inviterIdList[0]
+
+      /**
+       * Set Cache Dirty
+       */
+      await this.roomMemberPayloadDirty(roomId)
+      await this.roomPayloadDirty(roomId)
+
+      this.emit('room-join', roomId, inviteeIdList,  inviterId, timestamp)
+    }
+  }
+  async onRoomLeaveEvent(message: PadplusMessagePayload): Promise<void> {
+    log.verbose(PRE, 'onRoomLeaveEvent({id=%s})', message.msgId)
+
+    const leaveEvent = roomLeaveEventMessageParser(message)
+
+    if (leaveEvent) {
+      const leaverNameList = leaveEvent.leaverNameList
+      const removerName    = leaveEvent.removerName
+      const roomId         = leaveEvent.roomId
+      const timestamp      = leaveEvent.timestamp
+      log.silly(PRE, 'onRoomLeaveEvent() onRoomLeaveEvent="%s"', JSON.stringify(leaveEvent))
+
+      const leaverIdList = flatten<string>(
+        await Promise.all(
+          leaverNameList.map(
+            leaverName => this.roomMemberSearch(roomId, leaverName),
+          ),
+        ),
+      )
+      const removerIdList = await this.roomMemberSearch(roomId, removerName)
+      if (removerIdList.length < 1) {
+        throw new Error('no removerId found')
+      } else if (removerIdList.length > 1) {
+        log.verbose(PRE, 'onPadproMessageRoomEventLeave(): removerId found more than 1, use the first one.')
+      }
+      const removerId = removerIdList[0]
+
+      if (!this.manager) {
+        throw new Error('no padproManager')
+      }
+
+      /**
+       * Set Cache Dirty
+       */
+      await this.roomMemberPayloadDirty(roomId)
+      await this.roomPayloadDirty(roomId)
+
+      this.emit('room-leave', roomId, leaverIdList, removerId, timestamp)
+    }
+  }
+  async onRoomTopicEvent(message: PadplusMessagePayload): Promise<void> {
+
+  }
+  
   roomInvitationAccept(roomInvitationId: string): Promise<void> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     throw new Error("Method not implemented.")
