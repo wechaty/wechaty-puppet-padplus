@@ -17,9 +17,9 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType, GrpcRoomRawPayload } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload, GrpcQrCodeLogin, GrpcRoomRawPayload } from '../schemas/grpc-schemas'
+import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
@@ -77,6 +77,7 @@ export class PadplusManager {
 
     this.state = new StateSwitch('PadplusManager')
     this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
+
     if (!GrpcGateway.Instance) {
       throw new Error(`The grpc gateway has no instance.`)
     }
@@ -87,12 +88,12 @@ export class PadplusManager {
     }
     this.grpcGateway = GrpcGateway.Instance
 
-    this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
-    this.padplusUser = new PadplusUser(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusMesasge = new PadplusMessage(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusContact = new PadplusContact(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusRoom = new PadplusRoom(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusFriendship = new PadplusFriendship(this.requestClient, this.grpcGatewayEmmiter)
+    this.requestClient = new RequestClient(this.grpcGateway, this.grpcGatewayEmmiter) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
+    this.padplusUser = new PadplusUser(this.requestClient)
+    this.padplusMesasge = new PadplusMessage(this.requestClient)
+    this.padplusContact = new PadplusContact(this.requestClient)
+    this.padplusRoom = new PadplusRoom(this.requestClient)
+    this.padplusFriendship = new PadplusFriendship(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -156,7 +157,8 @@ export class PadplusManager {
     if (uin) {
       log.silly(PRE, `uin : ${util.inspect(uin)}`)
       this.grpcGatewayEmmiter.setUIN(uin)
-      await this.padplusUser.initInstance(uin)
+      await new Promise(r => setTimeout(r, 500))
+      await this.padplusUser.initInstance()
     } else {
       await this.padplusUser.getWeChatQRCode()
     }
@@ -229,8 +231,14 @@ export class PadplusManager {
         case ResponseType.AUTO_LOGIN :
           const grpcAutoLoginData = data.getData()
           if (grpcAutoLoginData) {
-            const autoLoginData: GrpcQrCodeLogin = JSON.parse(grpcAutoLoginData)
-            this.emit('login', autoLoginData)
+            const autoLoginData = JSON.parse(grpcAutoLoginData)
+
+            log.verbose(PRE, `init cache manager`)
+            log.silly(PRE, `user name : ${util.inspect(autoLoginData)}`)
+            await CacheManager.init(autoLoginData.wechatUser.userName)
+            this.cacheManager = CacheManager.Instance
+
+            this.emit('login', autoLoginData.wechatUser)
           }
           break
         case ResponseType.ACCOUNT_LOGOUT :
@@ -254,14 +262,22 @@ export class PadplusManager {
           break
         case ResponseType.CONTACT_MODIFY :
           const roomRawData = data.getData()
-          // TODO: 查找该联系人的信息并更新
           if (roomRawData) {
-            const roomData: GrpcRoomRawPayload = JSON.parse(roomRawData)
-            const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData as GrpcRoomRawPayload)
-            if (this.cacheManager) {
-              this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
+            const _data = JSON.parse(roomRawData)
+            if (!_data.ExtInfo) {
+              const contactData: GrpcContactPayload = _data
+              const contact = convertFromGrpcContact(contactData)
+              if (this.cacheManager) {
+                await this.cacheManager.setContact(contact.userName, contact)
+              }
             } else {
-              // TODO: 根据群id查找对应的群详情
+              const roomData: GrpcRoomRawPayload = _data
+              const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
+              if (this.cacheManager) {
+                await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
+              } else {
+                // TODO: 根据群id查找对应的群详情
+              }
             }
           }
           break
@@ -325,14 +341,52 @@ export class PadplusManager {
    * Message Section
    */
 
-  public async sendMessage (wxid: string, receiver: string, text: string, type: PadplusMessageType) {
-    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${text}, : ${type}`)
-    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
+  public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
+    log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
+    if (mention) {
+      await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    } else {
+      await this.padplusMesasge.sendMessage(selfId, receiver, text, type)
+    }
   }
 
-  public async sendContact (wxid: string, receiver: string, contactId: string) {
-    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${contactId}`)
-    // await this.padplusMesasge.sendContact(wxid, receiver, contactId)
+  public async sendContact (selfId: string, receiver: string, contactId: string) {
+    log.silly(PRE, `selfId : ${selfId},receiver : ${receiver},contactId : ${contactId}`)
+    if (!this.cacheManager) {
+      throw new PadplusError(PadplusErrorType.NO_CACHE, `sendContact()`)
+    }
+    let contact = await this.getContact(contactId)
+    if (contact) {
+      const content = {
+        headImgUrl: contact.smallHeadUrl,
+        userName: contact.userName,
+        nickName: contact.nickName,
+      }
+      const contentStr = JSON.stringify(content)
+      await this.padplusMesasge.sendContact(selfId, receiver, contentStr)
+    } else {
+      throw new Error('not able to send contact')
+    }
+  }
+
+  private async getContact (contactId: string, count = 0): Promise<PadplusContactPayload | null | undefined> {
+    if (!this.cacheManager) {
+      throw new Error()
+    }
+    const contact = await this.cacheManager.getContact(contactId)
+    if (contact) {
+      return contact;
+    }
+    if (count === 0) {
+      await this.padplusContact.getContactInfo(contactId)
+    }
+
+    if (count > 4) {
+      return null
+    }
+
+    await new Promise(r => setTimeout(r, 400))
+    return this.getContact(contactId, count + 1)
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -341,18 +395,26 @@ export class PadplusManager {
     return url
   }
 
-  public async sendUrlLink (wxid: string, receiver: string, urlLinkPayload: UrlLinkPayload) {
+  public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string) {
+    log.verbose(PRE, 'sendFile()')
+
+    await this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType)
+
+  }
+
+  public async sendUrlLink (selfId: string, receiver: string, urlLinkPayload: UrlLinkPayload) {
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
-    const payload: PadplusUrlLink = {
-      description,
-      thumbnailUrl,
+    const payload = {
+      des: description,
+      thumburl: thumbnailUrl,
       title,
       url,
+      type: 5,
     }
-    log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${payload}`)
+    const content = JSON.stringify(payload)
 
-    // await this.padplusMesasge.sendUrlLink(wxid, receiver, payload)
+    await this.padplusMesasge.sendUrlLink(selfId, receiver, content)
   }
 
   private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {

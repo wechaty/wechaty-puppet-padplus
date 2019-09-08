@@ -1,92 +1,78 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
-import { PadplusMessageType } from '../../schemas'
+import { PadplusMessageType, RequestStatus } from '../../schemas'
 
 const PRE = 'PadplusMessage'
 
 export class PadplusMessage {
 
   private requestClient: RequestClient
-  private emitter: GrpcEventEmitter
-  constructor (requestClient: RequestClient, emmiter: GrpcEventEmitter) {
+  constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
-    this.emitter = emmiter
     log.silly(PRE, `re : ${this.requestClient}`)
-    log.silly(PRE, `emitter : ${this.emitter}`)
   }
 
   // Send message (text, image, url, video, file, gif)
-  public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: PadplusMessageType, fileName?: string): Promise<boolean> => {
+  public sendMessage = async (selfId: string, receiverId: string, content: string, messageType: PadplusMessageType, mentionListStr?: string): Promise<boolean> => {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
+      content: content,
+      fromUserName: selfId,
       messageType,
-      fromUserName: contactId,
-      toUserName: contactIdOrRoomId,
-      content: message,
+      toUserName: receiverId,
+      mentionListStr,
     }
 
     const res = await this.requestClient.request({
       apiType: ApiType.SEND_MESSAGE,
-      uin: this.emitter.getUIN(),
       data,
     })
-    log.silly(`==P==A==D==P==L==U==S==<send message callback>==P==A==D==P==L==U==S==`)
+
     log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
     return true
   }
 
   // Send url link
-  /* public sendUrlLink = async (contactId: string, contactIdOrRoomId: string, urlLinkPayload: MacproUrlLink): Promise<RequestStatus> => {
+  public sendUrlLink = async (selfId: string, receiverId: string, content: string): Promise<RequestStatus> => {
     log.verbose(PRE, `sendUrlLink()`)
 
-    const data = {
-      describe: urlLinkPayload.description,
-      my_account: contactId,
-      thumb: urlLinkPayload.thumbnailUrl,
-      title: urlLinkPayload.title,
-      to_account: contactIdOrRoomId,
-      url: urlLinkPayload.url,
-    }
+    await this.sendMessage(selfId, receiverId, content, PadplusMessageType.App)
 
-    const res = await this.requestClient.request({
-      apiName: 'sendUrlLink',
-      data,
-    })
-    log.silly(PRE, `sendUrlLink : ${JSON.stringify(res)}`)
-    if (res.code === RequestStatus.Success) {
-      return RequestStatus.Success
-    } else {
-      return RequestStatus.Fail
-    }
+    return RequestStatus.Success
   }
 
   // send contact card
-  public sendContact = async (contactId: string, contactIdOrRoomId: string, cardName: string): Promise<RequestStatus> => {
+  public sendContact = async (selfId: string, receiver: string, content: string): Promise<RequestStatus> => {
     log.verbose(PRE, `sendContact()`)
 
+    await this.sendMessage(selfId, receiver, content, PadplusMessageType.ShareCard)
+    return RequestStatus.Success
+  }
+
+  public sendFile = async (selfId: string, receiver: string, url: string, fileName: string, subType: string): Promise<RequestStatus> => {
+    log.verbose(PRE, `sendFile()`)
+
     const data = {
-      cardName,
-      my_account: contactId,
-      to_account: contactIdOrRoomId,
+      fileName,
+      fromUserName: selfId,
+      messageType: PadplusMessageType.Image,
+      subType,
+      toUserName: receiver,
+      url,
     }
 
     const res = await this.requestClient.request({
-      apiName: 'sendUserCard',
+      apiType: ApiType.SEND_FILE,
       data,
     })
-    log.silly(PRE, `sendContact : ${JSON.stringify(res)}`)
-    if (res.code === RequestStatus.Success) {
-      return RequestStatus.Success
-    } else {
-      return RequestStatus.Fail
-    }
+    log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
+    return RequestStatus.Success
   }
 
   // send mini program
-  public sendMiniProgram = async (miniProgram: MiniProgram) => {
+  /* public sendMiniProgram = async (miniProgram: MiniProgram) => {
     log.verbose(PRE, `sendMiniProgram()`)
 
     const data = {
