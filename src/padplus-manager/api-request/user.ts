@@ -1,22 +1,24 @@
 import { RequestClient } from './request'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
 
 export class PadplusUser {
 
   private requestClient: RequestClient
   // private token: string
 
-  constructor (requestClient: RequestClient) {
-    // this.token = token
+  private emitter: GrpcEventEmitter
+  constructor (requestClient: RequestClient, emitter: GrpcEventEmitter) {
     this.requestClient = requestClient
+    this.emitter = emitter
   }
 
   // 初始化登录信息
   public async initInstance (uin: string) {
     await this.requestClient.request({
       apiType: ApiType.INIT,
-      uin,
+      uin: this.emitter.getUIN(),
     })
   }
 
@@ -25,7 +27,7 @@ export class PadplusUser {
     log.silly(`==P==A==D==P==L==U==S==<get qrcode>==P==A==D==P==L==U==S==`)
     const res = await this.requestClient.request({
       apiType: ApiType.GET_QRCODE,
-      uin: '',
+      uin: this.emitter.getUIN(),
       data: JSON.stringify({loginer: '1'}),
     })
     log.silly(`USER API res : ${JSON.stringify(res)}`)

@@ -1,15 +1,18 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
 
 const PRE = 'PadplusMessage'
 
 export class PadplusMessage {
 
   private requestClient: RequestClient
-
-  constructor (requestClient: RequestClient) {
+  private emitter: GrpcEventEmitter
+  constructor (requestClient: RequestClient, emmiter: GrpcEventEmitter) {
     this.requestClient = requestClient
+    this.emitter = emmiter
     log.silly(PRE, `re : ${this.requestClient}`)
+    log.silly(PRE, `emitter : ${this.emitter}`)
   }
 
   // Send message (text, image, url, video, file, gif)

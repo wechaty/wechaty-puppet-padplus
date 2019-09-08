@@ -86,11 +86,11 @@ export class PadplusManager {
     this.grpcGateway = GrpcGateway.Instance
 
     this.requestClient = new RequestClient(this.grpcGateway)
-    this.padplusUser = new PadplusUser(this.requestClient)
+    this.padplusUser = new PadplusUser(this.requestClient, this.grpcGatewayEmmiter)
     this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
     // this.padplusMesasge = new PadplusMessage(this.requestClient)
-    this.padplusContact = new PadplusContact(this.requestClient)
-    this.padplusRoom = new PadplusRoom(this.requestClient)
+    this.padplusContact = new PadplusContact(this.requestClient, this.grpcGatewayEmmiter)
+    this.padplusRoom = new PadplusRoom(this.requestClient, this.grpcGatewayEmmiter)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
