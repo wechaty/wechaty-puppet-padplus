@@ -25,6 +25,7 @@ export class PadplusRoom {
 
     const res = await this.requestClient.request({
       apiType: ApiType.CHANGE_TOPIC,
+      uin: '',
       data,
     })
     log.silly(PRE, `message : ${JSON.stringify(res)}`)
@@ -39,6 +40,7 @@ export class PadplusRoom {
 
     const res = await this.requestClient.request({
       apiType: ApiType.GET_ROOM_MEMBER,
+      uin: '',
       data,
     })
     const json = res.getData()
@@ -59,6 +61,7 @@ export class PadplusRoom {
 
     await this.requestClient.request({
       apiType: ApiType.CHANGE_TOPIC,
+      uin: '',
       data,
     })
     return RequestStatus.Success

@@ -23,6 +23,7 @@ export class PadplusContact {
     }
     const res = await this.requestClient.request({
       apiType: ApiType.GET_CONTACT,
+      uin: '',
       data,
     })
     log.silly(PRE, `get contact info from API : ${JSON.stringify(res)}`)
@@ -47,6 +48,7 @@ export class PadplusContact {
 
     await this.requestClient.request({
       apiType: ApiType.SEARCH_CONTACT,
+      uin: '',
       data,
     })
     return true
@@ -55,13 +57,9 @@ export class PadplusContact {
   public syncContacts = async (uin: string): Promise<void> => {
     log.verbose(PRE, `contactList(${uin})`)
 
-    const data = {
-      uin,
-    }
-
     await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,
-      data,
+      uin,
     })
   }
 }

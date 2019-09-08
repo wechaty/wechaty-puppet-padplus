@@ -6,6 +6,7 @@ import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 
 export interface RequestOption {
   data?: any,
+  uin: string,
   apiType: ApiType,
 }
 
@@ -28,7 +29,7 @@ export class RequestClient {
       }
       return retryException(new Error('tryRawPayload empty'))
     }) */
-    const res = await this.grpcGateway.request(option.apiType, option.data)
+    const res = await this.grpcGateway.request(option.apiType, option.uin, option.data)
     log.silly(PRE, `REQUEST res : ${JSON.stringify(res)}`)
     return res
   }

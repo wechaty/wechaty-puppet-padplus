@@ -108,15 +108,19 @@ export class GrpcGateway extends EventEmitter {
   }
 
 
-  public async request (apiType: ApiType, data?: any): Promise<StreamResponse> {
+  public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
     const requestId = uuid()
-    log.silly(PRE, `GRPC : ${this.token}, ${data}, ${apiType}`)
+    log.silly(PRE, `GRPC : ${this.token}, ${data}, ${apiType}, uin : ${uin}`)
     request.setToken(this.token)
-    request.setUin(data.uin)
+    if (uin !== '') {
+      request.setUin(uin)
+    }
     request.setApitype(apiType)
     request.setParams(data)
     request.setRequestid(requestId)
+    log.silly(`==P==A==D==P==L==U==S==<request test>==P==A==D==P==L==U==S==`)
+    log.silly(PRE, `request : ${util.inspect(request)}`)
 
     try {
       const result = await this._request(request)
@@ -183,6 +187,8 @@ export class GrpcGateway extends EventEmitter {
       result.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
+        log.silly(`==P==A==D==P==L==U==S==<type>==P==A==D==P==L==U==S==`)
+        log.silly(PRE, `type : ${util.inspect(responseType)}`)
         // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
         if (requestId) {
           const callback = await CallbackPool.Instance.getCallback(requestId)
@@ -200,7 +206,10 @@ export class GrpcGateway extends EventEmitter {
             }
           } else {
             const uin = data.getUin()
-            const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin)
+            const userName = JSON.parse(data.getData()!).userName
+            const emitter = Object.values(this.eventEmitterMap)
+                                  .find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
+            log.silly(PRE, `emi : ${util.inspect(emitter)}`)
             if (!emitter) {
               return
             }

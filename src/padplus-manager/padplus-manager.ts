@@ -170,12 +170,13 @@ export class PadplusManager {
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
           if (qrcodeRawData) {
-            log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
+            // log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
             const qrcodeData = JSON.parse(qrcodeRawData)
             this.memorySlot.qrcodeId = qrcodeData.qrcodeId
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
 
-            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            await fileBox.toFile()
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
@@ -187,11 +188,11 @@ export class PadplusManager {
             const scanData: ScanData = JSON.parse(scanRawData)
             log.info(PRE, `
             =================================================
-            QRCODE_SCAN MSG : ${scanData.msg}
+            QRCODE_SCAN MSG : ${scanData.msg || '已确认'}
             =================================================
             `)
             const status = scanData.status
-            this.grpcGatewayEmmiter.setQrcodeId(scanData.qrcodeId)
+            this.grpcGatewayEmmiter.setQrcodeId(scanData.user_name)
             if (status !== 1) {
               this.memorySlot.qrcodeId = ''
             }
@@ -372,6 +373,8 @@ export class PadplusManager {
   }
 
   public async syncContacts (): Promise<void> {
+    log.silly(`==P==A==D==P==L==U==S==<UIN test>==P==A==D==P==L==U==S==`)
+    log.silly(PRE, `uin : ${util.inspect(this.grpcGatewayEmmiter.getUIN())}`)
     await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 

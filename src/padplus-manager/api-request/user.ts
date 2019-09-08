@@ -20,6 +20,7 @@ export class PadplusUser {
     }
     this.requestClient.request({
       apiType: ApiType.INIT,
+      uin: '',
       data,
     })
   }
@@ -29,6 +30,7 @@ export class PadplusUser {
     log.silly(`==P==A==D==P==L==U==S==<get qrcode>==P==A==D==P==L==U==S==`)
     const res = await this.requestClient.request({
       apiType: ApiType.GET_QRCODE,
+      uin: '',
       data: JSON.stringify({loginer: '1'}),
     })
     log.silly(`USER API res : ${JSON.stringify(res)}`)
