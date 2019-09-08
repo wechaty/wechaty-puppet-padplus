@@ -18,7 +18,7 @@
   > 转换数据模型 Padplus <=> Grpc，纯函数，可测试
 
 - api-request
-  > 封装联络易 API 请求
+  > 封装 API 请求
 
 - utils
   > 工具方法
