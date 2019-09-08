@@ -269,25 +269,44 @@ export class PadplusManager {
     selfId: string,
   ): Promise<string[]> {
     // TODO get contact from cache
-    const contacts = await this.padplusContact.contactList(selfId)
-    // TODO: set contact cache
-    const result = contacts.map(c => c.userName)
+    const contacts: string[] = [];
+    // const result = contacts.map(c => c.userName)
+    const result = contacts;
     return result;
   }
 
-  public async getContact (
+  public async getRawContact (
     selfId: string,
     contactId: string,
-  ) {
+  ): Promise<PadplusContactPayload> {
     // TODO: get contact from cache.
     let contact: PadplusContactPayload;
     // if (!contact) {
     contact = await this.padplusContact.getContactInfo(selfId, contactId);
     // }
     // TODO set contact cache.
-    const rawContact = convertToPuppetContact(contact)
-    return rawContact
+    return contact
   }
+
+  public async syncContacts (
+    selfId: string,
+  ) {
+    this.padplusContact.syncContacts(selfId)
+  }
+
+  // public async getContact (
+  //   selfId: string,
+  //   contactId: string,
+  // ) {
+  //   // TODO: get contact from cache.
+  //   let contact: PadplusContactPayload;
+  //   // if (!contact) {
+  //   contact = await this.padplusContact.getContactInfo(selfId, contactId);
+  //   // }
+  //   // TODO set contact cache.
+  //   const rawContact = convertToPuppetContact(contact)
+  //   return rawContact
+  // }
   
   /**
    * 

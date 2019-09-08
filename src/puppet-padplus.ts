@@ -26,6 +26,7 @@ import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusContactPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
 import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
+import { convertToPuppetContact } from './convert-manager/contact-convertor';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -150,30 +151,36 @@ export class PuppetPadplus extends Puppet {
     return contactIds;
   }
 
-  // protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
-  //   if (!this.id) {
-  //     throw new Error(`bot not login.`)
-  //   }
-
-  // }
-
-  // protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
-  //   throw new Error("Method not implemented.")
-  // }
-
-  public async contactPayload (
-    contactId: string,
-  ): Promise<ContactPayload> {
+  protected async contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
+    if (!this.id) {
+      throw new Error(`bot not login.`)
+    }
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    if (!this.id) {
-      throw new Error(`no bot logined.`)
-    }
     const selfId = this.selfId()
-    const result: ContactPayload = await this.manager.getContact(selfId, contactId)
-    return  result;
+    const payload = await this.manager.getRawContact(selfId, contactId)
+    return payload
   }
+
+  protected async contactRawPayloadParser(rawPayload: PadplusContactPayload): Promise<ContactPayload> {
+    const payload = convertToPuppetContact(rawPayload)
+    return payload
+  }
+
+  // public async contactPayload (
+  //   contactId: string,
+  // ): Promise<ContactPayload> {
+  //   if (!this.manager) {
+  //     throw new Error(`no manager.`)
+  //   }
+  //   if (!this.id) {
+  //     throw new Error(`no bot logined.`)
+  //   }
+  //   const selfId = this.selfId()
+  //   const result: ContactPayload = await this.manager.getContact(selfId, contactId)
+  //   return  result;
+  // }
 
   // /**
   //  * =========================
