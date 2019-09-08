@@ -5,15 +5,16 @@ import {
   /* ContactPayload,
   FriendshipPayload,
   MessagePayload,
-  Puppet,
   Receiver,
   RoomInvitationPayload,
   RoomMemberPayload,
   RoomPayload,
   UrlLinkPayload,
   MiniProgramPayload, */
+  Puppet,
   PuppetOptions,
   ScanStatus,
+  ContactPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -22,17 +23,19 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
+import { FileBox } from 'file-box';
+import { PadplusContactPayload } from './schemas';
 
 const PRE = 'PUPPET_PADPLUD'
 
-export class PuppetPadplus {
+export class PuppetPadplus extends Puppet{
 
   private manager: PadplusManager
 
   constructor (
     public options: PuppetOptions = {},
   ) {
-    // super(options)
+    super(options)
 
     const token = options.token || padplusToken()
     const name = options.name
@@ -95,30 +98,73 @@ export class PuppetPadplus {
   //   throw new Error("Method not implemented.")
   // }
 
-  // contactAlias(contactId: string): Promise<string>
-  // contactAlias(contactId: string, alias: string | null): Promise<void>
-  // contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
-  //   log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
-  //   throw new Error("Method not implemented.")
-  // }
+  contactAlias(contactId: string): Promise<string>
+  contactAlias(contactId: string, alias: string | null): Promise<void>
+  public async contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
+    log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
+    if (typeof alias === 'undefined') {
+      const payload = await this.contactRawPayload(contactId);
+      return payload.alias || ''
+    }
 
-  // contactAvatar(contactId: string): Promise<FileBox>
-  // contactAvatar(contactId: string, file: FileBox): Promise<void>
-  // contactAvatar(contactId: string, file?: FileBox): Promise<FileBox | void> {
-  //   throw new Error("Method not implemented.")
-  // }
+    if (!this.manager) {
+      throw new Error(`no padplus manage.`)
+    }
+    // await this.manager.setContactAlias(contactId, alias || '')
+    // await this.manager.updateContact(contactId)
+  }
 
-  // contactList(): Promise<string[]> {
-  //   throw new Error("Method not implemented.")
-  // }
+  contactAvatar(contactId: string): Promise<FileBox>
+  contactAvatar(contactId: string, file: FileBox): Promise<void>
+  public async contactAvatar(contactId: string, file?: FileBox): Promise<FileBox | void> {
+    if (file) {
+      if (contactId !== this.selfId()) {
+        throw new Error(`can not set avatar for others.`)
+      }
+      if (!this.manager) {
+        throw new Error(`no padplus manager.`)
+      }
+      return
+      // TODO: set avatar for self.
+    }
+    const payload = await this.contactRawPayload(contactId)
+    if (!payload || !payload.bigHeadUrl) {
+      throw new Error(`can not find contact.`)
+    }
+    const fileBox = FileBox.fromUrl(
+      payload.bigHeadUrl,
+      `wechaty-contact-avatar-${payload.userName}.jpg`
+    )
+    return fileBox
+  }
 
-  // protected contactRawPayload(contactId: string): Promise<any> {
-  //   throw new Error("Method not implemented.")
-  // }
+  public async contactList(): Promise<string[]> {
+    log.verbose(PRE, `contactList()`)
+    if (!this.manager) {
+      throw new Error(`no padplus manager.`)
+    }
+    // const contactIds = await this.manager.getContactIdList();
+    const contactIdList: string [] = [];
+    return contactIdList;
+  }
 
-  // protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
-  //   throw new Error("Method not implemented.")
-  // }
+  protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
+    if (!this.id) {
+      throw new Error(`bot not login.`)
+    }
+
+  }
+
+  protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  public async contactPayload (
+    contactId: string,
+  ): Promise<ContactPayload> {
+    // const result: ContactPayload = {}
+    // return  result;
+  }
 
   // /**
   //  * =========================

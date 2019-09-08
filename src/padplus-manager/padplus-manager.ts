@@ -218,4 +218,22 @@ export class PadplusManager {
   }
 }
 
+/**
+ * 
+ * contact
+ * 
+ */
+
+/**
+ * 
+ * room
+ * 
+ */
+
+ /**
+  * 
+  * messages
+  * 
+  */
+
 export default PadplusManager
