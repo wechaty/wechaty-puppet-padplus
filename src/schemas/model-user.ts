@@ -21,7 +21,7 @@ export interface PadplusQrcodeLogin {
   verifyFlag: string,
 }
 
-export interface ScanData {
+export interface GrpcLoginData {
   msg: string,
   loginer: string,
   head_url: string,
@@ -31,4 +31,13 @@ export interface ScanData {
   qrcodeId: string,
   serverId: string,
   status: number,
+}
+
+export interface ScanData {
+  head_url: string,
+  msg: string,
+  nick_name: string,
+  qrcodeId: string,
+  status: number,
+  user_name: string,
 }

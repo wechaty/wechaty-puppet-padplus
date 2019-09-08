@@ -17,7 +17,7 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 // import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcLoginData } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload } from '../schemas/grpc-schemas';
 
@@ -25,8 +25,8 @@ const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
 export interface PadplusMemorySlot {
   userName  : string,
-  uin : number,
-  qrcodeId: number,
+  uin : string,
+  qrcodeId: string,
 }
 
 export interface ManagerOptions {
@@ -74,8 +74,8 @@ export class PadplusManager {
     }
     this.memorySlot = {
       userName: '',
-      uin: 0,
-      qrcodeId: 0,
+      uin: '',
+      qrcodeId: '',
     }
     this.grpcGateway = GrpcGateway.Instance
     this.requestClient = new RequestClient(this.grpcGateway)
@@ -89,7 +89,7 @@ export class PadplusManager {
   }
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
-  public emit (event: 'login', userIdOrReasonOrData: string): boolean
+  public emit (event: 'login', data: GrpcLoginData): boolean
   public emit (event: 'logout', userIdOrReasonOrData: string): boolean
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
@@ -108,7 +108,7 @@ export class PadplusManager {
   }
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
-  public on (event: 'login', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
+  public on (event: 'login', listener: ((this: PadplusManager, data: GrpcLoginData) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
   public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'contact-modify', listener: ((this: PadplusManager, data: string) => void)): this
@@ -170,10 +170,11 @@ export class PadplusManager {
           if (scanRawData) {
             log.silly(PRE, `QRCODE_SCAN : ${util.inspect(scanRawData)}`)
             const scanData: ScanData = JSON.parse(scanRawData)
+            log.info(PRE, `QRCODE_SCAN MSG : ${scanData.msg}`)
             const status = scanData.status
             this.grpcGatewayEmmiter.setQrcodeId(scanData.qrcodeId)
             if (status !== 1) {
-              this.memorySlot.qrcodeId = 0
+              this.memorySlot.qrcodeId = ''
             }
           }
           break
@@ -181,7 +182,9 @@ export class PadplusManager {
           const loginRawData = data.getData()
           // TODO: convert data from grpc to padplus
           if (loginRawData) {
-            this.emit('login', loginRawData)
+            const grpcLoginData: GrpcLoginData = JSON.parse(loginRawData)
+            const loginData = convertLoginData(grpcLoginData)
+            this.emit('login', loginData)
           }
           break
         case ResponseType.ACCOUNT_LOGOUT :
