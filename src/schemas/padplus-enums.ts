@@ -248,3 +248,8 @@ export enum PadplusAutoLoginErrorType {
   SAFETY_LOGOUT = 'SAFETY_LOGOUT',
   UNKNOWN = 'UNKNOWN',
 }
+
+export enum MessageSendType {
+  SELF_SENT = 1,
+  CONTACT_SENT = 2,
+}

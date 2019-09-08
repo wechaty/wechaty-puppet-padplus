@@ -1,8 +1,9 @@
 /* eslint-disable */
 import util from 'util'
+import FileBox from 'file-box'
 
 import {
-  /* ContactPayload,
+  ContactPayload,
   FriendshipPayload,
   MessagePayload,
   Receiver,
@@ -10,11 +11,10 @@ import {
   RoomMemberPayload,
   RoomPayload,
   UrlLinkPayload,
-  MiniProgramPayload, */
-  Puppet,
+  MiniProgramPayload,
   PuppetOptions,
   ScanStatus,
-  ContactPayload,
+  Puppet,
 }                           from 'wechaty-puppet'
 
 import {
@@ -23,12 +23,13 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { FileBox } from 'file-box';
 import { PadplusContactPayload } from './schemas';
+import { PadplusMessagePayload } from './schemas/model-message';
+import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 
-const PRE = 'PUPPET_PADPLUD'
+const PRE = 'PUPPET_PADPLUS'
 
-export class PuppetPadplus extends Puppet{
+export class PuppetPadplus extends Puppet {
 
   private manager: PadplusManager
 
@@ -320,6 +321,186 @@ export class PuppetPadplus extends Puppet{
   //   log.silly(PRE, 'ding(%s)', data || '')
   //   this.emit('dong', data)
   // }
+  
+
+  /**
+   * =========================
+   *    FRIENDSHIP SECTION
+   * =========================
+   */
+
+  friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  friendshipAccept(friendshipId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected friendshipRawPayload(friendshipId: string): Promise<any> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected friendshipRawPayloadParser(rawPayload: any): Promise<FriendshipPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  /**
+   * ========================
+   *      MESSAGE SECTION
+   * ========================
+   */
+
+  messageFile(messageId: string): Promise<FileBox> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageUrl(messageId: string): Promise<UrlLinkPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageMiniProgram(messageId: string): Promise<MiniProgramPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageForward(receiver: Receiver, messageId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageSendText(receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void> {
+    log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
+
+    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+
+    if (this.id) {
+      if (mentionIdList && mentionIdList.length > 0) {
+        await this.room.atRoomMember(this.id, contactIdOrRoomId!, mentionIdList.join(','), text)
+      } else {
+        await this.message.sendMessage(this.id, contactIdOrRoomId!, text, MacproMessageType.Text)
+      }
+    } else {
+      throw new Error('Can not get the logined account id')
+    }
+
+  }
+
+  messageSendContact(receiver: Receiver, contactId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageSendFile(receiver: Receiver, file: FileBox): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageSendUrl(receiver: Receiver, urlLinkPayload: UrlLinkPayload): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  messageSendMiniProgram(receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected async messageRawPayload(messageId: string): Promise<PadplusMessagePayload> {
+    log.verbose(PRE, 'messageRawPayload(%s)', messageId)
+
+    const rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
+    if (!rawPayload) {
+      throw new Error('no rawPayload')
+    }
+
+    return rawPayload
+  }
+
+  protected async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
+    log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
+
+    const payload = await convertMessageFromPadplusToPuppet(rawPayload)
+
+    return payload
+  }
+
+  /**
+   * ========================
+   *      ROOM SECTION
+   * ========================
+   */
+  roomInvitationAccept(roomInvitationId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomInvitationRawPayload(roomInvitationId: string): Promise<any> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomInvitationRawPayloadParser(rawPayload: any): Promise<RoomInvitationPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomAdd(roomId: string, contactId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomAvatar(roomId: string): Promise<FileBox> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomDel(roomId: string, contactId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomQuit(roomId: string): Promise<void> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomTopic(roomId: string): Promise<string>
+  roomTopic(roomId: string, topic: string): Promise<void>
+  roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
+  roomTopic(roomId: any, topic?: any): Promise<string | void> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomQrcode(roomId: string): Promise<string> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomList(): Promise<string[]> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomMemberList(roomId: string): Promise<string[]> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomRawPayload(roomId: string): Promise<any> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomRawPayloadParser(rawPayload: any): Promise<RoomPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomMemberRawPayload(roomId: string, contactId: string): Promise<any> {
+    throw new Error("Method not implemented.")
+  }
+
+  protected roomMemberRawPayloadParser(rawPayload: any): Promise<RoomMemberPayload> {
+    throw new Error("Method not implemented.")
+  }
+
+  roomAnnounce(roomId: string): Promise<string>
+  roomAnnounce(roomId: string, text: string): Promise<void>
+  roomAnnounce(roomId: any, text?: any): Promise<string | void> {
+    throw new Error("Method not implemented.")
+  }
+
+  public ding (data?: string): void {
+    log.silly(PRE, 'ding(%s)', data || '')
+    this.emit('dong', data)
+  }
 
 }
 
