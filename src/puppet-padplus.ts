@@ -38,6 +38,7 @@ import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-
 const PRE = 'PUPPET_PADPLUS'
 
 export class PuppetPadplus extends Puppet {
+  public id = 'wxid_v7j3e9kna9l912' // TODO: need to delete
 
   private manager: PadplusManager
 
@@ -78,8 +79,8 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
-      // this.manager.syncContacts()
-      this.messageSendText({contactId: 'Soul001001'}, '哈哈哈哈哈哈')
+      await this.manager.syncContacts()
+
       this.emit('login', loginData.userName)
     })
 
@@ -279,11 +280,10 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
-    this.id = 'wxid_v7j3e9kna9l912'
+
     if (this.id) {
       if (mentionIdList && mentionIdList.length > 0) {
-        // TODO: 群中@某人
-        // await this.room.atRoomMember(this.id, contactIdOrRoomId!, mentionIdList.join(','), text)
+        await this.manager.sendMessage(this.id, contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
       } else {
         await this.manager.sendMessage(this.id, contactIdOrRoomId!, text, PadplusMessageType.Text)
       }
@@ -331,13 +331,13 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        await this.manager.sendMessage(this.id, contactIdOrRoomId!, fileUrl, PadplusMessageType.Image)
+        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'pic')
         break
       case '.mp4':
-        await this.manager.sendMessage(this.id, contactIdOrRoomId!, fileUrl, PadplusMessageType.Video)
+        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
         break
       default:
-        await this.manager.sendMessage(this.id, contactIdOrRoomId!, fileUrl, PadplusMessageType.App) // TODO: file.name
+        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc')
         break
     }
   }

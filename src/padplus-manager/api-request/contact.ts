@@ -1,8 +1,6 @@
 import { log } from '../../config'
-import { PadplusContactPayload, GrpcContactPayload } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
-import { convertFromGrpcContact } from '../../convert-manager/contact-convertor';
 import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
 
 const PRE = 'PadplusContact'
@@ -16,26 +14,18 @@ export class PadplusContact {
     this.emitter = emitter
   }
   // Query contact list info
-  public getContactInfo = async (loginId: string, contactId: string): Promise<PadplusContactPayload> => {
-    log.verbose(PRE, `getContactInfo(${loginId}, ${contactId})`)
+  public getContactInfo = async (userName: string, roomId?: string): Promise<boolean> => {
+    log.verbose(PRE, `getContactInfo(${userName})`)
 
     const data = {
-      account: contactId,
-      my_account: loginId,
+      userName,
     }
-    const res = await this.requestClient.request({
+    await this.requestClient.request({
       apiType: ApiType.GET_CONTACT,
       uin: this.emitter.getUIN(),
       data,
     })
-    log.silly(PRE, `get contact info from API : ${JSON.stringify(res)}`)
-    const json = res.getData()
-    if (!json) {
-      throw new Error(`can not find contact.`)
-    }
-    const rawContact: GrpcContactPayload = JSON.parse(json)
-    const padplusContact = convertFromGrpcContact(rawContact)
-    return padplusContact
+    return true
   }
 
   // Set alias for contact
