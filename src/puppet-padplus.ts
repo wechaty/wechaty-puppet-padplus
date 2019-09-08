@@ -175,8 +175,8 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const selfId = this.selfId()
-    const payload = await this.manager.getRawContact(selfId, contactId)
+
+    const payload = await this.manager.getContactPayload(contactId)
     return payload
   }
 

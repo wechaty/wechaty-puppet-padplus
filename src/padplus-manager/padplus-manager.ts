@@ -18,12 +18,13 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 // import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType, GrpcRoomPayload } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas';
-import { CacheManager } from '../server-manager/cache-manager';
-import { convertFromGrpcContact } from '../convert-manager/contact-convertor';
-import { PadplusRoom } from './api-request/room';
+import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
+import { CacheManager } from '../server-manager/cache-manager'
+import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
+import { PadplusRoom } from './api-request/room'
+import { convertRoomFromGrpc } from '../convert-manager/room-convertor';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -86,7 +87,7 @@ export class PadplusManager {
 
     this.requestClient = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.requestClient)
-    this.requestClient = new RequestClient(this.grpcGateway)
+    this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
     // this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
     this.padplusRoom = new PadplusRoom(this.requestClient)
@@ -152,6 +153,7 @@ export class PadplusManager {
 
     if (uin) {
       log.silly(PRE, `uin : ${util.inspect(uin)}`)
+      await this.padplusUser.initInstance(uin)
     } else {
       await this.padplusUser.getWeChatQRCode()
     }
@@ -190,7 +192,6 @@ export class PadplusManager {
             =================================================
             `)
             this.grpcGatewayEmmiter.setQrcodeId(scanData.user_name)
-
           }
           break
         case ResponseType.QRCODE_LOGIN :
@@ -219,14 +220,9 @@ export class PadplusManager {
             this.emit('login', loginData)
           }
           break
-        case ResponseType.ACCOUNT_LOGIN :
-          /*const loginRawData = data.getData()
-          // TODO: convert data from grpc to padplus
-           if (loginRawData) {
-            const grpcLoginData: GrpcLoginData = JSON.parse(loginRawData)
-            // const loginData = convertLoginData(grpcLoginData)
-            this.emit('login', grpcLoginData)
-          } */
+        case ResponseType.AUTO_LOGIN :
+          // 再次登录，同步数据
+          this.syncContacts()
           break
         case ResponseType.ACCOUNT_LOGOUT :
           const looutRawData = data.getData()
@@ -247,10 +243,16 @@ export class PadplusManager {
           }
           break
         case ResponseType.CONTACT_MODIFY :
-          const contactModify = data.getData()
+          const roomRawData = data.getData()
           // TODO: 查找该联系人的信息并更新
-          if (contactModify) {
-            this.emit('contact-modify', contactModify)
+          if (roomRawData) {
+            const roomData: GrpcRoomPayload = JSON.parse(roomRawData)
+            const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
+            if (this.cacheManager) {
+              this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
+            } else {
+              // TODO: 根据群id查找对应的群详情
+            }
           }
           break
         case ResponseType.CONTACT_DELETE :
@@ -357,23 +359,25 @@ export class PadplusManager {
     selfId: string,
   ): Promise<string[]> {
     log.silly(PRE, `selfId : ${util.inspect(selfId)}`)
-    // TODO get contact from cache
-    const contacts: string[] = [];
-    // const result = contacts.map(c => c.userName)
-    const result = contacts;
-    return result;
+    if (!this.cacheManager) {
+      throw new PadplusError(PadplusErrorType.NO_CACHE, 'contactList()')
+    }
+
+    return this.cacheManager.getContactIds()
   }
 
-  public async getRawContact (
-    selfId: string,
+  public async getContactPayload (
     contactId: string,
   ): Promise<PadplusContactPayload> {
-    // TODO: get contact from cache.
-    let contact: PadplusContactPayload;
-    // if (!contact) {
-    contact = await this.padplusContact.getContactInfo(selfId, contactId);
-    // }
-    // TODO set contact cache.
+    if (!this.cacheManager) {
+      throw new PadplusError(PadplusErrorType.NO_CACHE, 'getContactPayload')
+    }
+    let contact = await this.cacheManager.getContact(contactId)
+
+    if (!contact) {
+      throw new Error(`can not get contact info from cache manager`)
+      // TODO: get contact info by GRPC
+    }
     return contact
   }
 

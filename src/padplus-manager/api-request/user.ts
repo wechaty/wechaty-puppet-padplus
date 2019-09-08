@@ -13,15 +13,10 @@ export class PadplusUser {
   }
 
   // 初始化登录信息
-  public initInstance (token: string, uin: string) {
-    const data = {
-      token,
-      uin,
-    }
-    this.requestClient.request({
+  public async initInstance (uin: string) {
+    await this.requestClient.request({
       apiType: ApiType.INIT,
-      uin: '',
-      data,
+      uin,
     })
   }
 

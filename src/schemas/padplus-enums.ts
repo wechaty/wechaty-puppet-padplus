@@ -239,6 +239,7 @@ export enum CDNFileMd5Exist {
 export enum PadplusErrorType {
   LOGIN = 'LOGIN',
   NO_ID = 'NO_ID',
+  NO_CACHE = 'NO_CACHE',
 }
 
 export enum PadplusAutoLoginErrorType {
