@@ -35,11 +35,11 @@ export function roomTopicEventMessageParser (
     return null
   }
 
-  const roomId  = rawPayload.fromMemberUserName
+  const roomId  = rawPayload.fromUserName
   const content = rawPayload.content
   const timestamp = rawPayload.createTime
   if (!roomId) {
-    throw new Error(`no room Id.`)
+    return null
   }
   if (!isRoomId(roomId)) {
     return null

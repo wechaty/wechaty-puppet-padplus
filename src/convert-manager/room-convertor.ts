@@ -1,21 +1,21 @@
 import { RoomPayload, RoomMemberPayload } from "wechaty-puppet";
-import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomPayload } from "../schemas";
+import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomRawPayload } from "../schemas";
 
-export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload => {
+export const convertRoomFromGrpc = (room: GrpcRoomRawPayload): PadplusRoomPayload => {
   const roomPayload: PadplusRoomPayload = {
-    alias          : room.Alias,
-    bigHeadUrl     : room.BigHeadImgUrl,
-    chatRoomOwner  : room.ChatRoomOwner,
-    chatroomVersion: room.ChatroomVersion,
-    contactType    : room.ContactType,
+    alias          : room.smallHeadImgUrl,
+    bigHeadUrl     : room.bigHeadImgUrl,
+    chatRoomOwner  : room.chatRoomOwner,
+    chatroomVersion: room.chatroomVersion,
+    contactType    : room.contactType,
     stranger       : '', // TODO: need to CHECK
-    members        : JSON.parse(room.ExtInfo),
-    labelLists     : room.LabelLists,
-    nickName       : room.NickName,
-    smallHeadUrl   : room.SmallHeadImgUrl,
-    ticket         : room.Ticket,
-    chatroomId     : room.UserName,
-    memberCount    : JSON.parse(room.ExtInfo).length,
+    members        : [],
+    labelLists     : room.labelLists,
+    nickName       : room.nickName,
+    smallHeadUrl   : room.smallHeadImgUrl,
+    ticket         : room.ticket,
+    chatroomId     : room.userName,
+    memberCount    : 1,
   };
   return roomPayload
 }

@@ -17,14 +17,15 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType, GrpcRoomPayload } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
+import { GrpcMessagePayload, GrpcQrCodeLogin, GrpcRoomRawPayload } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor';
 import { CallbackPool } from '../utils/callbackHelper';
+import { PadplusFriendship } from './api-request/friendship';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -55,7 +56,8 @@ export class PadplusManager {
   private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
   private padplusRoom        : PadplusRoom
-  private cacheManager?       : CacheManager
+  private padplusFriendship  : PadplusFriendship
+  private cacheManager?      : CacheManager
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
@@ -90,6 +92,7 @@ export class PadplusManager {
     this.padplusMesasge = new PadplusMessage(this.requestClient, this.grpcGatewayEmmiter)
     this.padplusContact = new PadplusContact(this.requestClient, this.grpcGatewayEmmiter)
     this.padplusRoom = new PadplusRoom(this.requestClient, this.grpcGatewayEmmiter)
+    this.padplusFriendship = new PadplusFriendship(this.requestClient, this.grpcGatewayEmmiter)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -148,8 +151,8 @@ export class PadplusManager {
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `slot : ${util.inspect(slot)}`)
     }
-    const uin = '2978186714' // this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
-
+    // const uin = '2978186714' // this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
+    const uin = this.grpcGatewayEmmiter.getUIN()
     if (uin) {
       log.silly(PRE, `uin : ${util.inspect(uin)}`)
       this.grpcGatewayEmmiter.setUIN(uin)
@@ -167,6 +170,8 @@ export class PadplusManager {
 
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
+      log.silly(`==P==A==D==P==L==U==S==<manager.parsegrpcdata>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `msgdata : ${util.inspect(data.toObject())}`)
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
@@ -251,8 +256,8 @@ export class PadplusManager {
           const roomRawData = data.getData()
           // TODO: 查找该联系人的信息并更新
           if (roomRawData) {
-            const roomData: GrpcRoomPayload = JSON.parse(roomRawData)
-            const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
+            const roomData: GrpcRoomRawPayload = JSON.parse(roomRawData)
+            const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData as GrpcRoomRawPayload)
             if (this.cacheManager) {
               this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
             } else {
@@ -474,6 +479,18 @@ export class PadplusManager {
     * messages
     * 
     */
+
+  /**
+   * 
+   * friendship
+   * 
+   */
+  public async confirmFriendship(
+    encryptUserName: string,
+    ticket: string,
+  ) {
+    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
+  }
 }
 
 
