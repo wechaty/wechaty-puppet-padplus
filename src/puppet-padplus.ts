@@ -24,10 +24,11 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
 // import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 import { convertToPuppetContact } from './convert-manager/contact-convertor';
+import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manager/room-convertor';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -390,10 +391,10 @@ export class PuppetPadplus extends Puppet {
     if (!this.id) {
       throw new Error(`not bot logined.`)
     }
-    // await this.manager.setRoomTopic(selfId, roomId, topic as string)
-
-
-    throw new Error("Method not implemented.")
+    const selfId = this.selfId()
+    await this.manager.setRoomTopic(selfId, roomId, topic as string)
+    await new Promise(r => setTimeout(r, 500))
+    await this.roomTopic(roomId)
   }
 
   roomQrcode(roomId: string): Promise<string> {
@@ -401,40 +402,68 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomList(): Promise<string[]> {
-    throw new Error("Method not implemented.")
+  async roomList(): Promise<string[]> {
+    log.verbose(PRE, `roomList()`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const roomIds = await this.manager.getRoomIdList()
+    return roomIds
   }
 
-  roomMemberList(roomId: string): Promise<string[]> {
+  async roomMemberList(roomId: string): Promise<string[]> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const roomIds = await this.manager.getRoomMemberIdList(roomId)
+    return roomIds
   }
 
-  protected roomRawPayload(roomId: string): Promise<PadplusRoomPayload> {
+  protected async roomRawPayload(roomId: string): Promise<PadplusRoomPayload> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error("Method not implemented.")
+    const rawRoom = await this.manager.getRoomInfo(roomId)
+    return rawRoom
   }
 
-  protected roomRawPayloadParser(rawPayload: any): Promise<RoomPayload> {
+  protected async roomRawPayloadParser(rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    throw new Error("Method not implemented.")
+    const room = convertToPuppetRoom(rawPayload)
+    return room
   }
 
-  protected roomMemberRawPayload(roomId: string, contactId: string): Promise<any> {
+  protected async roomMemberRawPayload(roomId: string, contactId: string): Promise<PadplusRoomMemberPayload> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const memberMap = await this.manager.getRoomMembers(roomId)
+    if (!memberMap) {
+      throw new Error('can not find members. may be you are removed.')
+    }
+    const member = memberMap[contactId]
+    return member
   }
 
-  protected roomMemberRawPayloadParser(rawPayload: any): Promise<RoomMemberPayload> {
+  protected async roomMemberRawPayloadParser(rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    throw new Error("Method not implemented.")
+    const member = convertToPuppetRoomMember(rawPayload)
+    return member
   }
 
   roomAnnounce(roomId: string): Promise<string>
   roomAnnounce(roomId: string, text: string): Promise<void>
-  roomAnnounce(roomId: any, text?: any): Promise<string | void> {
+  async roomAnnounce(roomId: any, text?: any): Promise<string | void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, text: ${text}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    if (text) {
+      await this.manager.setAnnouncement(roomId, text)
+    } else {
+      log.warn(`get room announcement is not supported by wechaty-puppet-padplus.`)
+      return ''
+    }
   }
 
   public ding (data?: string): void {

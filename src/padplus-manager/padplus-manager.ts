@@ -18,11 +18,12 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 // import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas';
 import { CacheManager } from '../server-manager/cache-manager';
 import { convertFromGrpcContact } from '../convert-manager/contact-convertor';
+import { PadplusRoom } from './api-request/room';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -52,6 +53,7 @@ export class PadplusManager {
   private padplusUser        : PadplusUser
   // private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
+  private padplusRoom        : PadplusRoom
   private cacheManager?       : CacheManager
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
@@ -87,6 +89,7 @@ export class PadplusManager {
     this.requestClient = new RequestClient(this.grpcGateway)
     // this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
+    this.padplusRoom = new PadplusRoom(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -372,25 +375,72 @@ export class PadplusManager {
     await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 
-  // public async getContact (
-  //   selfId: string,
-  //   contactId: string,
-  // ) {
-  //   // TODO: get contact from cache.
-  //   let contact: PadplusContactPayload;
-  //   // if (!contact) {
-  //   contact = await this.padplusContact.getContactInfo(selfId, contactId);
-  //   // }
-  //   // TODO set contact cache.
-  //   const rawContact = convertToPuppetContact(contact)
-  //   return rawContact
-  // }
-  
   /**
    * 
    * room
    * 
    */
+
+  public async setRoomTopic (
+    selfId: string,
+    roomId: string,
+    topic: string,
+  ) {
+    await this.padplusRoom.setTopic(selfId, roomId, topic)
+  }
+
+  public async getRoomIdList ():Promise<string[]> {
+    if (!this.cacheManager) {
+      throw new Error(`no cache.`)
+    }
+    return await this.cacheManager.getRoomIds()
+  }
+
+  public async getRoomMemberIdList (
+    roomId: string,
+  ) {
+    if (!this.cacheManager) {
+      throw new Error(`no cache.`)
+    }
+    const memberMap = await this.cacheManager.getRoomMember(roomId)
+    if (!memberMap) {
+      return []
+    }
+    return Object.keys(memberMap)
+  }
+
+  public async getRoomInfo (
+    roomId: string,
+  ):Promise<PadplusRoomPayload> {
+    log.verbose(PRE, `getRoomInfo()`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache`)
+    }
+    const hasRoom = await this.cacheManager.hasRoom(roomId)
+    if (hasRoom) {
+      const room = await this.cacheManager.getRoom(roomId)
+      return room!
+    }
+    throw new Error(`has no room for roomId:${roomId}`)
+  }
+
+  public async getRoomMembers (
+    roomId: string,
+  ) {
+    if (!this.cacheManager) {
+      throw new Error(`no cache.`)
+    }
+    const memberMap = await this.cacheManager.getRoomMember(roomId)
+    return memberMap
+  }
+
+  public async setAnnouncement (
+    roomId: string,
+    announcement: string,
+  ) {
+    const uin = this.grpcGatewayEmmiter.getUIN()
+    await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
+  }
   
    /**
     * 
