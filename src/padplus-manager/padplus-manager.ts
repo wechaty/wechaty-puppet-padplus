@@ -8,6 +8,7 @@ import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE } from '../con
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
+import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
@@ -17,10 +18,11 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 // import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas';
 import { CacheManager } from '../server-manager/cache-manager';
+import { convertFromGrpcContact } from '../convert-manager/contact-convertor';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -134,8 +136,22 @@ export class PadplusManager {
     return this
   }
   public async start (): Promise<void> {
+    log.silly(PRE, `start()`)
+
     await this.parseGrpcData()
-    await this.padplusUser.getWeChatQRCode()
+    // check login info in local memory card
+    if (this.options.memory) {
+      const slot = await this.options.memory.get(String(this.options.name))
+      log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `slot : ${util.inspect(slot)}`)
+    }
+    const uin = this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
+
+    if (uin) {
+      log.silly(PRE, `uin : ${util.inspect(uin)}`)
+    } else {
+      await this.padplusUser.getWeChatQRCode()
+    }
     if (this.options.memory) {
       this.memorySlot = {
         ...this.memorySlot,
@@ -145,7 +161,6 @@ export class PadplusManager {
   }
 
   public async parseGrpcData () {
-    log.silly(PRE, `grpc emmiter name : ${util.inspect(this.grpcGatewayEmmiter.getName())}`)
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
@@ -156,10 +171,10 @@ export class PadplusManager {
             const qrcodeData = JSON.parse(qrcodeRawData)
             this.memorySlot.qrcodeId = qrcodeData.qrcodeId
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
-            // 保存QRCode
-            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 1000).toFixed()}.png`)
-            await fileBox.toFile()
-            this.emit('scan', qrcodeData, ScanStatus.Waiting)
+
+            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            const qrcodeUrl = await fileBoxToQrcode(fileBox)
+            this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
           break
         case ResponseType.QRCODE_SCAN :
@@ -167,7 +182,11 @@ export class PadplusManager {
           if (scanRawData) {
             log.silly(PRE, `QRCODE_SCAN : ${util.inspect(scanRawData)}`)
             const scanData: ScanData = JSON.parse(scanRawData)
-            log.info(PRE, `QRCODE_SCAN MSG : ${scanData.msg}`)
+            log.info(PRE, `
+            =================================================
+            QRCODE_SCAN MSG : ${scanData.msg}
+            =================================================
+            `)
             const status = scanData.status
             this.grpcGatewayEmmiter.setQrcodeId(scanData.qrcodeId)
             if (status !== 1) {
@@ -178,12 +197,12 @@ export class PadplusManager {
         case ResponseType.QRCODE_LOGIN :
           const grpcLoginData = data.getData()
           if (grpcLoginData) {
-            log.silly(PRE, `QRCODE_SCAN : ${util.inspect(grpcLoginData)}`)
+            log.silly(PRE, `QRCODE_LOGIN : ${util.inspect(grpcLoginData)}`)
             const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
             this.grpcGatewayEmmiter.setQrcodeId('')
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
-            // 初始化缓存
+
             log.verbose(PRE, `init cache manager`)
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
@@ -202,23 +221,25 @@ export class PadplusManager {
           break
         case ResponseType.ACCOUNT_LOGOUT :
           const looutRawData = data.getData()
-          // TODO: convert data from grpc to padplus, E.G. : convert.scanQrcodeConvert()
           if (looutRawData) {
             this.emit('logout', looutRawData)
           }
           break
         case ResponseType.CONTACT_LIST :
-          const grpcContactList = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (grpcContactList) {
-            const contactList = JSON.parse(grpcContactList)
-            log.silly(PRE, `contact list : ${util.inspect(contactList)}`)
-            // TODO: 联系人列表存入缓存
+          const grpcContact = data.getData()
+          if (grpcContact) {
+            const _contact: GrpcContactPayload = JSON.parse(grpcContact)
+            log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
+            const contact = convertFromGrpcContact(_contact)
+
+            if (this.cacheManager) {
+              this.cacheManager.setContact(contact.userName, contact)
+            }
           }
           break
         case ResponseType.CONTACT_MODIFY :
           const contactModify = data.getData()
-          // TODO: convert data from grpc to padplus
+          // TODO: 查找该联系人的信息并更新
           if (contactModify) {
             this.emit('contact-modify', contactModify)
           }

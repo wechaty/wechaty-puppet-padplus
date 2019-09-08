@@ -1,6 +1,6 @@
 import { RequestClient } from './request'
 import { log } from '../../config'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
 export class PadplusUser {
 
@@ -12,13 +12,29 @@ export class PadplusUser {
     this.requestClient = requestClient
   }
 
+  // 初始化登录信息
+  public initInstance (token: string, uin: string) {
+    const data = {
+      token,
+      uin,
+    }
+    this.requestClient.request({
+      apiType: ApiType.INIT,
+      data,
+    })
+  }
+
   // 获取微信登录二维码
   public getWeChatQRCode = async () => {
-    log.silly(`==P==A==D==P==L==U==S==<GET QRCODE>==P==A==D==P==L==U==S==`)
-    const res = await this.requestClient.request({apiType: ApiType.GET_QRCODE, data: JSON.stringify({loginer: '1'}) })
+    log.silly(`==P==A==D==P==L==U==S==<get qrcode>==P==A==D==P==L==U==S==`)
+    const res = await this.requestClient.request({
+      apiType: ApiType.GET_QRCODE,
+      data: JSON.stringify({loginer: '1'}),
+    })
     log.silly(`USER API res : ${JSON.stringify(res)}`)
     return res
   }
+
 /*
   // 登出微信
   public logoutWeChat = async (account: string): Promise<RequestStatus> => {

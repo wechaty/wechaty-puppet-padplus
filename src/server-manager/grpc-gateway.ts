@@ -188,18 +188,14 @@ export class GrpcGateway extends EventEmitter {
           const callback = await CallbackPool.Instance.getCallback(requestId)
           callback(data)
         } else { // 长连接推送的内容
-          log.silly(PRE, `StreamResponse data : ${util.inspect(data.toObject())}`)
           if (responseType === ResponseType.LOGIN_QRCODE) {
             const name = Object.keys(this.eventEmitterMap).find(name => {
               const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
               const uin = this.eventEmitterMap[name].getUIN()
               const userName = this.eventEmitterMap[name].getUserName()
-              log.silly(PRE, `event map : ${qrcodeId}, ${uin}, ${userName}, ${name}`)
               return qrcodeId === '' && uin === '' && userName === ''
             })
-            log.silly(PRE, `name : ${util.inspect(name)}`)
             if (name) {
-              log.silly(PRE, `map : ${util.inspect(this.eventEmitterMap)}`)
               this.eventEmitterMap[name].emit('data', data)
             }
           } else {

@@ -19,3 +19,35 @@ export interface PadplusContactPayload {
   ticket           : string,                     // 用户v2码，如果非空则为单向好友(非对方好友) 'v2_xxx@stranger'
   userName         : string,                     // "mengjunjun001" | "qq512436430" Unique name
 }
+
+export interface GrpcContactPayload {
+  ContactType: string,
+  ExtInfoExt: string,
+  Sex: number,
+  EncryptUsername: string,
+  wechatUserName: string,
+  PYQuanPin: string,
+  Remark: string,
+  LabelLists: string,
+  ChatroomVersion: number,
+  ExtInfo: string,
+  ChatRoomOwner: string,
+  VerifyFlag: number,
+  ContactFlag: number,
+  UserName: string,
+  HeadImgUrl: string,
+  RemarkPYInitial: string,
+  MsgType: number,
+  City: string,
+  NickName: string,
+  Province: string,
+  Alias: string,
+  Signature: string,
+  RemarkName: string,
+  RemarkPYQuanPin: string,
+  Uin: number,
+  SmallHeadImgUrl: string,
+  PYInitial: string,
+  Seq: string,
+  BigHeadImgUrl: string,
+}

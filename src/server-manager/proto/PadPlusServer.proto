@@ -6,6 +6,8 @@ enum ApiType {
     GET_QRCODE = 0;
     RECONNECT = 1;
     LOGOUT = 2;
+    INIT = 3;
+    STOP = 4;
 
     GET_CONTACT = 10;
     SEARCH_CONTACT = 11;
@@ -45,8 +47,6 @@ message ResponseObject {
 
 message InitConfig {
     required string token = 10;
-    optional string wxid = 20;
-    optional string uin = 21;
 }
 
 enum ResponseType {

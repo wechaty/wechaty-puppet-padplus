@@ -29,10 +29,6 @@ export interface GrpcQrCodeLogin {
   verifyFlag: string,
 }
 
-export interface GrpcContact {
-
-}
-
 export interface GrpcMessagePayload {
   AppMsgType?: string,
   Content: string,
