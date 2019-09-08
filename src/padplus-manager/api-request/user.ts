@@ -26,7 +26,6 @@ export class PadplusUser {
     const res = await this.requestClient.request({
       apiType: ApiType.GET_QRCODE,
       uin: '',
-      data: JSON.stringify({loginer: '1'}),
     })
     log.silly(`USER API res : ${JSON.stringify(res)}`)
     return res

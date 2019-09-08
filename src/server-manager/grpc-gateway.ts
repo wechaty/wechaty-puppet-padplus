@@ -118,8 +118,6 @@ export class GrpcGateway extends EventEmitter {
     request.setApitype(apiType)
     request.setParams(data)
     request.setRequestid(requestId)
-    log.silly(`==P==A==D==P==L==U==S==<request test>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `request : ${util.inspect(request)}`)
 
     try {
       const result = await this._request(request)
@@ -184,12 +182,11 @@ export class GrpcGateway extends EventEmitter {
         log.error(PRE, 'grpc server close')
       })
       result.on('data', async (data: StreamResponse) => {
-        log.silly(`==P==A==D==P==L==U==S==<receive data test>==P==A==D==P==L==U==S==`)
-        log.silly(PRE, `receive data : ${util.inspect(data.toObject())}`)
+        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
+        log.silly(PRE, `data : ${JSON.stringify(data.getData())}`)
+        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
-        log.silly(`==P==A==D==P==L==U==S==<type>==P==A==D==P==L==U==S==`)
-        log.silly(PRE, `type : ${util.inspect(responseType)}`)
         // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
         if (requestId) {
           const callback = await CallbackPool.Instance.getCallback(requestId)
@@ -210,7 +207,6 @@ export class GrpcGateway extends EventEmitter {
             const userName = JSON.parse(data.getData()!).userName
             const emitter = Object.values(this.eventEmitterMap)
                                   .find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
-            log.silly(PRE, `emi : ${util.inspect(emitter)}`)
             if (!emitter) {
               return
             }

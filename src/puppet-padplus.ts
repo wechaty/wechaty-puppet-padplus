@@ -28,7 +28,7 @@ import {
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
-// import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
+import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 import { convertToPuppetContact } from './convert-manager/contact-convertor';
 import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
@@ -73,11 +73,13 @@ export class PuppetPadplus extends Puppet {
   private async startManager (manager: PadplusManager) {
     manager.on('scan', async (url: string, status: ScanStatus) => {
       log.silly(PRE, `scan : ${url}, status: ${status}`)
+      this.emit('scan', url, status)
     })
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
       this.manager.syncContacts()
+      this.emit('login', loginData.userName)
     })
 
     manager.on('message', message => this.onMessage(message))
@@ -341,9 +343,9 @@ export class PuppetPadplus extends Puppet {
   protected async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
     log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
 
-    // const payload = await convertMessageFromPadplusToPuppet(rawPayload)
+    const payload = await convertMessageFromPadplusToPuppet(rawPayload)
 
-    return {} as MessagePayload
+    return payload //{} as MessagePayload
   }
 
   /**

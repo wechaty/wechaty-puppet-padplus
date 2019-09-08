@@ -1,5 +1,6 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
 
 const PRE = 'PadplusMessage'
 
@@ -13,19 +14,18 @@ export class PadplusMessage {
   }
 
   // Send message (text, image, url, video, file, gif)
-  /* public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: MacproMessageType, fileName?: string): Promise<RequestStatus> => {
+  public sendMessage = async (contactId: string, contactIdOrRoomId: string, message: string, messageType: MacproMessageType, fileName?: string): Promise<RequestStatus> => {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
+      messageType,
+      fromUserName: contactId,
+      toUserName: contactIdOrRoomId,
       content: message,
-      content_type: messageType,
-      file_name: fileName,
-      my_account: contactId,
-      to_account: contactIdOrRoomId,
     }
 
     const res = await this.requestClient.request({
-      apiName: 'sendMessage',
+      apiType: ApiType.SEND_MESSAGE,
       data,
     })
     log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
@@ -37,7 +37,7 @@ export class PadplusMessage {
   }
 
   // Send url link
-  public sendUrlLink = async (contactId: string, contactIdOrRoomId: string, urlLinkPayload: MacproUrlLink): Promise<RequestStatus> => {
+  /* public sendUrlLink = async (contactId: string, contactIdOrRoomId: string, urlLinkPayload: MacproUrlLink): Promise<RequestStatus> => {
     log.verbose(PRE, `sendUrlLink()`)
 
     const data = {

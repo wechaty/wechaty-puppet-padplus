@@ -4,7 +4,6 @@ import {
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
 import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE } from '../config'
-// import { CacheManager } from '../server-manager/cache-manager'
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
@@ -16,7 +15,7 @@ import { ScanStatus, UrlLinkPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
-// import { PadplusMessage } from './api-request/message'
+import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
 import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType, GrpcRoomPayload } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
@@ -52,7 +51,7 @@ export class PadplusManager {
   private syncQueueExecutor  : DelayQueueExecutor
   private requestClient      : RequestClient
   private padplusUser        : PadplusUser
-  // private padplusMesasge     : PadplusMessage
+  private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
   private padplusRoom        : PadplusRoom
   private cacheManager?       : CacheManager
@@ -88,7 +87,7 @@ export class PadplusManager {
     this.requestClient = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.requestClient)
     this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
-    // this.padplusMesasge = new PadplusMessage(this.requestClient)
+    this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
     this.padplusRoom = new PadplusRoom(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
@@ -149,10 +148,11 @@ export class PadplusManager {
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `slot : ${util.inspect(slot)}`)
     }
-    const uin = this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
+    const uin = '2978186714' // this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
 
     if (uin) {
       log.silly(PRE, `uin : ${util.inspect(uin)}`)
+      this.grpcGatewayEmmiter.setUIN(uin)
       await this.padplusUser.initInstance(uin)
     } else {
       await this.padplusUser.getWeChatQRCode()
@@ -177,6 +177,7 @@ export class PadplusManager {
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            await fileBox.toFile()
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
@@ -225,9 +226,10 @@ export class PadplusManager {
           this.syncContacts()
           break
         case ResponseType.ACCOUNT_LOGOUT :
-          const looutRawData = data.getData()
-          if (looutRawData) {
-            this.emit('logout', looutRawData)
+          const logoutRawData = data.getData()
+          if (logoutRawData) {
+            const logoutData = JSON.parse(logoutRawData)
+            this.emit('logout', logoutData)
           }
           break
         case ResponseType.CONTACT_LIST :
@@ -262,36 +264,36 @@ export class PadplusManager {
             this.emit('contact-delete', contactDelete)
           }
           break
-          case ResponseType.MESSAGE_RECEIVE :
-            const rawMessageStr = data.getData()
-            // TODO: convert data from grpc to padplus
-            if (rawMessageStr) {
-              const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
-              const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
-              this.emit('message', message)
-            }
-            break
-          case ResponseType.ROOM_MEMBER_LIST :
-            const roomMemberList = data.getData()
-            // TODO: convert data from grpc to padplus
-            if (roomMemberList) {
-              this.emit('room-member-list', roomMemberList)
-            }
-            break
-          case ResponseType.ROOM_MEMBER_MODIFY :
-            const roomMemberModify = data.getData()
-            // TODO: convert data from grpc to padplus
-            if (roomMemberModify) {
-              this.emit('room-member-modify', roomMemberModify)
-            }
-            break
-          case ResponseType.STATUS_NOTIFY :
-            const statusNotify = data.getData()
-            // TODO: convert data from grpc to padplus
-            if (statusNotify) {
-              this.emit('status-notify', statusNotify)
-            }
-            break
+        case ResponseType.MESSAGE_RECEIVE :
+          const rawMessageStr = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (rawMessageStr) {
+            const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
+            const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
+            this.emit('message', message)
+          }
+          break
+        case ResponseType.ROOM_MEMBER_LIST :
+          const roomMemberList = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (roomMemberList) {
+            this.emit('room-member-list', roomMemberList)
+          }
+          break
+        case ResponseType.ROOM_MEMBER_MODIFY :
+          const roomMemberModify = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (roomMemberModify) {
+            this.emit('room-member-modify', roomMemberModify)
+          }
+          break
+        case ResponseType.STATUS_NOTIFY :
+          const statusNotify = data.getData()
+          // TODO: convert data from grpc to padplus
+          if (statusNotify) {
+            this.emit('status-notify', statusNotify)
+          }
+          break
       }
     })
   }
@@ -306,7 +308,7 @@ export class PadplusManager {
    */
 
   public async sendMessage (wxid: string, receiver: string, text: string, type: PadplusMessageType) {
-    // await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
+    await this.padplusMesasge.sendMessage(wxid, receiver, text, type)
     log.silly(PRE, ` : ${wxid}, : ${receiver}, : ${text}, : ${type}`)
   }
 
