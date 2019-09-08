@@ -25,8 +25,8 @@ const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
 export interface PadplusMemorySlot {
   userName  : string,
-  uin : number,
-  qrcodeId: number,
+  uin : string,
+  qrcodeId: string,
 }
 
 export interface ManagerOptions {
@@ -74,8 +74,8 @@ export class PadplusManager {
     }
     this.memorySlot = {
       userName: '',
-      uin: 0,
-      qrcodeId: 0,
+      uin: '',
+      qrcodeId: '',
     }
     this.grpcGateway = GrpcGateway.Instance
     this.requestClient = new RequestClient(this.grpcGateway)
@@ -173,7 +173,7 @@ export class PadplusManager {
             const status = scanData.status
             this.grpcGatewayEmmiter.setQrcodeId(scanData.qrcodeId)
             if (status !== 1) {
-              this.memorySlot.qrcodeId = 0
+              this.memorySlot.qrcodeId = ''
             }
           }
           break

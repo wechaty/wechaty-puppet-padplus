@@ -203,9 +203,12 @@ export class GrpcGateway extends EventEmitter {
               this.eventEmitterMap[name].emit('data', data)
             }
           } else {
-            // TODO: 根据消息中的 uin 找到对应的name，从而找到对应的 Emmitter
-
-            this.eventEmitterMap[name].emit('data', data)
+            const uin = data.getUin()
+            const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin)
+            if (!emitter) {
+              return
+            }
+            emitter.emit('data', data)
           }
 
         }

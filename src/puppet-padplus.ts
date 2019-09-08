@@ -24,7 +24,7 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
 // import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 import { convertToPuppetContact } from './convert-manager/contact-convertor';
@@ -377,8 +377,22 @@ export class PuppetPadplus extends Puppet {
   roomTopic(roomId: string): Promise<string>
   roomTopic(roomId: string, topic: string): Promise<void>
   roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
-  roomTopic(roomId: any, topic?: any): Promise<string | void> {
+  async roomTopic(roomId: string, topic?: any): Promise<string | void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, topic: ${topic}`)
+    if (typeof topic === 'undefined') {
+      const room = await this.roomPayload(roomId)
+      return room && room.topic || ''
+    }
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    if (!this.id) {
+      throw new Error(`not bot logined.`)
+    }
+    const selfId = this.selfId()
+    // await this.manager.setRoomTopic(selfId, roomId, topic as string)
+
+
     throw new Error("Method not implemented.")
   }
 
@@ -396,7 +410,7 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  protected roomRawPayload(roomId: string): Promise<any> {
+  protected roomRawPayload(roomId: string): Promise<PadplusRoomPayload> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
