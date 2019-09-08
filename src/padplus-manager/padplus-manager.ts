@@ -3,10 +3,11 @@ import {
   DelayQueueExecutor,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE } from '../config'
 // import { CacheManager } from '../server-manager/cache-manager'
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
+import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway';
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
@@ -14,6 +15,8 @@ import { ScanStatus } from 'wechaty-puppet';
 import { RequestClient } from './api-request/request';
 import { PadplusUser } from './api-request/user-api';
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter';
+import { PadplusMessagePayload } from '../schemas';
+import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -43,11 +46,21 @@ export class PadplusManager {
   private padplusUser        : PadplusUser
 
   private memorySlot: PadplusMemorySlot
+  public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
   constructor (
     public options: ManagerOptions,
   ) {
     log.verbose(PRE, 'constructor()')
+    const lruOptions: LRU.Options<string, PadplusMessagePayload> = {
+      dispose (key: string, val: any) {
+        log.silly(PRE, `constructor() lruOptions.dispose(${key}, ${JSON.stringify(val)})`)
+      },
+      max: MESSAGE_CACHE_MAX,
+      maxAge: MESSAGE_CACHE_AGE,
+    }
+
+    this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
 
     this.state = new StateSwitch('PadplusManager')
     this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
@@ -72,7 +85,7 @@ export class PadplusManager {
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
   public emit (event: 'contact-delete', data: string): boolean
-  public emit (event: 'message', data: string): boolean
+  public emit (event: 'message', data: PadplusMessagePayload): boolean
   public emit (event: 'room-member-list', data: string): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
@@ -91,7 +104,7 @@ export class PadplusManager {
   public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'contact-modify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'contact-delete', listener: ((this: PadplusManager, data: string) => void)): this
-  public on (event: 'message', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'message', listener: ((this: PadplusManager, data: PadplusMessagePayload) => void)): this
   public on (event: 'room-member-list', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'room-member-modify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
@@ -189,7 +202,8 @@ export class PadplusManager {
             const rawMessage = data.getData()
             // TODO: convert data from grpc to padplus
             if (rawMessage) {
-              this.emit('message', rawMessage)
+              const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
+              this.emit('message', message)
             }
             break
           case ResponseType.ROOM_MEMBER_LIST :
@@ -215,6 +229,23 @@ export class PadplusManager {
             break
       }
     })
+  }
+
+  /**
+   * Contact Section
+   */
+
+
+  /**
+   * Message Section
+   */
+
+  private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
+    // TODO: 处理所有消息信息 1. 数据转换  2. 类型处理
+    const messageId = ''
+    const payload: PadplusMessagePayload = convertMessageFromGrpcToPadplus(rawMessage)
+    this.cachePadplusMessagePayload.set(messageId, payload)
+    return {} as PadplusMessagePayload
   }
 }
 
