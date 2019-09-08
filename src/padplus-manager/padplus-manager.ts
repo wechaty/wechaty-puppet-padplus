@@ -17,9 +17,10 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 // import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData, GrpcLoginData } from '../schemas'
+import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, PadplusUrlLink, ScanData } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload } from '../schemas/grpc-schemas';
+import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas';
+import { CacheManager } from '../server-manager/cache-manager';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -49,7 +50,7 @@ export class PadplusManager {
   private padplusUser        : PadplusUser
   // private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
-
+  private cacheManager?       : CacheManager
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
@@ -78,8 +79,8 @@ export class PadplusManager {
       qrcodeId: '',
     }
     this.grpcGateway = GrpcGateway.Instance
-    this.requestClient = new RequestClient(this.grpcGateway)
 
+    this.requestClient = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.requestClient)
     this.requestClient = new RequestClient(this.grpcGateway)
     // this.padplusMesasge = new PadplusMessage(this.requestClient)
@@ -89,7 +90,7 @@ export class PadplusManager {
   }
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
-  public emit (event: 'login', data: GrpcLoginData): boolean
+  public emit (event: 'login', data: GrpcQrCodeLogin): boolean
   public emit (event: 'logout', userIdOrReasonOrData: string): boolean
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
@@ -108,7 +109,7 @@ export class PadplusManager {
   }
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
-  public on (event: 'login', listener: ((this: PadplusManager, data: GrpcLoginData) => void)): this
+  public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
   public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'contact-modify', listener: ((this: PadplusManager, data: string) => void)): this
@@ -132,7 +133,6 @@ export class PadplusManager {
 
     return this
   }
-
   public async start (): Promise<void> {
     await this.parseGrpcData()
     await this.padplusUser.getWeChatQRCode()
@@ -142,7 +142,6 @@ export class PadplusManager {
         ...await this.options.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
       }
     }
-    await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 
   public async parseGrpcData () {
@@ -155,8 +154,6 @@ export class PadplusManager {
           if (qrcodeRawData) {
             log.silly(PRE, `LOGIN_QRCODE : ${util.inspect(qrcodeRawData)}`)
             const qrcodeData = JSON.parse(qrcodeRawData)
-            log.silly(`==P==A==D==P==L==U==S==<qrcode id>==P==A==D==P==L==U==S==`)
-            log.silly(PRE, `qrcodeData : ${util.inspect(qrcodeData.qrcodeId)}`)
             this.memorySlot.qrcodeId = qrcodeData.qrcodeId
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
             // 保存QRCode
@@ -178,14 +175,30 @@ export class PadplusManager {
             }
           }
           break
-        case ResponseType.ACCOUNT_LOGIN :
-          const loginRawData = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (loginRawData) {
-            const grpcLoginData: GrpcLoginData = JSON.parse(loginRawData)
-            const loginData = convertLoginData(grpcLoginData)
+        case ResponseType.QRCODE_LOGIN :
+          const grpcLoginData = data.getData()
+          if (grpcLoginData) {
+            log.silly(PRE, `QRCODE_SCAN : ${util.inspect(grpcLoginData)}`)
+            const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
+            this.grpcGatewayEmmiter.setQrcodeId('')
+            this.grpcGatewayEmmiter.setUserName(loginData.userName)
+            this.grpcGatewayEmmiter.setUIN(loginData.uin)
+            // 初始化缓存
+            log.verbose(PRE, `init cache manager`)
+            await CacheManager.init(loginData.userName)
+            this.cacheManager = CacheManager.Instance
+
             this.emit('login', loginData)
           }
+          break
+        case ResponseType.ACCOUNT_LOGIN :
+          /*const loginRawData = data.getData()
+          // TODO: convert data from grpc to padplus
+           if (loginRawData) {
+            const grpcLoginData: GrpcLoginData = JSON.parse(loginRawData)
+            // const loginData = convertLoginData(grpcLoginData)
+            this.emit('login', grpcLoginData)
+          } */
           break
         case ResponseType.ACCOUNT_LOGOUT :
           const looutRawData = data.getData()
@@ -195,10 +208,12 @@ export class PadplusManager {
           }
           break
         case ResponseType.CONTACT_LIST :
-          const contactList = data.getData()
+          const grpcContactList = data.getData()
           // TODO: convert data from grpc to padplus
-          if (contactList) {
-            this.emit('contact-list', contactList)
+          if (grpcContactList) {
+            const contactList = JSON.parse(grpcContactList)
+            log.silly(PRE, `contact list : ${util.inspect(contactList)}`)
+            // TODO: 联系人列表存入缓存
           }
           break
         case ResponseType.CONTACT_MODIFY :
@@ -332,10 +347,8 @@ export class PadplusManager {
     return contact
   }
 
-  public async syncContacts (
-    selfId: string,
-  ) {
-    this.padplusContact.syncContacts(selfId)
+  public async syncContacts (): Promise<void> {
+    await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 
   // public async getContact (

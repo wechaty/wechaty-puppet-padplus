@@ -24,7 +24,7 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
 // import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
 import { convertToPuppetContact } from './convert-manager/contact-convertor';
@@ -68,8 +68,9 @@ export class PuppetPadplus extends Puppet {
       log.silly(PRE, `scan : ${url}, status: ${status}`)
     })
 
-    manager.on('login', async (loginData: string) => {
-      log.silly(PRE, `scan : ${util.inspect(loginData)}`)
+    manager.on('login', async (loginData: GrpcQrCodeLogin) => {
+      log.silly(PRE, `login success : ${util.inspect(loginData)}`)
+      this.manager.syncContacts()
     })
 
     await manager.start()
@@ -389,7 +390,6 @@ export class PuppetPadplus extends Puppet {
     if (!this.id) {
       throw new Error(`not bot logined.`)
     }
-    const selfId = this.selfId()
     // await this.manager.setRoomTopic(selfId, roomId, topic as string)
 
 
