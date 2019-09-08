@@ -33,6 +33,7 @@ import { convertToPuppetContact } from './convert-manager/contact-convertor';
 import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
+import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -87,6 +88,8 @@ export class PuppetPadplus extends Puppet {
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${util.inspect(message)}`)
     this.onRoomJoinEvent(message)
+    this.onRoomLeaveEvent(message)
+    this.onRoomTopicEvent(message)
   }
 
   stop(): Promise<void> {
@@ -449,7 +452,38 @@ export class PuppetPadplus extends Puppet {
     }
   }
   async onRoomTopicEvent(message: PadplusMessagePayload): Promise<void> {
+    log.verbose(PRE, 'onPadproMessageRoomEventTopic({id=%s})', message.msgId)
 
+    const topicEvent = roomTopicEventMessageParser(message)
+
+    if (topicEvent) {
+      const changerName = topicEvent.changerName
+      const newTopic    = topicEvent.topic
+      const roomId      = topicEvent.roomId
+      const timestamp   = topicEvent.timestamp
+      log.silly(PRE, 'onPadproMessageRoomEventTopic() roomTopicEvent="%s"', JSON.stringify(topicEvent))
+
+      const roomOldPayload = await this.roomPayload(roomId)
+      const oldTopic       = roomOldPayload.topic
+
+      const changerIdList = await this.roomMemberSearch(roomId, changerName)
+      if (changerIdList.length < 1) {
+        throw new Error('no changerId found')
+      } else if (changerIdList.length > 1) {
+        log.verbose(PRE, 'onPadproMessageRoomEventTopic() changerId found more than 1, use the first one.')
+      }
+      const changerId = changerIdList[0]
+
+      if (!this.manager) {
+        throw new Error('no padproManager')
+      }
+      /**
+       * Set Cache Dirty
+       */
+      await this.roomPayloadDirty(roomId)
+
+      this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
+    }
   }
   
   roomInvitationAccept(roomInvitationId: string): Promise<void> {
