@@ -1,4 +1,3 @@
-/* eslint-disable */
 import grpc from 'grpc'
 import util from 'util'
 import { v4 as uuid } from 'uuid'
@@ -63,7 +62,9 @@ export class GrpcGateway extends EventEmitter {
   ) {
     super()
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
-    this.initGrpcGateway()
+    this.initGrpcGateway().catch(err => {
+      throw new Error(err)
+    })
   }
 
   private addNewInstance (
@@ -117,9 +118,9 @@ export class GrpcGateway extends EventEmitter {
     try {
       const result = await this._request(request)
       if (result) {
-        return new Promise<StreamResponse>((resolve) => {
+        return new Promise<StreamResponse>(async resolve => {
           if (NEED_CALLBACK_API_LIST.includes(apiType)) {
-            CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            await CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
               resolve(data)
             })
           } else {
