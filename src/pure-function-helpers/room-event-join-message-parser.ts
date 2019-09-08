@@ -88,9 +88,9 @@ export async function roomJoinEventMessageParser (
     return null
   }
 
-  const roomId = rawPayload.fromMemberUserName
+  const roomId = rawPayload.fromUserName
   if (!roomId) {
-    throw new Error(`no room Id.`)
+    return null
   }
   if (!isRoomId(roomId)) {
     return null

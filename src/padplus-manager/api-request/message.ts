@@ -1,7 +1,6 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
 import { PadplusMessageType, RequestStatus } from '../../schemas'
 
 const PRE = 'PadplusMessage'
@@ -9,12 +8,9 @@ const PRE = 'PadplusMessage'
 export class PadplusMessage {
 
   private requestClient: RequestClient
-  private emitter: GrpcEventEmitter
-  constructor (requestClient: RequestClient, emmiter: GrpcEventEmitter) {
+  constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
-    this.emitter = emmiter
     log.silly(PRE, `re : ${this.requestClient}`)
-    log.silly(PRE, `emitter : ${this.emitter}`)
   }
 
   // Send message (text, image, url, video, file, gif)
@@ -31,7 +27,6 @@ export class PadplusMessage {
 
     const res = await this.requestClient.request({
       apiType: ApiType.SEND_MESSAGE,
-      uin: this.emitter.getUIN(),
       data,
     })
 
@@ -70,7 +65,6 @@ export class PadplusMessage {
 
     const res = await this.requestClient.request({
       apiType: ApiType.SEND_FILE,
-      uin: this.emitter.getUIN(),
       data,
     })
     log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)

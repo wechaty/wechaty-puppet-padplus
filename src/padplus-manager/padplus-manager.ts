@@ -17,21 +17,32 @@ import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
 import { PadplusMessage } from './api-request/message'
 import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
-import { PadplusMessagePayload, PadplusContactPayload, PadplusMessageType, ScanData, GrpcContactPayload, PadplusRoomPayload, PadplusError, PadplusErrorType, GrpcRoomPayload } from '../schemas'
+import {
+  GrpcContactPayload,
+  GrpcRoomPayload,
+  PadplusContactPayload,
+  PadplusError,
+  PadplusErrorType,
+  PadplusMessagePayload,
+  PadplusMessageType,
+  PadplusRoomPayload,
+  ScanData,
+} from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
-import { convertRoomFromGrpc } from '../convert-manager/room-convertor';
-import { CallbackPool } from '../utils/callbackHelper';
+import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
+import { CallbackPool } from '../utils/callbackHelper'
+import { PadplusFriendship } from './api-request/friendship'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
 export interface PadplusMemorySlot {
-  userName  : string,
-  uin : string,
   qrcodeId: string,
+  uin : string,
+  userName  : string,
 }
 
 export interface ManagerOptions {
@@ -55,7 +66,8 @@ export class PadplusManager {
   private padplusMesasge     : PadplusMessage
   private padplusContact     : PadplusContact
   private padplusRoom        : PadplusRoom
-  private cacheManager?       : CacheManager
+  private padplusFriendship  : PadplusFriendship
+  private cacheManager?      : CacheManager
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
@@ -86,11 +98,12 @@ export class PadplusManager {
     }
     this.grpcGateway = GrpcGateway.Instance
 
-    this.requestClient = new RequestClient(this.grpcGateway) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
-    this.padplusUser = new PadplusUser(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusMesasge = new PadplusMessage(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusContact = new PadplusContact(this.requestClient, this.grpcGatewayEmmiter)
-    this.padplusRoom = new PadplusRoom(this.requestClient, this.grpcGatewayEmmiter)
+    this.requestClient = new RequestClient(this.grpcGateway, this.grpcGatewayEmmiter) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
+    this.padplusUser = new PadplusUser(this.requestClient)
+    this.padplusMesasge = new PadplusMessage(this.requestClient)
+    this.padplusContact = new PadplusContact(this.requestClient)
+    this.padplusRoom = new PadplusRoom(this.requestClient)
+    this.padplusFriendship = new PadplusFriendship(this.requestClient)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -143,11 +156,18 @@ export class PadplusManager {
       const slot = await this.options.memory.get(String(this.options.name))
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `slot : ${util.inspect(slot)}`)
-      const uin = slot.uin
+      let uin
+      if (!slot) {
+        uin = ''
+      } else {
+        uin = slot.uin
+      }
+
       if (uin) {
+        log.silly(PRE, `uin : ${util.inspect(uin)}`)
         this.grpcGatewayEmmiter.setUIN(uin)
         await new Promise(r => setTimeout(r, 500))
-        await this.padplusUser.initInstance(uin)
+        await this.padplusUser.initInstance()
       } else {
         await this.padplusUser.getWeChatQRCode()
       }
@@ -161,6 +181,8 @@ export class PadplusManager {
 
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
+      log.silly(`==P==A==D==P==L==U==S==<manager.parsegrpcdata>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `msgdata : ${util.inspect(data.toObject())}`)
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
@@ -345,7 +367,7 @@ export class PadplusManager {
     }
     const contact = await this.cacheManager.getContact(contactId)
     if (contact) {
-      return contact;
+      return contact
     }
     if (count === 0) {
       await this.padplusContact.getContactInfo(contactId)
@@ -509,6 +531,18 @@ export class PadplusManager {
     * messages
     * 
     */
+
+  /**
+   * 
+   * friendship
+   * 
+   */
+  public async confirmFriendship(
+    encryptUserName: string,
+    ticket: string,
+  ) {
+    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
+  }
 }
 
 

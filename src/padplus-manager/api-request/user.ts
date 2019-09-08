@@ -1,33 +1,27 @@
 import { RequestClient } from './request'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
 
 export class PadplusUser {
 
   private requestClient: RequestClient
   // private token: string
 
-  private emitter: GrpcEventEmitter
-  constructor (requestClient: RequestClient, emitter: GrpcEventEmitter) {
+  constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
-    this.emitter = emitter
   }
 
   // 初始化登录信息
-  public async initInstance (uin: string) {
+  public async initInstance () {
     await this.requestClient.request({
       apiType: ApiType.INIT,
-      uin, // this.emitter.getUIN(),
     })
   }
 
   // 获取微信登录二维码
   public getWeChatQRCode = async () => {
-    log.silly(`==P==A==D==P==L==U==S==<get qrcode>==P==A==D==P==L==U==S==`)
     const res = await this.requestClient.request({
       apiType: ApiType.GET_QRCODE,
-      uin: this.emitter.getUIN(),
     })
     log.silly(`USER API res : ${JSON.stringify(res)}`)
     return res

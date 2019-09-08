@@ -8,7 +8,7 @@ export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload =
     chatRoomOwner  : room.ChatRoomOwner,
     chatroomVersion: room.ChatroomVersion,
     contactType    : room.ContactType,
-    stranger       : '', // TODO: need to CHECK
+    stranger       : room.EncryptUsername,
     members        : JSON.parse(room.ExtInfo),
     labelLists     : room.LabelLists,
     nickName       : room.NickName,

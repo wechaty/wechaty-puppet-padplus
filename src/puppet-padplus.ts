@@ -18,6 +18,7 @@ import {
   ScanStatus,
   Puppet,
 }                           from 'wechaty-puppet'
+// import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
 import {
   log,
@@ -34,6 +35,7 @@ import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manage
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
+import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -89,6 +91,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   async onMessage(message: PadplusMessagePayload) {
+    log.silly(`==P==A==D==P==L==U==S==<padplus.ts receive message>==P==A==D==P==L==U==S==`)
     log.silly(PRE, `receive message : ${util.inspect(message)}`)
     const messageType = message.msgType
     switch(messageType) {
@@ -99,6 +102,8 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Voice:
       case PadplusMessageType.SelfAvatar:
       case PadplusMessageType.VerifyMsg:
+        await this.onFriendshipEvent(message)
+        break
       case PadplusMessageType.PossibleFriendMsg:
       case PadplusMessageType.ShareCard:
       case PadplusMessageType.Video:
@@ -229,6 +234,61 @@ export class PuppetPadplus extends Puppet {
    *    FRIENDSHIP SECTION
    * =========================
    */
+
+  async onFriendshipEvent(message: PadplusMessagePayload): Promise<void> {
+    log.verbose(PRE, 'onPadproMessageFriendshipEvent({id=%s})', message.msgId)
+    /**
+     * 1. Look for friendship confirm event
+     */
+    const friendshipConfirmContactId = friendshipConfirmEventMessageParser(message)
+    /**
+     * 2. Look for friendship receive event
+     */
+    const friendshipReceiveContactId = await friendshipReceiveEventMessageParser(message)
+    /**
+     * 3. Look for friendship verify event
+     */
+    const friendshipVerifyContactId = friendshipVerifyEventMessageParser(message)
+
+    // if (friendshipReceiveContactId) {
+    //   interface XmlSchema {
+    //     msg: {
+    //       $: {
+    //         fromusername    : string,
+    //         encryptusername : string,
+    //         content         : string,
+    //         ticket          : string,
+    //       },
+    //     }
+    //   }
+    
+    //   try {
+    //     const jsonPayload: XmlSchema = await xmlToJson(
+    //       message.content,
+    //     )
+    
+    //     const v1 = jsonPayload.msg.$.encryptusername
+    //     const ticket = jsonPayload.msg.$.ticket
+    //     log.silly(`==P==A==D==P==L==U==S==<receive friendship>==P==A==D==P==L==U==S==`)
+    //     log.silly(PRE, `v1 and v2 : ${util.inspect(v1)};;;${ticket}`)
+    //     await this.confirmFriendship(v1, ticket)
+    //   } catch (e) {
+    //     // not receive event
+    //   }
+    // }
+
+    if (friendshipConfirmContactId
+        || friendshipReceiveContactId
+        || friendshipVerifyContactId
+    ) {
+      // Maybe load contact here since we know a new friend is added
+      this.emit('friendship', message.msgId)
+    }
+  }
+
+  async confirmFriendship(v1: string, ticket: string) {
+    await this.manager.confirmFriendship(v1, ticket)
+  }
 
   friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
     log.silly(PRE, `contactId : ${util.inspect(contactId)}, hello: ${hello}`)
@@ -390,6 +450,8 @@ export class PuppetPadplus extends Puppet {
   async onRoomJoinEvent(message: PadplusMessagePayload): Promise<void> {
     const joinEvent = await roomJoinEventMessageParser(message)
     if (joinEvent) {
+      log.silly(`==P==A==D==P==L==U==S==<room join event>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `receive join event : ${util.inspect(joinEvent)}`)
       const inviteeNameList = joinEvent.inviteeNameList
       const inviterName     = joinEvent.inviterName
       const roomId          = joinEvent.roomId
@@ -452,6 +514,8 @@ export class PuppetPadplus extends Puppet {
     const leaveEvent = roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
+      log.silly(`==P==A==D==P==L==U==S==<roomLeaveEvent>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `receive remove event : ${util.inspect(leaveEvent)}`)
       const leaverNameList = leaveEvent.leaverNameList
       const removerName    = leaveEvent.removerName
       const roomId         = leaveEvent.roomId
@@ -492,6 +556,8 @@ export class PuppetPadplus extends Puppet {
     const topicEvent = roomTopicEventMessageParser(message)
 
     if (topicEvent) {
+      log.silly(`==P==A==D==P==L==U==S==<room topic event>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `receive topic event : ${util.inspect(topicEvent)}`)
       const changerName = topicEvent.changerName
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
