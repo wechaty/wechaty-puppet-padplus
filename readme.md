@@ -17,7 +17,7 @@
 ### 1. Init
 
 ```js
-mkdir padplus
+mkdir test-padplus
 
 npm init
 ```
