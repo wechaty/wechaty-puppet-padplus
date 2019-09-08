@@ -117,12 +117,7 @@ export class PadplusManager {
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
-  public on (event: 'contact-list', listener: ((this: PadplusManager, data: string) => void)): this
-  public on (event: 'contact-modify', listener: ((this: PadplusManager, data: string) => void)): this
-  public on (event: 'contact-delete', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'message', listener: ((this: PadplusManager, data: PadplusMessagePayload) => void)): this
-  public on (event: 'room-member-list', listener: ((this: PadplusManager, data: string) => void)): this
-  public on (event: 'room-member-modify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: never, listener: never): never
 
@@ -143,28 +138,25 @@ export class PadplusManager {
     log.silly(PRE, `start()`)
 
     await this.parseGrpcData()
-    // check login info in local memory card
+
     if (this.options.memory) {
       const slot = await this.options.memory.get(String(this.options.name))
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `slot : ${util.inspect(slot)}`)
-    }
-    const uin = '2978186714' // this.grpcGatewayEmmiter.getUIN() // 从 memory card 中获取 uin 数据
-
-    if (uin) {
-      log.silly(PRE, `uin : ${util.inspect(uin)}`)
-      this.grpcGatewayEmmiter.setUIN(uin)
-      await new Promise(r => setTimeout(r, 500))
-      await this.padplusUser.initInstance(uin)
-    } else {
-      await this.padplusUser.getWeChatQRCode()
-    }
-    if (this.options.memory) {
+      const uin = slot.uin
+      if (uin) {
+        this.grpcGatewayEmmiter.setUIN(uin)
+        await new Promise(r => setTimeout(r, 500))
+        await this.padplusUser.initInstance(uin)
+      } else {
+        await this.padplusUser.getWeChatQRCode()
+      }
       this.memorySlot = {
         ...this.memorySlot,
         ...await this.options.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
       }
     }
+
   }
 
   public async parseGrpcData () {
@@ -239,6 +231,7 @@ export class PadplusManager {
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
           if (logoutRawData) {
+            // TODO: parse logout data
             const logoutData = JSON.parse(logoutRawData)
             this.emit('logout', logoutData)
           }
@@ -271,21 +264,16 @@ export class PadplusManager {
               if (this.cacheManager) {
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
               } else {
-                // TODO: 根据群id查找对应的群详情
+                throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
             }
           }
           break
         case ResponseType.CONTACT_DELETE :
-          const contactDelete = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (contactDelete) {
-            this.emit('contact-delete', contactDelete)
-          }
+          // TODO: delete contact in cache
           break
         case ResponseType.MESSAGE_RECEIVE :
           const rawMessageStr = data.getData()
-          // TODO: convert data from grpc to padplus
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
@@ -293,30 +281,17 @@ export class PadplusManager {
           }
           break
         case ResponseType.ROOM_MEMBER_LIST :
-          const roomMemberList = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (roomMemberList) {
-            this.emit('room-member-list', roomMemberList)
-          }
+          // TODO: not support now
           break
         case ResponseType.ROOM_MEMBER_MODIFY :
-          const roomMemberModify = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (roomMemberModify) {
-            this.emit('room-member-modify', roomMemberModify)
-          }
+          // TODO: not support now
           break
         case ResponseType.STATUS_NOTIFY :
-          const statusNotify = data.getData()
-          // TODO: convert data from grpc to padplus
-          if (statusNotify) {
-            this.emit('status-notify', statusNotify)
-          }
+          // TODO: not support now
           break
         case ResponseType.REQUEST_RESPONSE :
           const requestId = data.getRequestid()
           const responseData = data.getData()
-          // TODO: convert data from grpc to padplus
           if (responseData) {
             const callback = await CallbackPool.Instance.getCallback(requestId!)
             callback && callback(data)
@@ -459,8 +434,6 @@ export class PadplusManager {
   }
 
   public async syncContacts (): Promise<void> {
-    log.silly(`==P==A==D==P==L==U==S==<UIN test>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `uin : ${util.inspect(this.grpcGatewayEmmiter.getUIN())}`)
     await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
   }
 

@@ -38,7 +38,6 @@ import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-
 const PRE = 'PUPPET_PADPLUS'
 
 export class PuppetPadplus extends Puppet {
-  public id = 'wxid_v7j3e9kna9l912' // TODO: need to delete
 
   private manager: PadplusManager
 
@@ -113,6 +112,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
+        this.emit('message', message.msgId)
         break
       case PadplusMessageType.Sys:
         await Promise.all([
