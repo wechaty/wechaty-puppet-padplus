@@ -26,18 +26,6 @@ export function messageType (
       type = MessageType.Audio
       // console.log(rawPayload)
       break
-
-    /* case PadplusMessageType.Emoji:
-    case PadplusMessageType.Gif:
-      type = MessageType.Emoticon
-      // console.log(rawPayload)
-      break
-
-    case PadplusMessageType.File:
-      type = MessageType.Attachment
-      // console.log(rawPayload)
-      break */
-
     case PadplusMessageType.Location:
       type = MessageType.Location
       // console.log(rawPayload)

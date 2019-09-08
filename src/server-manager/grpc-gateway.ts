@@ -1,3 +1,4 @@
+/* eslint-disable */
 import grpc from 'grpc'
 import util from 'util'
 import { v4 as uuid } from 'uuid'
@@ -29,19 +30,13 @@ export interface ResultObject {
 const PRE = 'GRPC_GATEWAY'
 const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEND_MESSAGE,
-];
+]
 
 export type GrpcGatewayEvent = 'data'
 
-export interface WX_Info {
-  userName?: string,
-  uin?: number,
-  qrcodeId?: number,
-}
-
 export class GrpcGateway extends EventEmitter {
 
-  private static _instance?: GrpcGateway = undefined;
+  private static _instance?: GrpcGateway = undefined
 
   public static get Instance () {
     return this._instance
@@ -57,7 +52,7 @@ export class GrpcGateway extends EventEmitter {
     if (!this._instance) {
       this._instance = new GrpcGateway(token, endpoint)
     }
-    return this._instance.addNewInstance(name);
+    return this._instance.addNewInstance(name)
   }
 
   private client: PadPlusServerClient
@@ -107,7 +102,6 @@ export class GrpcGateway extends EventEmitter {
     return this
   }
 
-
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse> {
     const request = new RequestObject()
     const requestId = uuid()
@@ -129,7 +123,7 @@ export class GrpcGateway extends EventEmitter {
               resolve(data)
             })
           } else {
-            resolve();
+            resolve()
           }
         })
       } else {
@@ -157,7 +151,7 @@ export class GrpcGateway extends EventEmitter {
             if (flag) {
               resolve(true)
             } else {
-              reject('can not get result from response.')
+              reject(err)
             }
           }
         }
@@ -206,8 +200,7 @@ export class GrpcGateway extends EventEmitter {
           } else {
             const uin = data.getUin()
             const userName = JSON.parse(data.getData()!).userName
-            const emitter = Object.values(this.eventEmitterMap)
-                                  .find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
+            const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
             if (!emitter) {
               return
             }
@@ -220,4 +213,5 @@ export class GrpcGateway extends EventEmitter {
       log.silly(PRE, `error : ${err}`)
     }
   }
+
 }

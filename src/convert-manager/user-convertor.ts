@@ -7,34 +7,30 @@ const PRE = 'user-convertor'
 export const convertToQrcode = (input: GrpcQrCode): PadplusQrcode => {
   try {
     const result: PadplusQrcode = {
-      qrcodeId: input.qrcodeId,
       qrcode: input.qrcode,
+      qrcodeId: input.qrcodeId,
     }
     return result
-  }
-  catch (err) {
-    log.warn(PRE, `convert to PadplusQrcode error from input:${ JSON.stringify(input) }`)
+  } catch (err) {
+    log.warn(PRE, `convert to PadplusQrcode error from input:${JSON.stringify(input)}`)
     throw err
   }
 }
-
 
 export const convertToQrcodeStatus = (input: GrpcQrCodeStatus): PadplusQrcodeStatus => {
   try {
     const result: PadplusQrcodeStatus = {
       headUrl: input.head_url,
-      userName: input.user_name,
       nickName: input.nick_name,
       status: QrcodeStatus.Waiting,
+      userName: input.user_name,
     }
     return result
-  }
-  catch (err) {
-    log.warn(PRE, `convert to PadplusQrcodeStatus error from input:${ JSON.stringify(input) }`)
+  } catch (err) {
+    log.warn(PRE, `convert to PadplusQrcodeStatus error from input:${JSON.stringify(input)}`)
     throw err
   }
 }
-
 
 export const convertToQrcodeLogin = (input: GrpcQrCodeLogin): PadplusQrcodeLogin => {
   try {
@@ -47,9 +43,8 @@ export const convertToQrcodeLogin = (input: GrpcQrCodeLogin): PadplusQrcodeLogin
       verifyFlag: input.verifyFlag,
     }
     return result
-  }
-  catch (err) {
-    log.warn(PRE, `convert to PadplusQrcodeLogin error from input:${ JSON.stringify(input) }`)
+  } catch (err) {
+    log.warn(PRE, `convert to PadplusQrcodeLogin error from input:${JSON.stringify(input)}`)
     throw err
   }
 }

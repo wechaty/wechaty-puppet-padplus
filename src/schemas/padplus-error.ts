@@ -16,4 +16,5 @@ export class PadplusError extends Error {
   public toString (): string {
     return `PADPLUS_ERROR ${this.toString()}`
   }
+
 }

@@ -1,6 +1,6 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
 const PRE = 'PadplusFriendship'
 
@@ -16,9 +16,9 @@ export class PadplusFriendship {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
+      type: 3,
       userName: encryptUserName,
       verifyUserTicket: ticket,
-      type: 3,
     }
 
     await this.requestClient.request({
@@ -27,4 +27,5 @@ export class PadplusFriendship {
     })
     return true
   }
+
 }

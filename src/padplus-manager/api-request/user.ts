@@ -27,7 +27,7 @@ export class PadplusUser {
     return res
   }
 
-/*
+  /*
   // 登出微信
   public logoutWeChat = async (account: string): Promise<RequestStatus> => {
     log.silly(PRE, `logoutWeChat(${account})`)

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events'
 
 export class GrpcEventEmitter extends EventEmitter {
 
@@ -7,7 +7,7 @@ export class GrpcEventEmitter extends EventEmitter {
   private uin: string
   private qrcodeId: string
 
-  constructor(name: string) {
+  constructor (name: string) {
     super()
     this.name = name
     this.userName = ''

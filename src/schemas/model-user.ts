@@ -1,15 +1,16 @@
+/* eslint camelcase: 0 */
 import { QrcodeStatus, LoginStatus } from './padplus-enums'
 
 export interface PadplusQrcode {
-  qrcodeId: string,
   qrcode: string,
+  qrcodeId: string,
 }
 
 export interface PadplusQrcodeStatus {
   headUrl: string,
-  userName: string,
   nickName: string,
   status: QrcodeStatus,
+  userName: string,
 }
 
 export interface PadplusQrcodeLogin {
@@ -22,15 +23,15 @@ export interface PadplusQrcodeLogin {
 }
 
 export interface GrpcLoginData {
-  msg: string,
-  loginer: string,
-  head_url: string,
-  user_name: string,
-  nick_name: string,
   event: string,
+  head_url: string,
+  loginer: string,
+  msg: string,
+  nick_name: string,
   qrcodeId: string,
   serverId: string,
   status: number,
+  user_name: string,
 }
 
 export interface ScanData {

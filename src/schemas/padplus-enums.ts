@@ -6,12 +6,6 @@ export enum LoginStatus {
   Logined = 1,
 }
 
-
-/**
- * 
- * old
- * 
- */
 export enum ContactType {
   Unknown  = 0,
   Personal = 99990,
@@ -58,20 +52,20 @@ export enum RoomAddTypeStatus {
  * 30 - 通过二维码方式
  */
 export enum SearchContactTypeStatus {
-  Searchable     = 0,
-  UnSearchable   = -24,
+  CONTACT        = 17,   // search by contact card
   EMAIL          = 2,    // search by email
-  WXID           = 3,    // search by wxid
+  FLOAT          = 25,   // search by float bottle
+  MOBILE         = 15,   // search by mobile number
+  QQ             = 12,   // search by qq friend
+  QRCODE         = 30,   // search by scanning qrcode
+  ROOM           = 14,   // search by room
+  Searchable     = 0,
+  SHAKE          = 22,   // search by shake and shack
+  UnSearchable   = -24,
+  VERIFY         = 16,   // search friend verify
   VERIFY_NOREPLY = 5,    // search by friend verify without reply(朋友验证消息)
   VERIFY_REPLY   = 7,    // search by friend verify(朋友验证消息，可回复)
-  QQ             = 12,   // search by qq friend
-  ROOM           = 14,   // search by room
-  MOBILE         = 15,   // search by mobile number
-  VERIFY         = 16,   // search friend verify
-  CONTACT        = 17,   // search by contact card
-  SHAKE          = 22,   // search by shake and shack
-  FLOAT          = 25,   // search by float bottle
-  QRCODE         = 30,   // search by scanning qrcode
+  WXID           = 3,    // search by wxid
 }
 
 export enum PadplusMessageStatus {
@@ -88,10 +82,10 @@ export enum PadplusContinue {
 }
 
 export enum PadplusPayloadType {
-  Logout             = -1, // -1 when logout
-  InvalidPadplusToken = -1111, // -1111 when the token pass to Padplus server is invalid
-  OnlinePadplusToken  = -1112, // -1112 when the token has already logged in to wechaty
   ExpirePadplusToken  = -1113, // -1113 when the token is expired
+  InvalidPadplusToken = -1111, // -1111 when the token pass to Padplus server is invalid
+  Logout             = -1, // -1 when logout
+  OnlinePadplusToken  = -1112, // -1112 when the token has already logged in to wechaty
 }
 
 export enum WechatAppMessageType {

@@ -20,9 +20,9 @@ export class PadplusMessage {
     const data = {
       content: content,
       fromUserName: selfId,
+      mentionListStr,
       messageType,
       toUserName: receiverId,
-      mentionListStr,
     }
 
     const res = await this.requestClient.request({

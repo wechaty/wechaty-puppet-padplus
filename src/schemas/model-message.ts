@@ -5,7 +5,6 @@ import {
   WechatAppMessageType,
 } from './padplus-enums'
 
-
 export interface PadplusMessageSource {
   silence?: boolean,
   memberCount?: number,

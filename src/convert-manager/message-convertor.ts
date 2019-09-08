@@ -1,16 +1,20 @@
-import { PadplusMessagePayload } from "../schemas/model-message";
+import { PadplusMessagePayload } from '../schemas/model-message'
 
 import {
- PadplusMessageType, GrpcMessagePayload,
-}                         from '../schemas'
+  PadplusMessageType,
+  GrpcMessagePayload,
+} from '../schemas'
 
 import {
   isRoomId,
-}                         from '../pure-function-helpers/is-type'
+} from '../pure-function-helpers/is-type'
 
 import { messageType } from './message-type'
 import { log } from '../config'
-import { MessagePayload, MessageType } from "wechaty-puppet";
+import {
+  MessagePayload,
+  MessageType,
+} from 'wechaty-puppet'
 
 const PRE = 'messageRawPayloadParser'
 

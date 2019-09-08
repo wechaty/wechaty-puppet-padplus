@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestStatus, GrpcRoomRawPayload } from '../../schemas'
 import { RequestClient } from './request'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
 const PRE = 'PadplusRoom'
 

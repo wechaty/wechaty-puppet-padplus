@@ -1,3 +1,4 @@
+/* eslint-disable */
 import test from 'blue-tape'
 import { GrpcQrCode, PadplusQrcode, GrpcQrCodeLogin, PadplusQrcodeLogin, QrcodeStatus, LoginStatus, GrpcQrCodeStatus, PadplusQrcodeStatus } from '../schemas'
 
@@ -5,13 +6,13 @@ import { convertToQrcode, convertToQrcodeLogin, convertToQrcodeStatus } from './
 
 test('Convert grpc qrcode to padplus qrcode', async t => {
   const grpcQrCode: GrpcQrCode = {
-    qrcodeId: 'string',
     qrcode: 'string',
+    qrcodeId: 'string',
   }
 
   const padplusQrCode: PadplusQrcode = {
-    qrcodeId: 'string',
     qrcode: 'string',
+    qrcodeId: 'string',
   }
 
   const payload = convertToQrcode(grpcQrCode)
@@ -20,13 +21,13 @@ test('Convert grpc qrcode to padplus qrcode', async t => {
 
 test('Convert grpc qrcode to padplus qrcode', async t => {
   const grpcQrCode: GrpcQrCode = {
-    qrcodeId: 'string',
     qrcode: 'string',
+    qrcodeId: 'string',
   }
 
   const padplusQrCode: PadplusQrcode = {
-    qrcodeId: 'string',
     qrcode: 'number',
+    qrcodeId: 'string',
   }
 
   const payload = convertToQrcode(grpcQrCode)
@@ -55,6 +56,7 @@ test('Convert grpc qrcodelogin to padplus qrcodelogin', async t => {
   const payload = convertToQrcodeLogin(grpcQrCodeLogin)
   t.deepEqual(payload, padplusQrCodeLogin, 'should parse grpc qrcodelogin to a padplus qrcodelogin')
 })
+
 test('Convert grpc qrcodelogin to padplus qrcodelogin', async t => {
   const grpcQrCodeLogin: GrpcQrCodeLogin = {
     headImgUrl: 'string',
@@ -78,20 +80,19 @@ test('Convert grpc qrcodelogin to padplus qrcodelogin', async t => {
   t.deepEqual(payload, padplusQrCodeLogin, 'should not parse grpc qrcodelogin to a padplus qrcodelogin')
 })
 
-
 test('Convert grpc qrcodestatus to padplus qrcode', async t => {
   const grpcQrCodeStatus: GrpcQrCodeStatus = {
-    nick_name: 'string',
     head_url: 'string',
-    user_name: 'string',
+    nick_name: 'string',
     status: 1,
+    user_name: 'string',
   }
 
   const padplusQrCodeStatus: PadplusQrcodeStatus = {
-    nickName: 'string',
     headUrl: 'string',
-    userName: 'string',
+    nickName: 'string',
     status: QrcodeStatus.Waiting,
+    userName: 'string',
   }
 
   const payload = convertToQrcodeStatus(grpcQrCodeStatus)
@@ -100,20 +101,19 @@ test('Convert grpc qrcodestatus to padplus qrcode', async t => {
 
 test('Convert grpc qrcodestatus to padplus qrcode', async t => {
   const grpcQrCodeStatus: GrpcQrCodeStatus = {
-    nick_name: 'string',
     head_url: 'string',
-    user_name: 'aaa',
+    nick_name: 'string',
     status: 1,
+    user_name: 'aaa',
   }
 
   const padplusQrCodeStatus: PadplusQrcodeStatus = {
-    nickName: 'string',
     headUrl: 'string',
-    userName: 'string',
+    nickName: 'string',
     status: QrcodeStatus.Waiting,
+    userName: 'string',
   }
 
   const payload = convertToQrcodeStatus(grpcQrCodeStatus)
   t.deepEqual(payload, padplusQrCodeStatus, 'should not parse grpc qrcodestatus to a padplus qrcodestatus')
 })
-

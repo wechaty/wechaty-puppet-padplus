@@ -1,3 +1,4 @@
+/* eslint camelcase: 0 */
 import {
   FriendshipType,
 } from 'wechaty-puppet'

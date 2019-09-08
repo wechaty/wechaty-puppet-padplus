@@ -2,8 +2,8 @@ import AWS from 'aws-sdk'
 
 import { log, AWS_S3 } from '../../config'
 import { GrpcGateway } from '../../server-manager/grpc-gateway'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
-import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
 
 export interface RequestOption {
   data?: any,
@@ -61,4 +61,5 @@ export class RequestClient {
     const _location = location.split('image-message')[0] + option.Key
     return _location
   }
+
 }

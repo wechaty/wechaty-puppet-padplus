@@ -1,6 +1,6 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
 const PRE = 'PadplusContact'
 
@@ -29,9 +29,9 @@ export class PadplusContact {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
-      selfId,
-      contactId,
       alias,
+      contactId,
+      selfId,
     }
 
     await this.requestClient.request({
@@ -48,4 +48,5 @@ export class PadplusContact {
       apiType: ApiType.SYNC_CONTACT,
     })
   }
+
 }

@@ -92,9 +92,9 @@ export class PadplusManager {
       throw new Error(`The grpc gateway has no instance.`)
     }
     this.memorySlot = {
-      userName: '',
-      uin: '',
       qrcodeId: '',
+      uin: '',
+      userName: '',
     }
     this.grpcGateway = GrpcGateway.Instance
 
@@ -166,7 +166,7 @@ export class PadplusManager {
       if (uin) {
         log.silly(PRE, `uin : ${util.inspect(uin)}`)
         this.grpcGatewayEmmiter.setUIN(uin)
-        await new Promise(r => setTimeout(r, 500))
+        await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
       } else {
         await this.padplusUser.getWeChatQRCode()
@@ -226,9 +226,9 @@ export class PadplusManager {
 
             if (this.options.memory) {
               this.memorySlot = {
-                userName: loginData.userName,
-                uin: loginData.uin,
                 qrcodeId: '',
+                uin: loginData.uin,
+                userName: loginData.userName,
               }
               log.silly(PRE, `memory slot : ${util.inspect(this.memorySlot)}`)
               await this.options.memory.set(MEMORY_SLOT_NAME, this.memorySlot)
@@ -266,7 +266,7 @@ export class PadplusManager {
             const contact = convertFromGrpcContact(_contact)
 
             if (this.cacheManager) {
-              this.cacheManager.setContact(contact.userName, contact)
+              await this.cacheManager.setContact(contact.userName, contact)
             }
           }
           break
@@ -325,14 +325,8 @@ export class PadplusManager {
   }
 
   /**
-   * Contact Section
-   */
-
-
-  /**
    * Message Section
    */
-
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
     log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
     if (mention) {
@@ -351,8 +345,8 @@ export class PadplusManager {
     if (contact) {
       const content = {
         headImgUrl: contact.smallHeadUrl,
-        userName: contact.userName,
         nickName: contact.nickName,
+        userName: contact.userName,
       }
       const contentStr = JSON.stringify(content)
       await this.padplusMesasge.sendContact(selfId, receiver, contentStr)
@@ -377,7 +371,7 @@ export class PadplusManager {
       return null
     }
 
-    await new Promise(r => setTimeout(r, 400))
+    await new Promise(resolve => setTimeout(resolve, 400))
     return this.getContact(contactId, count + 1)
   }
 
@@ -401,8 +395,8 @@ export class PadplusManager {
       des: description,
       thumburl: thumbnailUrl,
       title,
-      url,
       type: 5,
+      url,
     }
     const content = JSON.stringify(payload)
 
@@ -416,17 +410,14 @@ export class PadplusManager {
   }
 
   /**
-   * 
-   * contact
-   * 
+   * Contact Section
    */
-
-  public async setContactAlias(
-    selfId: string,
-    contactId: string,
+  public async setContactAlias (
     alias: string,
+    contactId: string,
+    selfId: string,
   ): Promise<void> {
-    this.padplusContact.setAlias(selfId, contactId, alias)
+    await this.padplusContact.setAlias(selfId, contactId, alias)
   }
 
   public async getContactIdList (
@@ -460,14 +451,11 @@ export class PadplusManager {
   }
 
   /**
-   * 
-   * room
-   * 
+   * Room Section
    */
-
   public async setRoomTopic (
-    selfId: string,
     roomId: string,
+    selfId: string,
     topic: string,
   ) {
     await this.padplusRoom.setTopic(selfId, roomId, topic)
@@ -477,7 +465,7 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
     }
-    return await this.cacheManager.getRoomIds()
+    return this.cacheManager.getRoomIds()
   }
 
   public async getRoomMemberIdList (
@@ -525,25 +513,17 @@ export class PadplusManager {
     const uin = this.grpcGatewayEmmiter.getUIN()
     await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
   }
-  
-   /**
-    * 
-    * messages
-    * 
-    */
 
   /**
-   * 
-   * friendship
-   * 
+   * Friendship Section
    */
-  public async confirmFriendship(
+  public async confirmFriendship (
     encryptUserName: string,
     ticket: string,
   ) {
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
   }
-}
 
+}
 
 export default PadplusManager

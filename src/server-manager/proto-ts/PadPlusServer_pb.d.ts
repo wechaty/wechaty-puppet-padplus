@@ -1,11 +1,11 @@
 // package: PadPlusServer
 // file: PadPlusServer.proto
 
-/* tslint:disable */
+/* eslint:disable */
 
 import * as jspb from "google-protobuf";
 
-export class RequestObject extends jspb.Message { 
+export class RequestObject extends jspb.Message {
 
     hasUin(): boolean;
     clearUin(): void;
@@ -57,7 +57,7 @@ export namespace RequestObject {
     }
 }
 
-export class ResponseObject extends jspb.Message { 
+export class ResponseObject extends jspb.Message {
 
     hasResult(): boolean;
     clearResult(): void;
@@ -81,7 +81,7 @@ export namespace ResponseObject {
     }
 }
 
-export class InitConfig extends jspb.Message { 
+export class InitConfig extends jspb.Message {
 
     hasToken(): boolean;
     clearToken(): void;
@@ -105,7 +105,7 @@ export namespace InitConfig {
     }
 }
 
-export class StreamResponse extends jspb.Message { 
+export class StreamResponse extends jspb.Message {
 
     hasUin(): boolean;
     clearUin(): void;

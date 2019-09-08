@@ -1,3 +1,4 @@
+/* eslint camelcase: 0 */
 import { ContactGender } from 'wechaty-puppet'
 
 import {
@@ -15,9 +16,9 @@ export interface GrpcQrCode {
 
 export interface GrpcQrCodeStatus {
   head_url: string,
-  user_name: string,
   nick_name: string,
   status: number,
+  user_name: string,
 }
 
 export interface GrpcQrCodeLogin {
@@ -56,12 +57,6 @@ export interface GrpcMessagePayload {
   url?: string,
   wechatUserName: string,
 }
-/**
- * 
- * old
- * 
- */
-
 
 export interface GrpcSelfInfoPayload {
   alias: string,                           // "",             -> weixin id
@@ -98,36 +93,6 @@ export type GrpcSyncMessagePayload = GrpcMessagePayload
                                    | GrpcSelfAvatarPayload
                                    | GrpcDeletedPayload
 
-/**
- * ******************************************************************************************************************
- * ----------------------------------------- Room related interface -------------------------------------------------
- * ******************************************************************************************************************
- * ******************************************************************************************************************
- */
-
-// Room payload
-// {
-//   "Alias": "",
-//   "BigHeadImgUrl": "http://wx.qlogo.cn/mmcrhead/22YD2oBcVUbuonH5SPq6GlD7fW1cHZiadZTGnAIny0PXdj7GEBYV3M5FHv3GicYBySftwQibDQiaahE0pU7phNiaH02wItnlKibOfp/0",
-//   "ChatRoomOwner": "wxid_3xl8j2suau8b22",
-//   "ChatroomVersion": 700001442
-//   "City": "",
-//   "ContactType": 0,
-//   "EncryptUsername": "v1_97cdf15ad29268aff9af5c79ef0696c13711214e4c4bd9fba4ae17c4317b90907b4a738d9c31dabd9c710720f3936efd@stranger",
-//   "ExtInfo": "[{\"Wxid\":\"wxid_1\",\"NickName\":\"nick\"},{\"Wxid\":\"wxid_2\",\"NickName\":\"nick\"}]",
-//   "ExtInfoExt": "wxid_1,wxid_2"
-//   "LabelLists": "",
-//   "MsgType": 2,
-//   "NickName": "Wechaty Developers' Home 2",
-//   "Province": "",
-//   "Remark": "",
-//   "Sex": 0,
-//   "Signature": "",
-//   "SmallHeadImgUrl": "",
-//   "Ticket": "",
-//   "UserName": "5729603967@chatroom",
-//   "VerifyFlag": 1,
-// }
 export interface GrpcRoomRawPayload {
   alias          : string,
   bigHeadImgUrl  : string,
@@ -146,20 +111,6 @@ export interface GrpcRoomRawPayload {
   verifyFlag     : number,
 }
 
-// Room member payload
-// {
-//   "ChatroomUsername": "1111@chatroom",
-//   "ServerVersion": 700000033,
-//   "MemberDetails": [{
-//     "Username": "wxid_z2",
-//     "NickName": "小桔测试",
-//     "DisplayName": "",
-//     "BigHeadImgUrl": "http://wx.qlogo.cn/mmhead/ver_1/V9HJ2jFv1eS0a4yj",
-//     "SmallHeadImgUrl": "http://wx.qlogo.cn/mmhead/ver_1/V9HJ2jFv1pxib6p",
-//     "ChatroomMemberFlag": 0,
-//     "InviterUserName": "wxid_zm"
-//   }]
-// }
 export interface GrpcRoomMemberRawPayload {
   chatroomUsername: string,
   serverVersion: number,
@@ -183,17 +134,11 @@ export interface GrpcContactOperationOption {
   remark?: string,
 }
 
-// {
-//   "Roomeid": "8316342888@chatroom",
-//   "Members": [{
-//     "MemberName": "wxid_dz1jpaw94eo712",
-//     "MemberStatus": 4
-//   }]
-// }
 export interface GrpcCreateRoomMemberPayload {
   memberName: string,
   memberStatus: number,
 }
+
 export interface GrpcCreateRoomPayload {
   roomeid: string,
   members: GrpcCreateRoomMemberPayload[]
