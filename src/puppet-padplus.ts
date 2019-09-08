@@ -109,6 +109,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
+        break
       case PadplusMessageType.Sys:
         await Promise.all([
           this.onRoomJoinEvent(message),
