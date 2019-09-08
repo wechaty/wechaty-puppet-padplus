@@ -104,14 +104,15 @@ export class PuppetPadplus extends Puppet {
   public async contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
     log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
     if (typeof alias === 'undefined') {
-      const payload = await this.contactRawPayload(contactId);
+      const payload = await this.contactPayload(contactId);
       return payload.alias || ''
     }
 
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    // await this.manager.setContactAlias(contactId, alias || '')
+    const selfId = this.selfId()
+    await this.manager.setContactAlias(selfId, contactId, alias || '')
     // await this.manager.updateContact(contactId)
   }
 
@@ -144,27 +145,34 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manager.`)
     }
-    // const contactIds = await this.manager.getContactIdList();
-    const contactIdList: string [] = [];
-    return contactIdList;
+    const selfId = this.selfId()
+    const contactIds = await this.manager.getContactIdList(selfId)
+    return contactIds;
   }
 
-  protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
-    if (!this.id) {
-      throw new Error(`bot not login.`)
-    }
+  // protected contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
+  //   if (!this.id) {
+  //     throw new Error(`bot not login.`)
+  //   }
 
-  }
+  // }
 
-  protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
-    throw new Error("Method not implemented.")
-  }
+  // protected contactRawPayloadParser(rawPayload: any): Promise<ContactPayload> {
+  //   throw new Error("Method not implemented.")
+  // }
 
   public async contactPayload (
     contactId: string,
   ): Promise<ContactPayload> {
-    // const result: ContactPayload = {}
-    // return  result;
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    if (!this.id) {
+      throw new Error(`no bot logined.`)
+    }
+    const selfId = this.selfId()
+    const result: ContactPayload = await this.manager.getContact(selfId, contactId)
+    return  result;
   }
 
   // /**

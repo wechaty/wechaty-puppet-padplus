@@ -1,12 +1,14 @@
-import { ContactGender } from 'wechaty-puppet'
-import { log } from '../config'
-import { RequestStatus } from '../schemas'
-import { AliasModel, PadplusContactPayload } from '../schemas'
+import { log } from '../../config'
+import { RequestStatus } from '../../schemas'
+import { PadplusContactPayload } from '../../schemas'
 import { RequestClient } from './request'
+import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb';
+import { GrpcContact } from '../../schemas';
+import { convertToRawContact } from '../../convert-manager/contact-convertor';
 
 const PRE = 'PadplusContact'
 
-export default class PadplusContact {
+export class PadplusContact {
 
   private requestClient: RequestClient
 
@@ -21,52 +23,38 @@ export default class PadplusContact {
       account: contactId,
       my_account: loginId,
     }
-
     const res = await this.requestClient.request({
-      apiName: 'getContactInfo',
+      apiType: ApiType.GET_CONTACT,
       data,
     })
     log.silly(PRE, `get contact info from API : ${JSON.stringify(res)}`)
-    const contactRawPayload: PadplusContactPayload = {
-      account: res.account,
-      accountAlias: res.name_remark,
-      area: res.area,
-      description: res.description,
-      disturb: res.disturb,
-      formName: res.form_name,
-      name: res.name,
-      sex: parseInt(res.sex, 10) as ContactGender,
-      thumb: res.thumb,
-      v1: res.v1 || '',
+    const json = res.getData()
+    if (!json) {
+      throw new Error(`can not find contact.`)
     }
-
-    return contactRawPayload
+    const rawContact: GrpcContact = JSON.parse(json)
+    const padplusContact = convertToRawContact(rawContact)
+    return padplusContact
   }
 
   // Set alias for contact
-  public setAlias = async (aliasModel: AliasModel): Promise<RequestStatus> => {
+  public setAlias = async (selfId: string, contactId: string, alias: string): Promise<RequestStatus> => {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
-      my_account: aliasModel.loginedId,
-      remark: aliasModel.remark,
-      to_account: aliasModel.contactId,
+      selfId,
+      contactId,
+      alias,
     }
 
-    const res = await this.requestClient.request({
-      apiName: 'modifyFriendAlias',
+    await this.requestClient.request({
+      apiType: ApiType.SEARCH_CONTACT,
       data,
     })
-
-    if (res.code === RequestStatus.Success) {
-      return RequestStatus.Success
-    } else {
-      return RequestStatus.Fail
-    }
   }
 
   // config callback endpoint for getting contact list
-  public contactList = async (loginId: string): Promise<RequestStatus> => {
+  public contactList = async (loginId: string): Promise<PadplusContactPayload[]> => {
     log.verbose(PRE, `contactList(${loginId})`)
 
     const data = {
@@ -74,15 +62,17 @@ export default class PadplusContact {
     }
 
     const res = await this.requestClient.request({
-      apiName: 'getContactList',
+      apiType: ApiType.SYNC_CONTACT,
       data,
     })
-
-    if (res.code === RequestStatus.Success) {
-      return RequestStatus.Success
-    } else {
-      return RequestStatus.Fail
+    const json = res.getData();
+    if (!json) {
+      return []
     }
+    const grpcContacts: GrpcContact[] = JSON.parse(json)
+    const contacts = grpcContacts.map(c => {
+      return convertToRawContact(c)
+    })
+    return contacts
   }
-
 }

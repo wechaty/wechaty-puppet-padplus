@@ -9,14 +9,16 @@ import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
 
-import { GrpcGateway } from '../server-manager/grpc-gateway';
-import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb';
-import { ScanStatus } from 'wechaty-puppet';
-import { RequestClient } from './api-request/request';
-import { PadplusUser } from './api-request/user-api';
-import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter';
-import { PadplusMessagePayload } from '../schemas';
-import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor';
+import { GrpcGateway } from '../server-manager/grpc-gateway'
+import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
+import { ScanStatus } from 'wechaty-puppet'
+import { RequestClient } from './api-request/request'
+import { PadplusUser } from './api-request/user'
+import { PadplusContact } from './api-request/contact'
+import { GrpcEventEmitter } from '../server-manager/grpc-event-emitter'
+import { PadplusMessagePayload, PadplusContactPayload } from '../schemas'
+import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
+import { convertToPuppetContact } from '../convert-manager/contact-convertor';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -44,6 +46,7 @@ export class PadplusManager {
   private syncQueueExecutor  : DelayQueueExecutor
   private request            : RequestClient
   private padplusUser        : PadplusUser
+  private padplusContact     : PadplusContact
 
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
@@ -75,6 +78,7 @@ export class PadplusManager {
     this.grpcGateway = GrpcGateway.Instance
     this.request = new RequestClient(this.grpcGateway)
     this.padplusUser = new PadplusUser(this.request)
+    this.padplusContact = new PadplusContact(this.request)
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -254,10 +258,35 @@ export class PadplusManager {
    */
 
   public async setContactAlias(
+    selfId: string,
     contactId: string,
     alias: string,
   ): Promise<void> {
-    this.contactRequest.
+    this.padplusContact.setAlias(selfId, contactId, alias)
+  }
+
+  public async getContactIdList (
+    selfId: string,
+  ): Promise<string[]> {
+    // TODO get contact from cache
+    const contacts = await this.padplusContact.contactList(selfId)
+    // TODO: set contact cache
+    const result = contacts.map(c => c.userName)
+    return result;
+  }
+
+  public async getContact (
+    selfId: string,
+    contactId: string,
+  ) {
+    // TODO: get contact from cache.
+    let contact: PadplusContactPayload;
+    // if (!contact) {
+    contact = await this.padplusContact.getContactInfo(selfId, contactId);
+    // }
+    // TODO set contact cache.
+    const rawContact = convertToPuppetContact(contact)
+    return rawContact
   }
   
   /**

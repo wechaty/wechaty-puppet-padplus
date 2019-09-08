@@ -30,6 +30,10 @@ export interface GrpcQrCodeLogin {
   verifyFlag: string,
 }
 
+export interface GrpcContact {
+  
+}
+
 /**
  * 
  * old
