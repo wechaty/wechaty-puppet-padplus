@@ -1,12 +1,12 @@
 import { ContactGender } from 'wechaty-puppet'
 import { log } from '../config'
 import { RequestStatus } from '../schemas'
-import { AliasModel, MacproContactPayload } from '../schemas/contact'
-import { RequestClient } from '../utils/request'
+import { AliasModel, PadplusContactPayload } from '../schemas'
+import { RequestClient } from './request'
 
-const PRE = 'MacproContact'
+const PRE = 'PadplusContact'
 
-export default class MacproContact {
+export default class PadplusContact {
 
   private requestClient: RequestClient
 
@@ -14,7 +14,7 @@ export default class MacproContact {
     this.requestClient = requestClient
   }
   // Query contact list info
-  public getContactInfo = async (loginId: string, contactId: string): Promise<MacproContactPayload> => {
+  public getContactInfo = async (loginId: string, contactId: string): Promise<PadplusContactPayload> => {
     log.verbose(PRE, `getContactInfo(${loginId}, ${contactId})`)
 
     const data = {
@@ -27,7 +27,7 @@ export default class MacproContact {
       data,
     })
     log.silly(PRE, `get contact info from API : ${JSON.stringify(res)}`)
-    const contactRawPayload: MacproContactPayload = {
+    const contactRawPayload: PadplusContactPayload = {
       account: res.account,
       accountAlias: res.name_remark,
       area: res.area,

@@ -247,24 +247,31 @@ export class PadplusManager {
     this.cachePadplusMessagePayload.set(messageId, payload)
     return {} as PadplusMessagePayload
   }
+  /**
+   * 
+   * contact
+   * 
+   */
+
+  public async setContactAlias(
+    contactId: string,
+    alias: string,
+  ): Promise<void> {
+    this.contactRequest.
+  }
+  
+  /**
+   * 
+   * room
+   * 
+   */
+  
+   /**
+    * 
+    * messages
+    * 
+    */
 }
 
-/**
- * 
- * contact
- * 
- */
-
-/**
- * 
- * room
- * 
- */
-
- /**
-  * 
-  * messages
-  * 
-  */
 
 export default PadplusManager
