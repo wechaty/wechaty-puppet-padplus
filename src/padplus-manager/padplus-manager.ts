@@ -619,7 +619,7 @@ export class PadplusManager {
     await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
   }
 
-  public async roomAddMember(
+  public async roomAddMember (
     roomId: string,
     memberId: string,
   ) {
@@ -628,6 +628,27 @@ export class PadplusManager {
       throw new Error(`no padplus Room.`)
     }
     await this.padplusRoom.addMember(roomId, memberId)
+  }
+
+  public async createRoom (
+    topic: string,
+    memberIdList: string[],
+  ) {
+    log.silly(PRE, `careteRoom : ${topic};${memberIdList.join(',')}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    await this.padplusRoom.createRoom(topic, memberIdList)
+  }
+  public async quitRoom (
+    roomId: string,
+    memberId: string,
+  ) {
+    log.silly(PRE, `quitRoom : ${roomId};${memberId}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    await this.padplusRoom.quitRoom(roomId, memberId)
   }
 
   /**

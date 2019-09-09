@@ -113,6 +113,40 @@ export class PadplusRoom {
     return RequestStatus.Success
   }
 
+  public createRoom = async (topic: string, memberIdList: string[]): Promise<RequestStatus> => {
+    log.verbose(PRE, `createRoom(${topic},memberIds${memberIdList.join(',')})`)
+    const data = {
+      OpType: 'CREATE',
+      memberList: memberIdList,
+      topic,
+      type: '',
+      content: '',
+    }
+
+    await this.requestClient.request({
+      apiType: ApiType.ROOM_OPERATION,
+      data,
+    })
+    return RequestStatus.Success
+  }
+
+  public quitRoom = async (roomId: string, memberId: string): Promise<RequestStatus> => {
+    log.verbose(PRE, `quitRoom(${roomId},${memberId})`)
+    const data = {
+      OpType: 'UPDATE',
+      memberList: [memberId],
+      topic: '',
+      roomId,
+      content: '',
+    }
+
+    await this.requestClient.request({
+      apiType: ApiType.ROOM_OPERATION,
+      data,
+    })
+    return RequestStatus.Success
+  }
+
   // // 获取微信群成员列表
   // public roomMember = async (loginId: string, roomId: string): Promise<RequestStatus> => {
   //   log.verbose(PRE, `roomMember(${loginId}, ${roomId})`)
