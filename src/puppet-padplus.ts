@@ -634,14 +634,12 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const payload = await this.manager.roomInviattionRawPayload(roomInvitationId)
+    const payload = await this.manager.roomInvitationRawPayload(roomInvitationId)
     return payload
   }
 
   protected async roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    // const payload = roomInviteEventMessageParser(rawPayload)
-    // return payload
     const payload: RoomInvitationPayload = {
       id: rawPayload.id,
       inviterId: rawPayload.fromUser,
@@ -655,9 +653,12 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  roomAdd(roomId: string, contactId: string): Promise<void> {
+  public async roomAdd(roomId: string, contactId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.roomAddMember(roomId, contactId)
   }
 
   roomAvatar(roomId: string): Promise<FileBox> {
@@ -680,10 +681,10 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomTopic(roomId: string): Promise<string>
-  roomTopic(roomId: string, topic: string): Promise<void>
-  roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
-  async roomTopic(roomId: string, topic?: any): Promise<string | void> {
+  public async roomTopic(roomId: string): Promise<string>
+  public async roomTopic(roomId: string, topic: string): Promise<void>
+  public async roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
+  public async roomTopic(roomId: string, topic?: any): Promise<string | void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, topic: ${topic}`)
     if (typeof topic === 'undefined') {
       const room = await this.roomPayload(roomId)

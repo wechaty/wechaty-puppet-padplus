@@ -611,15 +611,26 @@ export class PadplusManager {
     await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
   }
 
+  public async roomAddMember(
+    roomId: string,
+    memberId: string,
+  ) {
+    log.silly(PRE, `roomAddMember : ${util.inspect(roomId)};${memberId}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    await this.padplusRoom.addMember(roomId, memberId)
+  }
+
   /**
    *
    * room event
    *
    */
-  public async roomInviattionRawPayload (
+  public async roomInvitationRawPayload (
     roomInvitationId: string,
   ) {
-    log.verbose(PRE, `roomInviattionRawPayload(${roomInvitationId})`)
+    log.verbose(PRE, `roomInvitationRawPayload(${roomInvitationId})`)
     if (!this.cacheManager) {
       throw new Error(`no cache manager.`)
     }
