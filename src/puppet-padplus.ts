@@ -647,6 +647,8 @@ export class PuppetPadplus extends Puppet {
       roomMemberIdList: [],
       roomTopic: rawPayload.roomName,
       timestamp: rawPayload.timestamp,
+      toId: '',
+      avatar: '',
     }
     return payload
   }
