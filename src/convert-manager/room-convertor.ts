@@ -1,4 +1,4 @@
-import { RoomPayload, RoomMemberPayload } from 'wechaty-puppet'
+import { RoomMemberPayload } from 'wechaty-puppet'
 import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomPayload } from '../schemas'
 
 export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload => {
@@ -20,23 +20,13 @@ export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload =
   return roomPayload
 }
 
-export const convertToPuppetRoom = (input: PadplusRoomPayload): RoomPayload => {
-  const result: RoomPayload = {
-    id: '',
-    memberIdList: [],
-    ownerId: '',
-    topic: '',
-  }
-  return result
-}
-
 export const convertToPuppetRoomMember = (input: PadplusRoomMemberPayload): RoomMemberPayload => {
   const resut: RoomMemberPayload = {
-    avatar     : 'string',
-    id         : 'string',
-    inviterId  : 'string',   // 'wxid_7708837087612',
-    name       : 'string',
-    roomAlias  : 'string',   // '李佳芮-群里设置的备注', `chatroom_nick_name`
+    avatar     : input.smallHeadUrl,
+    id         : input.contactId,
+    inviterId  : input.inviterId,   // 'wxid_7708837087612',
+    name       : input.nickName,
+    roomAlias  : input.displayName,   // '李佳芮-群里设置的备注', `chatroom_nick_name`
   }
   return resut
 }

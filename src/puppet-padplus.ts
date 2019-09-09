@@ -27,19 +27,25 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
-import { convertMessageFromPadplusToPuppet } from './convert-manager/message-convertor';
-import { convertToPuppetContact } from './convert-manager/contact-convertor';
-import { convertToPuppetRoom, convertToPuppetRoomMember } from './convert-manager/room-convertor';
+import { convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
+import { messageRawPayloadParser, roomRawPayloadParser } from './pure-function-helpers';
+import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
 
 export class PuppetPadplus extends Puppet {
+  roomInvitationSerialize(roomInvitationId: string): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+  roomInvitationDeserialize(payload: string): Promise<RoomInvitationPayload> {
+    throw new Error("Method not implemented.");
+  }
 
   private manager: PadplusManager
 
@@ -222,7 +228,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async contactRawPayloadParser(rawPayload: PadplusContactPayload): Promise<ContactPayload> {
-    const payload = convertToPuppetContact(rawPayload)
+    const payload = contactRawPayloadParser(rawPayload)
+    log.verbose(PRE, `contactRawPayloadParser(${rawPayload})`)
     return payload
   }
 
@@ -433,7 +440,7 @@ export class PuppetPadplus extends Puppet {
   protected async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
     log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
 
-    const payload = await convertMessageFromPadplusToPuppet(rawPayload)
+    const payload = await messageRawPayloadParser(rawPayload)
 
     return payload //{} as MessagePayload
   }
@@ -594,8 +601,10 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  protected roomInvitationRawPayloadParser(rawPayload: any): Promise<RoomInvitationPayload> {
+  protected roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    // const payload = roomInviteEventMessageParser(rawPayload)
+    // return payload
     throw new Error("Method not implemented.")
   }
 
@@ -676,7 +685,7 @@ export class PuppetPadplus extends Puppet {
 
   protected async roomRawPayloadParser(rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    const room = convertToPuppetRoom(rawPayload)
+    const room = roomRawPayloadParser(rawPayload)
     return room
   }
 
