@@ -508,8 +508,11 @@ export class PadplusManager {
     let contact = await this.cacheManager.getContact(contactId)
 
     if (!contact) {
-      throw new Error(`can not get contact info from cache manager`)
-      // TODO: get contact info by GRPC
+      const contact = await this.getContact(contactId)
+      if (contact === null || contact === undefined) {
+        throw new Error(`can not get contact by contact ID : ${contactId}`)
+      }
+      return contact
     }
     return contact
   }
