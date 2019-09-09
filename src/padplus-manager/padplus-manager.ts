@@ -11,7 +11,7 @@ import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, UrlLinkPayload, ContactGender } from 'wechaty-puppet'
+import { ScanStatus, UrlLinkPayload, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -27,6 +27,7 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
+  FriendshipPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -156,10 +157,9 @@ export class PadplusManager {
 
     if (this.memory) {
       const slot = await this.memory.get(MEMORY_SLOT_NAME)
-      const uin = slot && slot.uin
-      if (uin) {
-        log.silly(PRE, `uin : ${uin}`)
-        this.grpcGatewayEmmiter.setUIN(uin)
+      if (slot && slot.uin) {
+        log.silly(PRE, `uin : ${slot.uin}`)
+        this.grpcGatewayEmmiter.setUIN(slot.uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
       } else {
@@ -180,6 +180,9 @@ export class PadplusManager {
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
+      log.silly(`==P==A==D==P==L==U==S==<444444444444444>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `responsetype : ${util.inspect(type)}`)
+      log.silly(`==P==A==D==P==L==U==S==<333333333333333>==P==A==D==P==L==U==S==`)
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
@@ -353,6 +356,9 @@ export class PadplusManager {
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
+            log.silly(`==P==A==D==P==L==U==S==<333333333333333333>==P==A==D==P==L==U==S==`)
+            log.silly(PRE, `rawmessage : ${util.inspect(message.msgType)};${message.msgId}`)
+            log.silly(`==P==A==D==P==L==U==S==<555555555555555555>==P==A==D==P==L==U==S==`)
             this.emit('message', message)
           }
           break
@@ -648,6 +654,16 @@ export class PadplusManager {
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
   }
 
-}
+  public async saveFriendship (
+    friendshipId: string,
+    friendship: FriendshipPayload,
+  ): Promise<void> {
+    log.silly(PRE, `saveFriendship : ${util.inspect(friendship)}`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache.`)
+    }
+    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
+  }
 
+}
 export default PadplusManager
