@@ -1,7 +1,7 @@
 import { PuppetPadplus }  from './puppet-padplus'
 import {
-  PadplusAutoLoginErrorType,
   PadplusErrorType,
+  PadplusAutoLoginErrorType,
 } from './schemas'
 
 export {
