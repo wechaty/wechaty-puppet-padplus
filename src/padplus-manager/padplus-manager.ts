@@ -483,6 +483,20 @@ export class PadplusManager {
   }
 
   /**
+   *
+   * message
+   *
+   */
+  public async getMessageFromCache (
+    messageId: string,
+  ) {
+    log.silly(PRE, `getMessageFromCache : ${messageId}`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache manager.`)
+    }
+  }
+
+  /**
    * Contact Section
    */
   public async setContactAlias (
@@ -611,8 +625,38 @@ export class PadplusManager {
   }
 
   /**
+   *
+   * room event
+   *
+   */
+  public async roomInviattionRawPayload (
+    roomInvitationId: string,
+  ) {
+    log.verbose(PRE, `roomInviattionRawPayload(${roomInvitationId})`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache manager.`)
+    }
+    const payload = await this.cacheManager.getRoomInvitation(roomInvitationId)
+    if (payload) {
+      return payload
+    } else {
+      throw new Error(`can not find invitation with id:${roomInvitationId}`)
+    }
+  }
+
+  /**
    * Friendship Section
    */
+  public async getFriendship (
+    friendshipId: string,
+  ) {
+    log.silly(PRE, `getFriendship(${friendshipId})`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache manager.`)
+    }
+    const friendship = await this.cacheManager.getFriendshipRawPayload(friendshipId)
+    return friendship
+  }
   public async confirmFriendship (
     encryptUserName: string,
     ticket: string,
