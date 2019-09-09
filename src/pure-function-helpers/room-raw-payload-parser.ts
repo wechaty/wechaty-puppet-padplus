@@ -12,7 +12,7 @@ export function roomRawPayloadParser (
   const payload: RoomPayload = {
     avatar       : rawPayload.bigHeadUrl,
     id           : rawPayload.chatroomId,
-    memberIdList : rawPayload.members.map(m => m.userName) || [],
+    memberIdList : rawPayload.members.map(m => m.UserName) || [],
     ownerId      : rawPayload.chatRoomOwner,
     topic        : rawPayload.nickName,
   }

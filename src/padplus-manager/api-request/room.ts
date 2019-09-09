@@ -1,5 +1,5 @@
 import { log } from '../../config'
-import { RequestStatus, GrpcRoomRawPayload } from '../../schemas'
+import { RequestStatus } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
@@ -15,38 +15,46 @@ export class PadplusRoom {
   // 修改微信群名称
   public setTopic = async (loginId: string, roomId: string, topic: string): Promise<RequestStatus> => {
     log.verbose(PRE, `setTopic(${loginId}, ${roomId}, ${topic})`)
-
+    const OpType = 'UPDATE'
+    const type = 'MOD_TOPIC'
     const data = {
-      g_number: roomId,
-      my_account: loginId,
-      name: topic,
+      OpType,
+      content: topic,
+      roomId,
+      type,
     }
 
     const res = await this.requestClient.request({
-      apiType: ApiType.CHANGE_TOPIC,
+      apiType: ApiType.ROOM_OPERATION,
       data,
     })
     log.silly(PRE, `message : ${JSON.stringify(res)}`)
     return RequestStatus.Success
   }
 
-  public getRoomMembers = async (uin: string, roomId: string): Promise<GrpcRoomRawPayload> => {
+  public getRoomMembers = async (uin: string, roomId: string): Promise<void> => {
     log.verbose(PRE, `getRoomMembers(${uin}, ${roomId})`)
 
+    const OpType = 'UPDATE'
+    const type = 'GET_MEMBER'
     const data = {
+      OpType,
+      content: '',
+      roomId,
+      type,
     }
 
-    const res = await this.requestClient.request({
-      apiType: ApiType.GET_ROOM_MEMBER,
+    await this.requestClient.request({
+      apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    const json = res.getData()
-    if (!json) {
-      // return null
-    }
-    log.verbose(PRE, `getRoomMembers return ${json}`)
-    const rawRoom: GrpcRoomRawPayload = JSON.parse(json!)
-    return rawRoom
+    // const json = res.getData()
+    // if (!json) {
+    //   // return null
+    // }
+    // log.verbose(PRE, `getRoomMembers return ${json}`)
+    // const rawRoom: GrpcRoomRawPayload = JSON.parse(json!)
+    // return rawRoom
   }
 
   // 获取微信群列表
@@ -57,7 +65,7 @@ export class PadplusRoom {
     }
 
     await this.requestClient.request({
-      apiType: ApiType.CHANGE_TOPIC,
+      apiType: ApiType.ROOM_OPERATION,
       data,
     })
     return RequestStatus.Success

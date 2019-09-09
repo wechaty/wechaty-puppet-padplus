@@ -60,6 +60,7 @@ export class PuppetPadplus extends Puppet {
         token,
         memory: this.memory,
         name,
+        endpoint: '192.168.1.199:50051',
       })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
@@ -85,9 +86,9 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
+      await super.login(loginData.userName)
       await this.manager.syncContacts()
 
-      this.emit('login', loginData.userName)
     })
 
     manager.on('message', msg => this.onMessage(msg))

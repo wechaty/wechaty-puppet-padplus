@@ -11,7 +11,7 @@ import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, UrlLinkPayload } from 'wechaty-puppet'
+import { ScanStatus, UrlLinkPayload, ContactGender } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -27,6 +27,7 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
+  PadplusRoomMemberPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -36,6 +37,7 @@ import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
+import { roomMemberParser } from '../pure-function-helpers/room-member-parser'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -49,6 +51,7 @@ export interface ManagerOptions {
   memory?: MemoryCard,
   token: string,
   name: unknown,
+  endpoint?: string,
 }
 
 const PRE = 'PadplusManager'
@@ -88,7 +91,7 @@ export class PadplusManager {
     this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
 
     this.state = new StateSwitch('PadplusManager')
-    this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
+    this.grpcGatewayEmmiter = GrpcGateway.init(options.token, this.options.endpoint || GRPC_ENDPOINT, String(options.name))
 
     if (!GrpcGateway.Instance) {
       throw new Error(`The grpc gateway has no instance.`)
@@ -220,19 +223,10 @@ export class PadplusManager {
           if (grpcLoginData) {
             log.silly(PRE, `QRCODE_LOGIN : ${util.inspect(grpcLoginData)}`)
             const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
-            this.emit('login', loginData)
+
             this.grpcGatewayEmmiter.setQrcodeId('')
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
-
-            log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
-            this.cacheManager = CacheManager.Instance
-
-            const contactSelf = await this.getContact(loginData.userName)
-            if (contactSelf) {
-              await this.cacheManager.setContact(loginData.userName, contactSelf)
-            }
 
             if (this.options.memory && this.subMemoryCard) {
               const data = {
@@ -252,6 +246,36 @@ export class PadplusManager {
               // await this.options.memory.set(String(this.options.name), this.memorySlot)
               // await this.options.memory.save()
             }
+
+            log.verbose(PRE, `init cache manager`)
+            await CacheManager.init(loginData.userName)
+            this.cacheManager = CacheManager.Instance
+
+            const contactSelf: PadplusContactPayload = {
+              alias: '',
+              bigHeadUrl: loginData.headImgUrl,
+              city: '',
+              contactType: 0,
+              country: '',
+              labelLists: '',
+              nickName: loginData.nickName,
+              province: '',
+              remark: '',
+              sex: ContactGender.Unknown,
+              signature: '',
+              smallHeadUrl: '',
+              stranger: '',
+              ticket: '',
+              userName: loginData.userName,
+            }
+            await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+
+            this.emit('login', loginData)
+
+            const selfOnline = await this.getContact(loginData.userName)
+            if (selfOnline) {
+              await this.cacheManager.setContact(selfOnline.userName, selfOnline)
+            }
           }
           break
         case ResponseType.AUTO_LOGIN :
@@ -260,10 +284,31 @@ export class PadplusManager {
             const autoLoginData = JSON.parse(grpcAutoLoginData)
             log.silly(PRE, `user name : ${util.inspect(autoLoginData)}`)
             if (autoLoginData && autoLoginData.online) {
+              const wechatUser = autoLoginData.wechatUser
               log.verbose(PRE, `init cache manager`)
-              await CacheManager.init(autoLoginData.wechatUser.userName)
+              await CacheManager.init(wechatUser.userName)
               this.cacheManager = CacheManager.Instance
-              this.emit('login', autoLoginData.wechatUser)
+
+              const contactSelf: PadplusContactPayload = {
+                alias: '',
+                bigHeadUrl: wechatUser.headImgUrl,
+                city: '',
+                contactType: 0,
+                country: '',
+                labelLists: '',
+                nickName: wechatUser.nickName,
+                province: '',
+                remark: '',
+                sex: ContactGender.Unknown,
+                signature: '',
+                smallHeadUrl: '',
+                stranger: '',
+                ticket: '',
+                userName: wechatUser.userName,
+              }
+              await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+
+              this.emit('login', wechatUser)
             } else {
               const uin = await this.grpcGatewayEmmiter.getUIN()
               const wxid = await this.grpcGatewayEmmiter.getUserName()
@@ -289,7 +334,7 @@ export class PadplusManager {
           const grpcContact = data.getData()
           if (grpcContact) {
             const _contact: GrpcContactPayload = JSON.parse(grpcContact)
-            log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
+            // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
             const contact = convertFromGrpcContact(_contact)
 
             if (this.cacheManager) {
@@ -311,7 +356,24 @@ export class PadplusManager {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
+                const roomMembers = roomMemberParser(roomPayload.members)
+                await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
+                roomPayload.members.map(async member => {
+                  if (!this.cacheManager) {
+                    throw new PadplusError(PadplusErrorType.NO_CACHE, `room member`)
+                  }
+                  const memberPayload: {[contactId: string]: PadplusRoomMemberPayload} = {}
+                  memberPayload[member.UserName] = {
+                    bigHeadUrl: '',
+                    contactId: member.UserName,
+                    displayName: '',
+                    inviterId: '',
+                    nickName: member.NickName || '',
+                    smallHeadUrl: '',
+                  }
+                  await this.cacheManager.setRoomMember(roomPayload.chatroomId, memberPayload)
+                })
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
@@ -544,6 +606,10 @@ export class PadplusManager {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
+    if (!memberMap) {
+      const uin = this.grpcGatewayEmmiter.getUIN()
+      await this.padplusRoom.getRoomMembers(uin, roomId)
+    }
     return memberMap
   }
 
