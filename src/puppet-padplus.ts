@@ -25,6 +25,7 @@ import {
   log,
   padplusToken,
   retry,
+  GRPC_ENDPOINT,
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
@@ -61,7 +62,7 @@ export class PuppetPadplus extends Puppet {
       this.manager = new PadplusManager({
         token,
         name,
-        endpoint: '192.168.1.199:50051',
+        endpoint: this.options.endpoint || GRPC_ENDPOINT,
       })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
