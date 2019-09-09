@@ -27,7 +27,6 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
-  PadplusRoomMemberPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -359,21 +358,6 @@ export class PadplusManager {
                 const roomMembers = roomMemberParser(roomPayload.members)
                 await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
-                roomPayload.members.map(async member => {
-                  if (!this.cacheManager) {
-                    throw new PadplusError(PadplusErrorType.NO_CACHE, `room member`)
-                  }
-                  const memberPayload: {[contactId: string]: PadplusRoomMemberPayload} = {}
-                  memberPayload[member.UserName] = {
-                    bigHeadUrl: '',
-                    contactId: member.UserName,
-                    displayName: '',
-                    inviterId: '',
-                    nickName: member.NickName || '',
-                    smallHeadUrl: '',
-                  }
-                  await this.cacheManager.setRoomMember(roomPayload.chatroomId, memberPayload)
-                })
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
@@ -570,19 +554,37 @@ export class PadplusManager {
     return Object.keys(memberMap)
   }
 
-  public async getRoomInfo (
-    roomId: string,
-  ):Promise<PadplusRoomPayload> {
-    log.verbose(PRE, `getRoomInfo()`)
+  public async getRoomInfo (roomId: string) {
+    const room = await this.getRoom(roomId)
+    if (room) {
+      if (!this.cacheManager) {
+        throw new PadplusError(PadplusErrorType.NO_CACHE, `get room info`)
+      }
+      await this.cacheManager.setRoom(room.chatroomId, room)
+      return room
+    } else {
+      throw new Error(`can not get room info by api`)
+    }
+  }
+
+  public async getRoom (roomId: string, count = 0): Promise<PadplusRoomPayload | null | undefined> {
     if (!this.cacheManager) {
-      throw new Error(`no cache`)
+      throw new Error()
     }
-    const hasRoom = await this.cacheManager.hasRoom(roomId)
-    if (hasRoom) {
-      const room = await this.cacheManager.getRoom(roomId)
-      return room!
+    const room = await this.cacheManager.getRoom(roomId)
+    if (room) {
+      return room
     }
-    throw new Error(`has no room for roomId:${roomId}`)
+    if (count === 0) {
+      await this.padplusRoom.getRoomInfo(roomId)
+    }
+
+    if (count > 4) {
+      return null
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 400))
+    return this.getRoom(roomId, count + 1)
   }
 
   public async getRoomMembers (
@@ -593,6 +595,7 @@ export class PadplusManager {
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
     if (!memberMap) {
+      log.silly(`==P==A==D==P==L==U==S==<room members>==P==A==D==P==L==U==S==`)
       const uin = this.grpcGatewayEmmiter.getUIN()
       await this.padplusRoom.getRoomMembers(uin, roomId)
     }

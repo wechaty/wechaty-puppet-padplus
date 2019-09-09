@@ -32,6 +32,19 @@ export class PadplusRoom {
     return RequestStatus.Success
   }
 
+  public getRoomInfo = async (roomId: string): Promise<boolean> => {
+    log.verbose(PRE, `getRoomInfo(${roomId})`)
+
+    const data = {
+      userName: roomId,
+    }
+    await this.requestClient.request({
+      apiType: ApiType.GET_CONTACT,
+      data,
+    })
+    return true
+  }
+
   public getRoomMembers = async (uin: string, roomId: string): Promise<void> => {
     log.verbose(PRE, `getRoomMembers(${uin}, ${roomId})`)
 

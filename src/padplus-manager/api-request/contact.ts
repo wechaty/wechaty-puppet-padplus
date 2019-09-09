@@ -11,7 +11,7 @@ export class PadplusContact {
     this.requestClient = requestClient
   }
   // Query contact list info
-  public getContactInfo = async (userName: string, roomId?: string): Promise<boolean> => {
+  public getContactInfo = async (userName: string): Promise<boolean> => {
     log.verbose(PRE, `getContactInfo(${userName})`)
 
     const data = {
