@@ -332,6 +332,7 @@ export class PadplusManager {
             if (!_data.ExtInfo) {
               const contactData: GrpcContactPayload = _data
               const contact = convertFromGrpcContact(contactData)
+              CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
               }
@@ -415,7 +416,9 @@ export class PadplusManager {
     }
   }
 
-  private async getContact (contactId: string, count = 0): Promise<PadplusContactPayload | null | undefined> {
+  private async getContact (
+    contactId: string
+  ): Promise<PadplusContactPayload | null | undefined> {
     if (!this.cacheManager) {
       throw new Error()
     }
@@ -423,16 +426,14 @@ export class PadplusManager {
     if (contact) {
       return contact
     }
-    if (count === 0) {
-      await this.padplusContact.getContactInfo(contactId)
-    }
-
-    if (count > 4) {
-      return null
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 400))
-    return this.getContact(contactId, count + 1)
+    await this.padplusContact.getContactInfo(contactId)
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 60 * 1000)
+      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusContactPayload)
+      })
+    })
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -508,19 +509,11 @@ export class PadplusManager {
   public async getContactPayload (
     contactId: string,
   ): Promise<PadplusContactPayload> {
-    if (!this.cacheManager) {
-      throw new PadplusError(PadplusErrorType.NO_CACHE, 'getContactPayload')
+    const payload = await this.getContact(contactId)
+    if (!payload) {
+      throw new Error('Can not find payload for contactId ' + contactId)
     }
-    let contact = await this.cacheManager.getContact(contactId)
-
-    if (!contact) {
-      const contact = await this.getContact(contactId)
-      if (contact === null || contact === undefined) {
-        throw new Error(`can not get contact by contact ID : ${contactId}`)
-      }
-      return contact
-    }
-    return contact
+    return payload
   }
 
   public async syncContacts (): Promise<void> {
@@ -571,7 +564,7 @@ export class PadplusManager {
     }
   }
 
-  public async getRoom (roomId: string, count = 0): Promise<PadplusRoomPayload | null | undefined> {
+  public async getRoom (roomId: string): Promise<PadplusRoomPayload | null | undefined> {
     if (!this.cacheManager) {
       throw new Error()
     }
@@ -579,16 +572,14 @@ export class PadplusManager {
     if (room) {
       return room
     }
-    if (count === 0) {
-      await this.padplusRoom.getRoomInfo(roomId)
-    }
-
-    if (count > 4) {
-      return null
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 400))
-    return this.getRoom(roomId, count + 1)
+    await this.padplusContact.getContactInfo(roomId)
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 60 * 1000)
+      CallbackPool.Instance.pushContactCallback(roomId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusRoomPayload)
+      })
+    })
   }
 
   public async getRoomMembers (
