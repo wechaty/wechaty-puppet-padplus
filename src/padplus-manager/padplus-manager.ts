@@ -638,17 +638,16 @@ export class PadplusManager {
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
-    await this.padplusRoom.createRoom(topic, memberIdList)
+    return await this.padplusRoom.createRoom(topic, memberIdList)
   }
   public async quitRoom (
     roomId: string,
-    memberId: string,
   ) {
-    log.silly(PRE, `quitRoom : ${roomId};${memberId}`)
+    log.silly(PRE, `quitRoom : ${roomId}`)
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
-    await this.padplusRoom.quitRoom(roomId, memberId)
+    await this.padplusRoom.quitRoom(roomId)
   }
 
   /**

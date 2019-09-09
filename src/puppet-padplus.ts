@@ -664,9 +664,13 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
-    log.silly(PRE, `contactIdList : ${util.inspect(contactIdList)}, topic: ${topic}`)
-    throw new Error("Method not implemented.")
+  public async roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
+    log.silly(PRE, `topic : ${topic}, contactIdList: ${contactIdList.join(',')}`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const result = await this.manager.createRoom(topic || '', contactIdList)
+    return result
   }
 
   public async roomDel (roomId: string, contactId: string): Promise<void> {
@@ -680,9 +684,12 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  roomQuit (roomId: string): Promise<void> {
+  public async roomQuit (roomId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.quitRoom(roomId)
   }
 
   public async roomTopic(roomId: string): Promise<string>

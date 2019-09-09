@@ -111,7 +111,7 @@ export class PadplusRoom {
     return RequestStatus.Success
   }
 
-  public createRoom = async (topic: string, memberIdList: string[]): Promise<RequestStatus> => {
+  public createRoom = async (topic: string, memberIdList: string[]): Promise<string> => {
     log.verbose(PRE, `createRoom(${topic},memberIds${memberIdList.join(',')})`)
     const data = {
       OpType: 'CREATE',
@@ -123,14 +123,13 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    return RequestStatus.Success
+    return ''
   }
 
-  public quitRoom = async (roomId: string, memberId: string): Promise<RequestStatus> => {
-    log.verbose(PRE, `quitRoom(${roomId},${memberId})`)
+  public quitRoom = async (roomId: string): Promise<RequestStatus> => {
+    log.verbose(PRE, `quitRoom(${roomId})`)
     const data = {
       OpType: 'UPDATE',
-      memberList: [memberId],
       roomId,
     }
 
