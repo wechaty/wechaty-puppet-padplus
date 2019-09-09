@@ -200,12 +200,16 @@ export class GrpcGateway extends EventEmitter {
             }
           } else {
             const uin = data.getUin()
-            const userName = JSON.parse(data.getData()!).userName
-            const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
-            if (!emitter) {
-              return
+            try {
+              const userName = JSON.parse(data.getData()!).userName
+              const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
+              if (!emitter) {
+                return
+              }
+              emitter.emit('data', data)
+            } catch (error) {
+              throw new Error(error)
             }
-            emitter.emit('data', data)
           }
 
         }

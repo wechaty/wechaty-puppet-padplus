@@ -153,9 +153,10 @@ export class PadplusManager {
     await this.parseGrpcData()
 
     if (this.options.memory) {
+      console.log(`await this.options.memory.keys(): ${JSON.stringify(await this.options.memory.keys())}`)
       const slot = await this.options.memory.get(String(this.options.name))
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `slot : ${util.inspect(slot)}`)
+      log.silly(PRE, `slot : ${JSON.stringify(slot)}`)
       let uin
       if (!slot) {
         uin = ''
@@ -181,8 +182,6 @@ export class PadplusManager {
 
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
-      log.silly(`==P==A==D==P==L==U==S==<manager.parsegrpcdata>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `msgdata : ${util.inspect(data.toObject())}`)
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
@@ -193,7 +192,6 @@ export class PadplusManager {
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
-            await fileBox.toFile()
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
@@ -216,6 +214,7 @@ export class PadplusManager {
           if (grpcLoginData) {
             log.silly(PRE, `QRCODE_LOGIN : ${util.inspect(grpcLoginData)}`)
             const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
+            this.emit('login', loginData)
             this.grpcGatewayEmmiter.setQrcodeId('')
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
@@ -224,17 +223,21 @@ export class PadplusManager {
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
 
+            const contactSelf = await this.getContact(loginData.userName)
+            if (contactSelf) {
+              this.cacheManager.setContact(loginData.userName, contactSelf)
+            }
+
             if (this.options.memory) {
               this.memorySlot = {
                 qrcodeId: '',
                 uin: loginData.uin,
                 userName: loginData.userName,
               }
-              log.silly(PRE, `memory slot : ${util.inspect(this.memorySlot)}`)
-              await this.options.memory.set(MEMORY_SLOT_NAME, this.memorySlot)
+              log.silly(PRE, `name: ${this.options.name}, memory slot : ${util.inspect(this.memorySlot)}`)
+              await this.options.memory.set(String(this.options.name), this.memorySlot)
               await this.options.memory.save()
             }
-            this.emit('login', loginData)
           }
           break
         case ResponseType.AUTO_LOGIN :
