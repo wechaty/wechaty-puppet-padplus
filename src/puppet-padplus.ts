@@ -60,7 +60,6 @@ export class PuppetPadplus extends Puppet {
     if (token) {
       this.manager = new PadplusManager({
         token,
-        memory: this.memory,
         name,
         endpoint: '192.168.1.199:50051',
       })
@@ -92,6 +91,8 @@ export class PuppetPadplus extends Puppet {
       await this.manager.syncContacts()
 
     })
+
+    manager.setMemory(this.memory)
 
     manager.on('message', msg => this.onMessage(msg))
 
