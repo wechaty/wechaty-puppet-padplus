@@ -35,7 +35,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
-import { messageRawPayloadParser, roomRawPayloadParser } from './pure-function-helpers';
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser } from './pure-function-helpers';
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
@@ -102,7 +102,9 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `receive message : ${message}`)
     const messageId = message.msgId
     const messageType = message.msgType
-    log.verbose(PRE, `onPadproMessage({id=${messageId}, type=${PadplusMessageType[messageType]}(${messageType})})`)
+    log.silly(`==P==A==D==P==L==U==S==<000000000000000000000000000>==P==A==D==P==L==U==S==`)
+    log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
+    log.silly(`==P==A==D==P==L==U==S==<999999999999999999999999999>==P==A==D==P==L==U==S==`)
     switch(messageType) {
       case PadplusMessageType.Text:
       case PadplusMessageType.Contact:
@@ -290,7 +292,18 @@ export class PuppetPadplus extends Puppet {
         || friendshipVerifyContactId
     ) {
       // Maybe load contact here since we know a new friend is added
-      this.emit('friendship', message.msgId)
+      log.silly(`==P==A==D==P==L==U==S==<4567456784456777353637347474848>==P==A==D==P==L==U==S==`)
+      if (!this.manager) {
+        throw new Error(`no manager.`)
+      }
+      const friendship = await friendshipRawPayloadParser(message)
+      if (!friendship) {
+        log.silly(PRE, `not friendship : ${message.msgId}`)
+        return
+      }
+      const {msgId} = message
+      await this.manager.saveFriendship(msgId, friendship)
+      this.emit('friendship', msgId)
     }
   }
 
@@ -604,8 +617,9 @@ export class PuppetPadplus extends Puppet {
        * Set Cache Dirty
        */
       await this.roomPayloadDirty(roomId)
-
+      log.silly(`==P==A==D==P==L==U==S==<last step room topic event>==P==A==D==P==L==U==S==`)
       this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
+      log.silly(`==P==A==D==P==L==U==S==<after emit>==P==A==D==P==L==U==S==`)
     }
   }
 
@@ -634,8 +648,8 @@ export class PuppetPadplus extends Puppet {
       roomMemberIdList: [],
       roomTopic: rawPayload.roomName,
       timestamp: rawPayload.timestamp,
-      // avatar: rawPayload.url,
-      // toId: '',
+      avatar: rawPayload.url,
+      toId: '',
     }
     return payload
   }
