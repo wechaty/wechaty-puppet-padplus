@@ -666,12 +666,18 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomDel(roomId: string, contactId: string): Promise<void> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    throw new Error("Method not implemented.")
+  public async roomDel (roomId: string, contactId: string): Promise<void> {
+    log.verbose(PRE, `roomDel(${roomId}, ${contactId})`)
+
+    const memberIdList = await this.roomMemberList(roomId)
+    if (memberIdList.includes(contactId)) {
+      await this.manager.deleteRoomMember(roomId, contactId)
+    } else {
+      log.verbose(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+    }
   }
 
-  roomQuit(roomId: string): Promise<void> {
+  roomQuit (roomId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }

@@ -606,6 +606,11 @@ export class PadplusManager {
     return memberMap
   }
 
+  public async deleteRoomMember (roomId: string, contactId: string): Promise<void> {
+    log.silly(PRE, `deleteRoomMember(%s, %s)`, roomId, contactId)
+    await this.padplusRoom.deleteRoomMember(roomId, contactId)
+  }
+
   public async setAnnouncement (
     roomId: string,
     announcement: string,
