@@ -1,4 +1,4 @@
-import { ContactGender, ContactPayload, ContactType } from 'wechaty-puppet'
+import { ContactGender } from 'wechaty-puppet'
 import { PadplusContactPayload, GrpcContactPayload } from '../schemas'
 
 export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): PadplusContactPayload => {
@@ -6,7 +6,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): Padp
     alias            : contactPayload.Alias,
     bigHeadUrl       : contactPayload.BigHeadImgUrl,
     city             : contactPayload.City,
-    contactType      : 1,
+    contactType      : 1, // TOEO: contact type convert
     country          : '', // TODO: need to CHECK
     labelLists       : contactPayload.LabelLists,
     nickName         : contactPayload.NickName,
@@ -20,15 +20,4 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): Padp
     userName         : contactPayload.UserName,
   }
   return payload
-}
-
-export const convertToPuppetContact = (payload: PadplusContactPayload) => {
-  const result: ContactPayload = {
-    avatar : payload.smallHeadUrl,
-    gender : ContactGender.Male,
-    id     : payload.userName,
-    name   : payload.nickName,
-    type   : ContactType.Personal,
-  }
-  return result
 }

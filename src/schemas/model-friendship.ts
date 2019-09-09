@@ -22,6 +22,7 @@ export interface FriendshipPayloadBase {
   id        : string,
   contactId : string,
   hello?    : string,
+  timestamp?: number,
 }
 
 export type FriendshipPayloadConfirm = FriendshipPayloadBase & {

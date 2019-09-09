@@ -26,6 +26,17 @@ export function messageType (
       type = MessageType.Audio
       // console.log(rawPayload)
       break
+
+    case PadplusMessageType.Emoticon:
+      type = MessageType.Emoticon
+      // console.log(rawPayload)
+      break
+
+    case PadplusMessageType.App:
+      type = MessageType.Attachment
+      // console.log(rawPayload)
+      break
+
     case PadplusMessageType.Location:
       type = MessageType.Location
       // console.log(rawPayload)
@@ -44,8 +55,14 @@ export function messageType (
       type = MessageType.Contact
       break
 
-    case PadplusMessageType.Contact:
-      type = MessageType.Contact
+    case PadplusMessageType.VoipMsg:
+    case PadplusMessageType.Recalled:
+      type = MessageType.Recalled
+      break
+
+    case PadplusMessageType.StatusNotify:
+    case PadplusMessageType.SysNotice:
+      type = MessageType.Unknown
       break
 
     default:
