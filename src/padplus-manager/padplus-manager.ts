@@ -75,7 +75,6 @@ export class PadplusManager {
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
   private subMemoryCard?: MemoryCard
-
   constructor (
     public options: ManagerOptions,
   ) {
@@ -671,16 +670,16 @@ export class PadplusManager {
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
   }
 
-  public async saveFriendship(
+  public async saveFriendship (
     friendshipId: string,
     friendship: FriendshipPayload,
-  ) {
+  ): Promise<void> {
     log.silly(PRE, `saveFriendship : ${util.inspect(friendship)}`)
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
     }
-    this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
+    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
   }
-}
 
+}
 export default PadplusManager
