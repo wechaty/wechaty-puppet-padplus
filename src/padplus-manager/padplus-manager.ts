@@ -352,7 +352,7 @@ export class PadplusManager {
           if (grpcContact) {
             const _contact: GrpcContactPayload = JSON.parse(grpcContact)
             // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
-            const contact = convertFromGrpcContact(_contact)
+            const contact = convertFromGrpcContact(_contact, true)
 
             if (this.cacheManager) {
               await this.cacheManager.setContact(contact.userName, contact)
@@ -458,7 +458,7 @@ export class PadplusManager {
     }
     await this.padplusContact.getContactInfo(contactId)
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 60 * 1000)
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
       CallbackPool.Instance.pushContactCallback(contactId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusContactPayload)
@@ -604,7 +604,7 @@ export class PadplusManager {
     }
     await this.padplusContact.getContactInfo(roomId)
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 60 * 1000)
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)
