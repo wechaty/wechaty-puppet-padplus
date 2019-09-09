@@ -499,11 +499,11 @@ export class PadplusManager {
   }
 
   /**
-   * 
+   *
    * message
-   * 
+   *
    */
-  public async getMessageFromCache(
+  public async getMessageFromCache (
     messageId: string,
   ) {
     log.silly(PRE, `getMessageFromCache : ${messageId}`)
@@ -622,11 +622,11 @@ export class PadplusManager {
   }
 
   /**
-   * 
+   *
    * room event
-   * 
+   *
    */
-  public async roomInviattionRawPayload(
+  public async roomInviattionRawPayload (
     roomInvitationId: string,
   ) {
     log.verbose(PRE, `roomInviattionRawPayload(${roomInvitationId})`)
