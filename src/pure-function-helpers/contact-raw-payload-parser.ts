@@ -62,6 +62,7 @@ export function contactRawPayloadParser (
     alias     : rawPayload.remark,
     avatar    : rawPayload.bigHeadUrl,
     city      : rawPayload.city,
+    friend,
     gender    : rawPayload.sex,
     id        : rawPayload.userName,
     name      : rawPayload.nickName,
@@ -69,7 +70,6 @@ export function contactRawPayloadParser (
     signature : (rawPayload.signature).replace('+', ' '),          // Stay+Foolish
     type      : contactType,
     weixin    : rawPayload.alias,
-    friend,
   }
 
   return payload
