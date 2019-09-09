@@ -634,7 +634,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const payload = await this.manager.roomInviattionRawPayload(roomInvitationId)
+    const payload = await this.manager.roomInvitationRawPayload(roomInvitationId)
     return payload
   }
 
@@ -651,9 +651,12 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  roomAdd(roomId: string, contactId: string): Promise<void> {
+  public async roomAdd(roomId: string, contactId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.roomAddMember(roomId, contactId)
   }
 
   roomAvatar(roomId: string): Promise<FileBox> {
@@ -661,9 +664,13 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
-    log.silly(PRE, `contactIdList : ${util.inspect(contactIdList)}, topic: ${topic}`)
-    throw new Error("Method not implemented.")
+  public async roomCreate(contactIdList: string[], topic?: string | undefined): Promise<string> {
+    log.silly(PRE, `topic : ${topic}, contactIdList: ${contactIdList.join(',')}`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const result = await this.manager.createRoom(topic || '', contactIdList)
+    return result
   }
 
   public async roomDel (roomId: string, contactId: string): Promise<void> {
@@ -677,15 +684,18 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  roomQuit (roomId: string): Promise<void> {
+  public async roomQuit (roomId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.quitRoom(roomId)
   }
 
-  roomTopic(roomId: string): Promise<string>
-  roomTopic(roomId: string, topic: string): Promise<void>
-  roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
-  async roomTopic(roomId: string, topic?: any): Promise<string | void> {
+  public async roomTopic(roomId: string): Promise<string>
+  public async roomTopic(roomId: string, topic: string): Promise<void>
+  public async roomTopic(roomId: string, topic?: string | undefined): Promise<string | void>
+  public async roomTopic(roomId: string, topic?: any): Promise<string | void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, topic: ${topic}`)
     if (typeof topic === 'undefined') {
       const room = await this.roomPayload(roomId)

@@ -606,15 +606,47 @@ export class PadplusManager {
     await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
   }
 
+  public async roomAddMember (
+    roomId: string,
+    memberId: string,
+  ) {
+    log.silly(PRE, `roomAddMember : ${util.inspect(roomId)};${memberId}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    await this.padplusRoom.addMember(roomId, memberId)
+  }
+
+  public async createRoom (
+    topic: string,
+    memberIdList: string[],
+  ) {
+    log.silly(PRE, `careteRoom : ${topic};${memberIdList.join(',')}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    const result = await this.padplusRoom.createRoom(topic, memberIdList)
+    return result
+  }
+  public async quitRoom (
+    roomId: string,
+  ) {
+    log.silly(PRE, `quitRoom : ${roomId}`)
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    await this.padplusRoom.quitRoom(roomId)
+  }
+
   /**
    *
    * room event
    *
    */
-  public async roomInviattionRawPayload (
+  public async roomInvitationRawPayload (
     roomInvitationId: string,
   ) {
-    log.verbose(PRE, `roomInviattionRawPayload(${roomInvitationId})`)
+    log.verbose(PRE, `roomInvitationRawPayload(${roomInvitationId})`)
     if (!this.cacheManager) {
       throw new Error(`no cache manager.`)
     }
