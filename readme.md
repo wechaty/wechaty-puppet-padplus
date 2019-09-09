@@ -8,7 +8,7 @@
 
 ## Notice
 
-1. wechaty-puppet-padplus is still in very Early Alpha Stage, please make sure you have the necessary engineering technics to deal with the bugs instead of just asking for support.
+1. Wechaty-puppet-padplus is still in very Early Alpha Stage, please make sure you have the necessary engineering technics to deal with the bugs instead of just asking for support.
 2. You are welcome to file an issue to reproduce the problem, if it is reproducible, we will fix that as soon as possible.
 3. If you need a stable version, please keep waiting until we release the stable one.
 
