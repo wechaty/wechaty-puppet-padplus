@@ -116,7 +116,7 @@ export class PadplusManager {
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
   public emit (event: 'contact-delete', data: string): boolean
-  public emit (event: 'message', data: PadplusMessagePayload): boolean
+  public emit (event: 'message', msg: PadplusMessagePayload): boolean
   public emit (event: 'room-member-list', data: string): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
@@ -132,7 +132,7 @@ export class PadplusManager {
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
-  public on (event: 'message', listener: ((this: PadplusManager, data: PadplusMessagePayload) => void)): this
+  public on (event: 'message', listener: ((this: PadplusManager, msg: PadplusMessagePayload) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: never, listener: never): never
 

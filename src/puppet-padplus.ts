@@ -85,14 +85,13 @@ export class PuppetPadplus extends Puppet {
       this.emit('login', loginData.userName)
     })
 
-    manager.on('message', message => this.onMessage(message))
+    manager.on('message', msg => this.onMessage(msg))
 
     await manager.start()
   }
 
   async onMessage(message: PadplusMessagePayload) {
-    log.silly(`==P==A==D==P==L==U==S==<padplus.ts receive message>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `receive message : ${util.inspect(message)}`)
+    log.silly(PRE, `receive message : ${message}`)
     const messageType = message.msgType
     switch(messageType) {
       case PadplusMessageType.Text:

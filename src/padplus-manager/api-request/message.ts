@@ -53,14 +53,34 @@ export class PadplusMessage {
 
   public sendFile = async (selfId: string, receiver: string, url: string, fileName: string, subType: string): Promise<RequestStatus> => {
     log.verbose(PRE, `sendFile()`)
+    let data = {}
 
-    const data = {
-      fileName,
-      fromUserName: selfId,
-      messageType: PadplusMessageType.Image,
-      subType,
-      toUserName: receiver,
-      url,
+    if (subType === 'img') {
+      data = {
+        fileName,
+        fromUserName: selfId,
+        messageType: PadplusMessageType.Image,
+        subType,
+        toUserName: receiver,
+        url,
+      }
+    } else if (subType === ('video' || 'doc')) {
+      const content = {
+        des: fileName,
+        thumburl: '',
+        title: fileName,
+        type: 5,
+        url,
+      }
+      data = {
+        content: JSON.stringify(content),
+        fileName,
+        fromUserName: selfId,
+        messageType: PadplusMessageType.Image,
+        subType,
+        toUserName: receiver,
+        url,
+      }
     }
 
     const res = await this.requestClient.request({
