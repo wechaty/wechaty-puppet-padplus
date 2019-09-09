@@ -55,7 +55,7 @@ export class PadplusMessage {
     log.verbose(PRE, `sendFile()`)
     let data = {}
 
-    if (subType === 'img') {
+    if (subType === 'pic') {
       data = {
         fileName,
         fromUserName: selfId,
@@ -76,7 +76,7 @@ export class PadplusMessage {
         content: JSON.stringify(content),
         fileName,
         fromUserName: selfId,
-        messageType: PadplusMessageType.Image,
+        messageType: PadplusMessageType.App,
         subType,
         toUserName: receiver,
         url,

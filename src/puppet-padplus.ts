@@ -591,7 +591,7 @@ export class PuppetPadplus extends Puppet {
       this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
     }
   }
-  
+
   roomInvitationAccept(roomInvitationId: string): Promise<void> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     throw new Error("Method not implemented.")
@@ -696,6 +696,8 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     const memberMap = await this.manager.getRoomMembers(roomId)
+    log.silly(`==P==A==D==P==L==U==S==<Room Member>==P==A==D==P==L==U==S==`)
+    log.silly(PRE, `member map : ${util.inspect(memberMap)}`)
     if (!memberMap) {
       throw new Error('can not find members. may be you are removed.')
     }

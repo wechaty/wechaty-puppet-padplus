@@ -182,7 +182,7 @@ export class GrpcGateway extends EventEmitter {
         const responseType = data.getResponsetype()
         if (responseType !== ResponseType.LOGIN_QRCODE) {
           log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
-          log.silly(PRE, `responseType: ${ResponseType[responseType!]}(${responseType}) data : ${JSON.stringify(data.getData())}`)
+          log.silly(PRE, `responseType: ${ResponseType[responseType!]}(${responseType}) data : ${data.getData()}`)
           log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         }
         // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
