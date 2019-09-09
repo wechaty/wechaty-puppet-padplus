@@ -1,7 +1,7 @@
 // package: PadPlusServer
 // file: PadPlusServer.proto
 
-/* eslint:disable */
+/* tslint:disable */
 
 import * as grpc from "grpc";
 import * as PadPlusServer_pb from "./PadPlusServer_pb";

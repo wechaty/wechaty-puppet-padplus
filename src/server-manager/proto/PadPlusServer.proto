@@ -17,11 +17,8 @@ enum ApiType {
     CONTACT_ALIAS = 15;
     ADD_CHATROOM_CONTACT = 16;
 
-    CREATE_ROOM = 30;
-    GET_ROOM_MEMBER = 31;
-    ADD_ROOM_MEMBER = 32;
-    REMOVE_ROOM_MEMBER = 33;
-    CHANGE_TOPIC = 34;
+    GET_ROOM_MEMBER = 30;
+    ROOM_OPERATION = 31;
 
     SEND_MESSAGE = 50;
     SEND_FILE = 51;
@@ -51,6 +48,7 @@ message InitConfig {
 
 enum ResponseType {
     REQUEST_RESPONSE = 0;
+    DISCONNECT = 1;
 
     LOGIN_QRCODE = 10;
     QRCODE_SCAN = 11;

@@ -37,6 +37,7 @@ import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
+import { roomMemberParser } from '../pure-function-helpers/room-member-parser'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -291,7 +292,7 @@ export class PadplusManager {
           const grpcContact = data.getData()
           if (grpcContact) {
             const _contact: GrpcContactPayload = JSON.parse(grpcContact)
-            log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
+            // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
             const contact = convertFromGrpcContact(_contact)
 
             if (this.cacheManager) {
@@ -313,18 +314,20 @@ export class PadplusManager {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
+                const roomMembers = roomMemberParser(roomPayload.members)
+                await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
                 roomPayload.members.map(async member => {
                   if (!this.cacheManager) {
                     throw new PadplusError(PadplusErrorType.NO_CACHE, `room member`)
                   }
                   const memberPayload: {[contactId: string]: PadplusRoomMemberPayload} = {}
-                  memberPayload[member.userName] = {
+                  memberPayload[member.UserName] = {
                     bigHeadUrl: '',
-                    contactId: member.userName,
+                    contactId: member.UserName,
                     displayName: '',
                     inviterId: '',
-                    nickName: member.nickName || '',
+                    nickName: member.NickName || '',
                     smallHeadUrl: '',
                   }
                   await this.cacheManager.setRoomMember(roomPayload.chatroomId, memberPayload)
@@ -547,6 +550,10 @@ export class PadplusManager {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
+    if (!memberMap) {
+      const uin = this.grpcGatewayEmmiter.getUIN()
+      await this.padplusRoom.getRoomMembers(uin, roomId)
+    }
     return memberMap
   }
 
