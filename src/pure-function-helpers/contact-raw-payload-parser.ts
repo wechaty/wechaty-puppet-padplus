@@ -10,6 +10,7 @@ import {
 import {
   isContactOfficialId,
   isRoomId,
+  isStrangerV1,
 }                           from './is-type'
 
 export function contactRawPayloadParser (
@@ -52,6 +53,10 @@ export function contactRawPayloadParser (
   } else {
     contactType = ContactType.Personal
   }
+  let friend = false
+  if (rawPayload.stranger && isStrangerV1(rawPayload.stranger)) {
+    friend = true
+  }
 
   const payload: ContactPayload = {
     alias     : rawPayload.remark,
@@ -64,6 +69,7 @@ export function contactRawPayloadParser (
     signature : (rawPayload.signature).replace('+', ' '),          // Stay+Foolish
     type      : contactType,
     weixin    : rawPayload.alias,
+    friend,
   }
 
   return payload
