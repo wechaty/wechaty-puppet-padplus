@@ -41,12 +41,12 @@ jobs:
         - ./scripts/package-publish-config-tag.sh
         - npm run dist
         - echo "NPM Building Finished."
-        - echo "$NPM_TOKEN"
+        - echo $NPM_TOKEN
 
       deploy:
         provider: npm
         email: ruiruibupt@126.com
-        api_key: "$NPM_TOKEN"
+        api_key: $NPM_TOKEN
         skip_cleanup: true
         on:
           all_branches: true
