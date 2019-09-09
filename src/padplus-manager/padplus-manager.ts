@@ -27,6 +27,7 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
+  PadplusRoomMemberPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -49,6 +50,7 @@ export interface ManagerOptions {
   memory?: MemoryCard,
   token: string,
   name: unknown,
+  endpoint?: string,
 }
 
 const PRE = 'PadplusManager'
@@ -88,7 +90,7 @@ export class PadplusManager {
     this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
 
     this.state = new StateSwitch('PadplusManager')
-    this.grpcGatewayEmmiter = GrpcGateway.init(options.token, GRPC_ENDPOINT, String(options.name))
+    this.grpcGatewayEmmiter = GrpcGateway.init(options.token, this.options.endpoint || GRPC_ENDPOINT, String(options.name))
 
     if (!GrpcGateway.Instance) {
       throw new Error(`The grpc gateway has no instance.`)
@@ -312,6 +314,21 @@ export class PadplusManager {
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
+                roomPayload.members.map(async member => {
+                  if (!this.cacheManager) {
+                    throw new PadplusError(PadplusErrorType.NO_CACHE, `room member`)
+                  }
+                  const memberPayload: {[contactId: string]: PadplusRoomMemberPayload} = {}
+                  memberPayload[member.userName] = {
+                    bigHeadUrl: '',
+                    contactId: member.userName,
+                    displayName: '',
+                    inviterId: '',
+                    nickName: member.nickName || '',
+                    smallHeadUrl: '',
+                  }
+                  await this.cacheManager.setRoomMember(roomPayload.chatroomId, memberPayload)
+                })
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
