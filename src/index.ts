@@ -9,9 +9,9 @@ export {
 }             from './config'
 
 export {
-  PuppetPadplus,
-  PadplusErrorType,
   PadplusAutoLoginErrorType,
+  PadplusErrorType,
+  PuppetPadplus,
 }
 
 export default PuppetPadplus
