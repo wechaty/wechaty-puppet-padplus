@@ -1,5 +1,5 @@
 import { StreamResponse } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusContactPayload, PadplusRoomPayload } from '../schemas';
+import { PadplusContactPayload, PadplusRoomPayload } from '../schemas'
 
 export class CallbackPool {
 

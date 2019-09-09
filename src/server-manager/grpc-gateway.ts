@@ -115,8 +115,10 @@ export class GrpcGateway extends EventEmitter {
     try {
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        return new Promise<StreamResponse>(resolve => {
+        return new Promise<StreamResponse>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('request timeout')), 10000)
           CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            clearTimeout(timeout)
             resolve(data)
           })
         })

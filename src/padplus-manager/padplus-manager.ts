@@ -390,11 +390,7 @@ export class PadplusManager {
    */
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
     log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
-    if (mention) {
-      await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
-    } else {
-      await this.padplusMesasge.sendMessage(selfId, receiver, text, type)
-    }
+    await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
   }
 
   public async sendContact (selfId: string, receiver: string, contactId: string) {
