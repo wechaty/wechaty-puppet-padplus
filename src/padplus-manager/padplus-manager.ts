@@ -156,7 +156,7 @@ export class PadplusManager {
 
     if (this.memory) {
       const slot = await this.memory.get(MEMORY_SLOT_NAME)
-      const uin = slot.uin
+      const uin = slot && slot.uin
       if (uin) {
         log.silly(PRE, `uin : ${uin}`)
         this.grpcGatewayEmmiter.setUIN(uin)

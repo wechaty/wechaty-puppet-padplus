@@ -105,15 +105,22 @@ export class PuppetPadplus extends Puppet {
     const messageType = message.msgType
     log.verbose(PRE, `onPadproMessage({id=${messageId}, type=${PadplusMessageType[messageType]}(${messageType})})`)
     switch(messageType) {
+      case PadplusMessageType.Sys:
+        await Promise.all([
+          this.onRoomJoinEvent(message),
+          this.onRoomLeaveEvent(message),
+          this.onRoomTopicEvent(message),
+        ])
+        break
+      case PadplusMessageType.VerifyMsg:
+        await this.onFriendshipEvent(message)
+        break
       case PadplusMessageType.Text:
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
       case PadplusMessageType.Voice:
       case PadplusMessageType.SelfAvatar:
-      case PadplusMessageType.VerifyMsg:
-        await this.onFriendshipEvent(message)
-        break
       case PadplusMessageType.PossibleFriendMsg:
       case PadplusMessageType.ShareCard:
       case PadplusMessageType.Video:
@@ -127,20 +134,13 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
-        break
-      case PadplusMessageType.Sys:
-        await Promise.all([
-          this.onRoomJoinEvent(message),
-          this.onRoomLeaveEvent(message),
-          this.onRoomTopicEvent(message),
-        ])
-        break
       case PadplusMessageType.Recalled:
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:
+        this.emit('message', message.msgId)
+        break
     }
-    this.emit('message', message.msgId)
   }
 
   stop(): Promise<void> {
