@@ -14,7 +14,13 @@ export class PadplusMessage {
   }
 
   // Send message (text, image, url, video, file, gif)
-  public sendMessage = async (selfId: string, receiverId: string, content: string, messageType: PadplusMessageType, mentionListStr?: string): Promise<boolean> => {
+  public async sendMessage (
+    selfId: string,
+    receiverId: string,
+    content: string,
+    messageType: PadplusMessageType,
+    mentionListStr?: string,
+  ): Promise<boolean | null> {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
@@ -25,13 +31,18 @@ export class PadplusMessage {
       toUserName: receiverId,
     }
 
-    const res = await this.requestClient.request({
-      apiType: ApiType.SEND_MESSAGE,
-      data,
-    })
+    try {
+      const res = await this.requestClient.request({
+        apiType: ApiType.SEND_MESSAGE,
+        data,
+      })
+      // TODO: read send result from the response, and generate message
+      log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
+      return true
+    } catch (e) {
+      return null
+    }
 
-    log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
-    return true
   }
 
   // Send url link

@@ -17,10 +17,6 @@ import {
 import { EventEmitter } from 'events'
 import { GrpcEventEmitter } from './grpc-event-emitter'
 
-export interface CallBackBuffer {
-  [id: string]: (buf: any) => void
-}
-
 export interface ResultObject {
   code: number,
   data: any,
@@ -104,7 +100,7 @@ export class GrpcGateway extends EventEmitter {
     return this
   }
 
-  public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse> {
+  public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {
     const request = new RequestObject()
     const requestId = uuid()
     log.silly(PRE, `GRPC : ${this.token}, ${apiType}, uin : ${uin}, ${JSON.stringify(data)}`)
@@ -118,26 +114,22 @@ export class GrpcGateway extends EventEmitter {
 
     try {
       const result = await this._request(request)
-      if (result) {
-        return new Promise<StreamResponse>(async resolve => {
-          if (NEED_CALLBACK_API_LIST.includes(apiType)) {
-            await CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
-              resolve(data)
-            })
-          } else {
-            resolve()
-          }
+      if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
+        return new Promise<StreamResponse>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('request timeout')), 10000)
+          CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            clearTimeout(timeout)
+            resolve(data)
+          })
         })
-      } else {
-        throw new Error('failed.')
       }
     } catch (err) {
-      log.silly(PRE, `error : ${util.inspect(err)}`)
+      log.verbose(PRE, `error : ${util.inspect(err)}`)
       if (err.details === 'INVALID_TOKEN') {
         padplusToken()
       }
-      throw new Error(`Can not get data from Transmit Server`)
     }
+    return null
   }
 
   private async _request (request: RequestObject): Promise<boolean> {
@@ -188,8 +180,9 @@ export class GrpcGateway extends EventEmitter {
         }
         // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
         if (requestId) {
-          const callback = await CallbackPool.Instance.getCallback(requestId)
+          const callback = CallbackPool.Instance.getCallback(requestId)
           callback(data)
+          CallbackPool.Instance.removeCallback(requestId)
         } else { // 长连接推送的内容
           if (responseType === ResponseType.LOGIN_QRCODE) {
             const name = Object.keys(this.eventEmitterMap).find(name => {
