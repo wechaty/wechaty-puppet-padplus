@@ -99,7 +99,7 @@ export class PadplusRoom {
     log.verbose(PRE, `addMember(${roomId},${memberId})`)
     const data = {
       OpType: 'UPDATE',
-      memberList: memberId,
+      content: memberId,
       roomId,
       type: 'ADD_MEMBER',
     }
