@@ -48,7 +48,6 @@ export interface PadplusMemorySlot {
 }
 
 export interface ManagerOptions {
-  memory?: MemoryCard,
   token: string,
   name: unknown,
   endpoint?: string,
@@ -71,10 +70,10 @@ export class PadplusManager {
   private padplusRoom        : PadplusRoom
   private padplusFriendship  : PadplusFriendship
   private cacheManager?      : CacheManager
+  private memory?            : MemoryCard
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
-  private subMemoryCard?: MemoryCard
   constructor (
     public options: ManagerOptions,
   ) {
@@ -156,25 +155,11 @@ export class PadplusManager {
 
     await this.parseGrpcData()
 
-    if (this.options.memory) {
-      const name = this.options.memory.name
-      const subMemoryCard = new MemoryCard({
-        name: name + '123',
-        storageOptions: { type: 'file' },
-      })
-      await subMemoryCard.load()
-
-      const data = await subMemoryCard.get(MEMORY_SLOT_NAME)
-
-      log.silly(PRE, `memory card: ${data}`)
-
-      const uin = (data && data.uin) || ''
-      this.subMemoryCard = subMemoryCard
-      log.silly(`==P==A==D==P==L==U==S==<sub memory>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `this.subMemoryCard : ${util.inspect(this.subMemoryCard)}`)
-      if (uin) {
-        log.silly(PRE, `uin : ${uin}`)
-        this.grpcGatewayEmmiter.setUIN(uin)
+    if (this.memory) {
+      const slot = await this.memory.get(MEMORY_SLOT_NAME)
+      if (slot && slot.uin) {
+        log.silly(PRE, `uin : ${slot.uin}`)
+        this.grpcGatewayEmmiter.setUIN(slot.uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
       } else {
@@ -182,10 +167,14 @@ export class PadplusManager {
       }
       this.memorySlot = {
         ...this.memorySlot,
-        ...await this.options.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
+        ...await this.memory.get<PadplusMemorySlot>(MEMORY_SLOT_NAME),
       }
     }
 
+  }
+
+  public setMemory (memory: MemoryCard) {
+    this.memory = memory
   }
 
   public async parseGrpcData () {
@@ -230,23 +219,15 @@ export class PadplusManager {
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
 
-            if (this.options.memory && this.subMemoryCard) {
-              const data = {
+            if (this.memory) {
+              this.memorySlot = {
                 qrcodeId: '',
                 uin: loginData.uin,
                 userName: loginData.userName,
               }
-              log.silly(PRE, `MEMORY_SLOT_NAME data : ${util.inspect(data)}`)
-              await this.subMemoryCard.set(MEMORY_SLOT_NAME, data)
-              await this.subMemoryCard.save()
-              // this.memorySlot = {
-              //   qrcodeId: '',
-              //   uin: loginData.uin,
-              //   userName: loginData.userName,
-              // }
-              // log.silly(PRE, `name: ${this.options.name}, memory slot : ${util.inspect(this.memorySlot)}`)
-              // await this.options.memory.set(String(this.options.name), this.memorySlot)
-              // await this.options.memory.save()
+              log.silly(PRE, `name: ${this.options.name}, memory slot : ${util.inspect(this.memorySlot)}`)
+              await this.memory.set(MEMORY_SLOT_NAME, this.memorySlot)
+              await this.memory.save()
             }
 
             log.verbose(PRE, `init cache manager`)
