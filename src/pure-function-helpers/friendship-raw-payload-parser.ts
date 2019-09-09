@@ -1,6 +1,6 @@
 import { xmlToJson } from './xml-to-json'
 
-import { 
+import {
   FriendshipType,
   FriendshipPayload,
   FriendshipPayloadConfirm,
