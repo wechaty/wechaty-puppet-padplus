@@ -253,11 +253,11 @@ export class PadplusManager {
 
             const contactSelf: PadplusContactPayload = {
               alias: '',
-              contactType: 0,
-              labelLists: '',
               bigHeadUrl: loginData.headImgUrl,
               city: '',
+              contactType: 0,
               country: '',
+              labelLists: '',
               nickName: loginData.nickName,
               province: '',
               remark: '',
@@ -291,11 +291,11 @@ export class PadplusManager {
 
               const contactSelf: PadplusContactPayload = {
                 alias: '',
-                contactType: 0,
-                labelLists: '',
                 bigHeadUrl: wechatUser.headImgUrl,
                 city: '',
+                contactType: 0,
                 country: '',
+                labelLists: '',
                 nickName: wechatUser.nickName,
                 province: '',
                 remark: '',
