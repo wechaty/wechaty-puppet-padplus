@@ -41,8 +41,8 @@ export class PadplusContact {
     return true
   }
 
-  public syncContacts = async (uin: string): Promise<void> => {
-    log.verbose(PRE, `contactList(${uin})`)
+  public syncContacts = async (): Promise<void> => {
+    log.verbose(PRE, `contactList()`)
 
     await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,

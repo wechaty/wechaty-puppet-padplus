@@ -21,7 +21,7 @@ export const padplusToken = () => {
 /**
  * GRPC server
  */
-export const GRPC_ENDPOINT = '52.80.223.226:50051'
+export const GRPC_ENDPOINT =  '192.168.1.199:50051' //'52.80.223.226:50051'
 export const MESSAGE_CACHE_AGE = 1000 * 60 * 60
 export const MESSAGE_CACHE_MAX = 1000
 

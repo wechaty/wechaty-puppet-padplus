@@ -19,12 +19,21 @@ export class PadplusUser {
   }
 
   // 获取微信登录二维码
-  public getWeChatQRCode = async () => {
-    const res = await this.requestClient.request({
-      apiType: ApiType.GET_QRCODE,
-    })
-    log.silly(`USER API res : ${JSON.stringify(res)}`)
-    return res
+  public getWeChatQRCode = async (data?: {uin: string, wxid: string}) => {
+    if (data) {
+      const res = await this.requestClient.request({
+        apiType: ApiType.GET_QRCODE,
+        data,
+      })
+      log.silly(`Get qrcode with user info, res : ${JSON.stringify(res)}`)
+      return res
+    } else {
+      const res = await this.requestClient.request({
+        apiType: ApiType.GET_QRCODE,
+      })
+      log.silly(`Get qrcode without user info, res : ${JSON.stringify(res)}`)
+      return res
+    }
   }
 
   /*

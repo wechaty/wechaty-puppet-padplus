@@ -178,11 +178,13 @@ export class GrpcGateway extends EventEmitter {
         log.error(PRE, 'grpc server close')
       })
       result.on('data', async (data: StreamResponse) => {
-        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
-        log.silly(PRE, `data : ${JSON.stringify(data.getData())}`)
-        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
+        if (responseType !== ResponseType.LOGIN_QRCODE) {
+          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
+          log.silly(PRE, `data : ${JSON.stringify(data.getData())}`)
+          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
+        }
         // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
         if (requestId) {
           const callback = await CallbackPool.Instance.getCallback(requestId)
@@ -193,6 +195,7 @@ export class GrpcGateway extends EventEmitter {
               const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
               const uin = this.eventEmitterMap[name].getUIN()
               const userName = this.eventEmitterMap[name].getUserName()
+              log.silly(PRE, `uin : ${uin}, userName: ${userName}`)
               return qrcodeId === '' && uin === '' && userName === ''
             })
             if (name) {
