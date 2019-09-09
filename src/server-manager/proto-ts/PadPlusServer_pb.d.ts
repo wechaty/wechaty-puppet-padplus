@@ -1,11 +1,11 @@
 // package: PadPlusServer
 // file: PadPlusServer.proto
 
-/* eslint:disable */
+/* tslint:disable */
 
 import * as jspb from "google-protobuf";
 
-export class RequestObject extends jspb.Message {
+export class RequestObject extends jspb.Message { 
 
     hasUin(): boolean;
     clearUin(): void;
@@ -57,7 +57,7 @@ export namespace RequestObject {
     }
 }
 
-export class ResponseObject extends jspb.Message {
+export class ResponseObject extends jspb.Message { 
 
     hasResult(): boolean;
     clearResult(): void;
@@ -81,7 +81,7 @@ export namespace ResponseObject {
     }
 }
 
-export class InitConfig extends jspb.Message {
+export class InitConfig extends jspb.Message { 
 
     hasToken(): boolean;
     clearToken(): void;
@@ -105,7 +105,7 @@ export namespace InitConfig {
     }
 }
 
-export class StreamResponse extends jspb.Message {
+export class StreamResponse extends jspb.Message { 
 
     hasUin(): boolean;
     clearUin(): void;
@@ -163,11 +163,8 @@ export enum ApiType {
     SYNC_CONTACT = 14,
     CONTACT_ALIAS = 15,
     ADD_CHATROOM_CONTACT = 16,
-    CREATE_ROOM = 30,
-    GET_ROOM_MEMBER = 31,
-    ADD_ROOM_MEMBER = 32,
-    REMOVE_ROOM_MEMBER = 33,
-    CHANGE_TOPIC = 34,
+    GET_ROOM_MEMBER = 30,
+    ROOM_OPERATION = 31,
     SEND_MESSAGE = 50,
     SEND_FILE = 51,
     REVOKE_MESSAGE = 52,
@@ -179,6 +176,7 @@ export enum ApiType {
 
 export enum ResponseType {
     REQUEST_RESPONSE = 0,
+    DISCONNECT = 1,
     LOGIN_QRCODE = 10,
     QRCODE_SCAN = 11,
     ACCOUNT_LOGIN = 12,

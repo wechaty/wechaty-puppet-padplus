@@ -8,8 +8,8 @@ export interface PadplusRoomMemberPayload {
 }
 
 export interface PadplusMemberBrief {
-  userName : string,
-  nickName?: string,
+  UserName : string,
+  NickName?: string,
 }
 
 /**

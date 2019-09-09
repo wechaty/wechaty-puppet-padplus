@@ -36,6 +36,7 @@ import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
+import { roomMemberParser } from '../pure-function-helpers/room-member-parser';
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -289,7 +290,7 @@ export class PadplusManager {
           const grpcContact = data.getData()
           if (grpcContact) {
             const _contact: GrpcContactPayload = JSON.parse(grpcContact)
-            log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
+            // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
             const contact = convertFromGrpcContact(_contact)
 
             if (this.cacheManager) {
@@ -311,6 +312,8 @@ export class PadplusManager {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
+                const roomMembers = roomMemberParser(roomPayload.members)
+                await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers);
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
@@ -530,6 +533,11 @@ export class PadplusManager {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
+    if (!memberMap) {
+      const uin = this.grpcGatewayEmmiter.getUIN()
+      await this.padplusRoom.getRoomMembers(uin, roomId)
+    }
+    console.log(JSON.stringify(memberMap))
     return memberMap
   }
 
