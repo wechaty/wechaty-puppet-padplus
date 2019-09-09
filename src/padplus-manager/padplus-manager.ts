@@ -163,12 +163,10 @@ export class PadplusManager {
       await subMemoryCard.load()
 
       const data = await subMemoryCard.get(MEMORY_SLOT_NAME)
-      // const slot = await this.options.memory.get(String(this.options.name))
-      // log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
-      // log.silly(PRE, `slot : ${JSON.stringify(slot)}`)
+
       log.silly(PRE, `memory card: ${data}`)
-      // const uin = slot && slot.uin || ''
-      const uin = data && data.uin || ''
+
+      const uin = (data && data.uin) || ''
       this.subMemoryCard = subMemoryCard
       log.silly(`==P==A==D==P==L==U==S==<sub memory>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `this.subMemoryCard : ${util.inspect(this.subMemoryCard)}`)
@@ -261,7 +259,7 @@ export class PadplusManager {
           if (grpcAutoLoginData) {
             const autoLoginData = JSON.parse(grpcAutoLoginData)
             log.silly(PRE, `user name : ${util.inspect(autoLoginData)}`)
-            if(autoLoginData && autoLoginData.online) {
+            if (autoLoginData && autoLoginData.online) {
               log.verbose(PRE, `init cache manager`)
               await CacheManager.init(autoLoginData.wechatUser.userName)
               this.cacheManager = CacheManager.Instance
