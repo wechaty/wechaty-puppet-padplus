@@ -29,6 +29,7 @@ export interface ResultObject {
 const PRE = 'GRPC_GATEWAY'
 const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEND_MESSAGE,
+  ApiType.SEND_FILE,
 ]
 
 export type GrpcGatewayEvent = 'data'

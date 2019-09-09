@@ -45,6 +45,24 @@ export class PadplusRoom {
     return true
   }
 
+  public async deleteRoomMember (roomId: string, contactId: string) {
+    log.verbose(PRE, `deleteRoomMember(${roomId}, ${contactId})`)
+
+    const OpType = 'UPDATE'
+    const type = 'DEL_MEMBER'
+    const data = {
+      OpType,
+      content: contactId,
+      roomId,
+      type,
+    }
+
+    await this.requestClient.request({
+      apiType: ApiType.ROOM_OPERATION,
+      data,
+    })
+  }
+
   public getRoomMembers = async (uin: string, roomId: string): Promise<void> => {
     log.verbose(PRE, `getRoomMembers(${uin}, ${roomId})`)
 
@@ -61,13 +79,6 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    // const json = res.getData()
-    // if (!json) {
-    //   // return null
-    // }
-    // log.verbose(PRE, `getRoomMembers return ${json}`)
-    // const rawRoom: GrpcRoomRawPayload = JSON.parse(json!)
-    // return rawRoom
   }
 
   // 获取微信群列表

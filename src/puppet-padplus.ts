@@ -107,15 +107,22 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
     log.silly(`==P==A==D==P==L==U==S==<999999999999999999999999999>==P==A==D==P==L==U==S==`)
     switch(messageType) {
+      case PadplusMessageType.Sys:
+        await Promise.all([
+          this.onRoomJoinEvent(message),
+          this.onRoomLeaveEvent(message),
+          this.onRoomTopicEvent(message),
+        ])
+        break
+      case PadplusMessageType.VerifyMsg:
+        await this.onFriendshipEvent(message)
+        break
       case PadplusMessageType.Text:
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
       case PadplusMessageType.Voice:
       case PadplusMessageType.SelfAvatar:
-      case PadplusMessageType.VerifyMsg:
-        await this.onFriendshipEvent(message)
-        break
       case PadplusMessageType.PossibleFriendMsg:
       case PadplusMessageType.ShareCard:
       case PadplusMessageType.Video:
@@ -129,20 +136,13 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
-        break
-      case PadplusMessageType.Sys:
-        await Promise.all([
-          this.onRoomJoinEvent(message),
-          this.onRoomLeaveEvent(message),
-          this.onRoomTopicEvent(message),
-        ])
-        break
       case PadplusMessageType.Recalled:
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:
+        this.emit('message', message.msgId)
+        break
     }
-    this.emit('message', message.msgId)
   }
 
   stop(): Promise<void> {
@@ -647,8 +647,6 @@ export class PuppetPadplus extends Puppet {
       roomMemberIdList: [],
       roomTopic: rawPayload.roomName,
       timestamp: rawPayload.timestamp,
-      avatar: rawPayload.url,
-      toId: '',
     }
     return payload
   }
@@ -671,12 +669,18 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  roomDel(roomId: string, contactId: string): Promise<void> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    throw new Error("Method not implemented.")
+  public async roomDel (roomId: string, contactId: string): Promise<void> {
+    log.verbose(PRE, `roomDel(${roomId}, ${contactId})`)
+
+    const memberIdList = await this.roomMemberList(roomId)
+    if (memberIdList.includes(contactId)) {
+      await this.manager.deleteRoomMember(roomId, contactId)
+    } else {
+      log.verbose(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+    }
   }
 
-  roomQuit(roomId: string): Promise<void> {
+  roomQuit (roomId: string): Promise<void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     throw new Error("Method not implemented.")
   }
