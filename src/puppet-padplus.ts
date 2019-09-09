@@ -108,6 +108,7 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
     log.silly(`==P==A==D==P==L==U==S==<999999999999999999999999999>==P==A==D==P==L==U==S==`)
     switch(messageType) {
+      case PadplusMessageType.Recalled:
       case PadplusMessageType.Sys:
         await Promise.all([
           this.onRoomJoinEvent(message),
@@ -137,7 +138,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
-      case PadplusMessageType.Recalled:
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:
