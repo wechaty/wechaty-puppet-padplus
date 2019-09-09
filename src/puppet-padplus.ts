@@ -6,10 +6,9 @@ import flatten from 'array-flatten'
 
 import {
   ContactPayload,
-  FriendshipPayload,
   MessagePayload,
   Receiver,
-  RoomInvitationPayload,
+  FriendshipPayload,
   RoomMemberPayload,
   RoomPayload,
   UrlLinkPayload,
@@ -17,8 +16,8 @@ import {
   PuppetOptions,
   ScanStatus,
   Puppet,
+  RoomInvitationPayload,
 }                           from 'wechaty-puppet'
-// import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
 import {
   log,
@@ -27,7 +26,7 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload } from './schemas';
 import { PadplusMessagePayload } from './schemas/model-message';
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
@@ -98,7 +97,9 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${message}`)
+    const messageId = message.msgId
     const messageType = message.msgType
+    log.verbose(PRE, `onPadproMessage({id=${messageId}, type=${PadplusMessageType[messageType]}(${messageType})})`)
     switch(messageType) {
       case PadplusMessageType.Text:
       case PadplusMessageType.Contact:
@@ -180,7 +181,7 @@ export class PuppetPadplus extends Puppet {
     }
     const selfId = this.selfId()
     await this.manager.setContactAlias(selfId, contactId, alias || '')
-    // await this.manager.updateContact(contactId)
+    // TODO: await this.manager.updateContact(contactId)
   }
 
   contactAvatar(contactId: string): Promise<FileBox>
@@ -304,14 +305,21 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  protected friendshipRawPayload(friendshipId: string): Promise<any> {
+  protected async friendshipRawPayload(friendshipId: string): Promise<PadplusFriendshipPayload> {
     log.silly(PRE, `friendshipId : ${util.inspect(friendshipId)}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const payload = await this.manager.getFriendship(friendshipId)
+    if (payload) {
+      return payload
+    }
+    throw new Error(`can not find friendship.`)
   }
 
-  protected friendshipRawPayloadParser(rawPayload: any): Promise<FriendshipPayload> {
+  protected async friendshipRawPayloadParser(rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    throw new Error("Method not implemented.")
+    return rawPayload as FriendshipPayload
   }
 
   /**
@@ -596,16 +604,30 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  protected roomInvitationRawPayload(roomInvitationId: string): Promise<any> {
+  protected async roomInvitationRawPayload(roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
-    throw new Error("Method not implemented.")
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const payload = await this.manager.roomInviattionRawPayload(roomInvitationId)
+    return payload
   }
 
-  protected roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
+  protected async roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
     // const payload = roomInviteEventMessageParser(rawPayload)
     // return payload
-    throw new Error("Method not implemented.")
+    const payload: RoomInvitationPayload = {
+      id: rawPayload.id,
+      inviterId: rawPayload.fromUser,
+      roomMemberCount: 0,
+      roomMemberIdList: [],
+      roomTopic: rawPayload.roomName,
+      timestamp: rawPayload.timestamp,
+      avatar: rawPayload.url,
+      toId: '',
+    }
+    return payload
   }
 
   roomAdd(roomId: string, contactId: string): Promise<void> {

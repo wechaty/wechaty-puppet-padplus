@@ -1,12 +1,14 @@
 import { xmlToJson } from './xml-to-json'
 
-import { FriendshipType } from 'wechaty-puppet'
-
-import {
+import { 
+  FriendshipType,
   FriendshipPayload,
   FriendshipPayloadConfirm,
   FriendshipPayloadReceive,
   FriendshipPayloadVerify,
+} from 'wechaty-puppet'
+
+import {
   PadplusFriendshipPayload,
   PadplusMessagePayload,
 }                                 from '../schemas'
