@@ -153,7 +153,6 @@ export class PadplusManager {
     await this.parseGrpcData()
 
     if (this.options.memory) {
-      console.log(`await this.options.memory.keys(): ${JSON.stringify(await this.options.memory.keys())}`)
       const slot = await this.options.memory.get(String(this.options.name))
       log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `slot : ${JSON.stringify(slot)}`)
@@ -225,7 +224,7 @@ export class PadplusManager {
 
             const contactSelf = await this.getContact(loginData.userName)
             if (contactSelf) {
-              this.cacheManager.setContact(loginData.userName, contactSelf)
+              await this.cacheManager.setContact(loginData.userName, contactSelf)
             }
 
             if (this.options.memory) {
