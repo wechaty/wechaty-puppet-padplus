@@ -11,7 +11,7 @@ import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, UrlLinkPayload } from 'wechaty-puppet'
+import { ScanStatus, UrlLinkPayload, ContactGender } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -223,19 +223,10 @@ export class PadplusManager {
           if (grpcLoginData) {
             log.silly(PRE, `QRCODE_LOGIN : ${util.inspect(grpcLoginData)}`)
             const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
-            this.emit('login', loginData)
+
             this.grpcGatewayEmmiter.setQrcodeId('')
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
-
-            log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
-            this.cacheManager = CacheManager.Instance
-
-            const contactSelf = await this.getContact(loginData.userName)
-            if (contactSelf) {
-              await this.cacheManager.setContact(loginData.userName, contactSelf)
-            }
 
             if (this.options.memory && this.subMemoryCard) {
               const data = {
@@ -255,6 +246,36 @@ export class PadplusManager {
               // await this.options.memory.set(String(this.options.name), this.memorySlot)
               // await this.options.memory.save()
             }
+
+            log.verbose(PRE, `init cache manager`)
+            await CacheManager.init(loginData.userName)
+            this.cacheManager = CacheManager.Instance
+
+            const contactSelf: PadplusContactPayload = {
+              alias: '',
+              contactType: 0,
+              labelLists: '',
+              bigHeadUrl: loginData.headImgUrl,
+              city: '',
+              country: '',
+              nickName: loginData.nickName,
+              province: '',
+              remark: '',
+              sex: ContactGender.Unknown,
+              signature: '',
+              smallHeadUrl: '',
+              stranger: '',
+              ticket: '',
+              userName: loginData.userName,
+            }
+            await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+
+            this.emit('login', loginData)
+
+            const selfOnline = await this.getContact(loginData.userName)
+            if (selfOnline) {
+              await this.cacheManager.setContact(selfOnline.userName, selfOnline)
+            }
           }
           break
         case ResponseType.AUTO_LOGIN :
@@ -263,10 +284,31 @@ export class PadplusManager {
             const autoLoginData = JSON.parse(grpcAutoLoginData)
             log.silly(PRE, `user name : ${util.inspect(autoLoginData)}`)
             if (autoLoginData && autoLoginData.online) {
+              const wechatUser = autoLoginData.wechatUser
               log.verbose(PRE, `init cache manager`)
-              await CacheManager.init(autoLoginData.wechatUser.userName)
+              await CacheManager.init(wechatUser.userName)
               this.cacheManager = CacheManager.Instance
-              this.emit('login', autoLoginData.wechatUser)
+
+              const contactSelf: PadplusContactPayload = {
+                alias: '',
+                contactType: 0,
+                labelLists: '',
+                bigHeadUrl: wechatUser.headImgUrl,
+                city: '',
+                country: '',
+                nickName: wechatUser.nickName,
+                province: '',
+                remark: '',
+                sex: ContactGender.Unknown,
+                signature: '',
+                smallHeadUrl: '',
+                stranger: '',
+                ticket: '',
+                userName: wechatUser.userName,
+              }
+              await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+
+              this.emit('login', wechatUser)
             } else {
               const uin = await this.grpcGatewayEmmiter.getUIN()
               const wxid = await this.grpcGatewayEmmiter.getUserName()
