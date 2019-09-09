@@ -28,6 +28,7 @@ import {
   PadplusRoomPayload,
   ScanData,
   FriendshipPayload,
+  QrcodeStatus,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -71,7 +72,8 @@ export class PadplusManager {
   private padplusFriendship  : PadplusFriendship
   private cacheManager?      : CacheManager
   private memory?            : MemoryCard
-  private memorySlot: PadplusMemorySlot
+  private memorySlot         : PadplusMemorySlot
+  private qrcodeStatus?      : ScanStatus
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
   constructor (
@@ -193,7 +195,8 @@ export class PadplusManager {
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
-            this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
+            this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
+            this.qrcodeStatus = ScanStatus.Cancel
           }
           break
         case ResponseType.QRCODE_SCAN :
@@ -207,6 +210,36 @@ export class PadplusManager {
             =================================================
             `)
             this.grpcGatewayEmmiter.setQrcodeId(scanData.user_name)
+            switch (scanData.status as QrcodeStatus) {
+              case QrcodeStatus.Scanned:
+                if (this.qrcodeStatus !== ScanStatus.Waiting) {
+                  this.qrcodeStatus = ScanStatus.Waiting
+                  this.emit('scan', '', this.qrcodeStatus)
+                }
+                break
+
+              case QrcodeStatus.Confirmed:
+                if (this.qrcodeStatus !== ScanStatus.Scanned) {
+                  this.qrcodeStatus = ScanStatus.Scanned
+                  this.emit('scan', '', this.qrcodeStatus)
+                }
+                break
+
+              case QrcodeStatus.Canceled:
+              case QrcodeStatus.Expired:
+                const uin = await this.grpcGatewayEmmiter.getUIN()
+                const wxid = await this.grpcGatewayEmmiter.getUserName()
+                const data = {
+                  uin,
+                  wxid,
+                }
+                await this.padplusUser.getWeChatQRCode(data)
+                break
+
+              default:
+                break
+
+            }
           }
           break
         case ResponseType.QRCODE_LOGIN :
@@ -311,6 +344,7 @@ export class PadplusManager {
             // TODO: parse logout data
             const logoutData = JSON.parse(logoutRawData)
             this.emit('logout', logoutData)
+            process.exit(0)
           }
           break
         case ResponseType.CONTACT_LIST :

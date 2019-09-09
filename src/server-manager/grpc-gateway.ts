@@ -161,11 +161,15 @@ export class GrpcGateway extends EventEmitter {
       const result = this.client.init(initConfig)
       log.silly(JSON.stringify(result))
 
-      result.on('error', (err: any) => {
+      result.on('error', async (err: any) => {
+        await new Promise(resolve => setTimeout(resolve, 5000))
         log.error(PRE, err.stack)
+        process.exit(0)
       })
-      result.on('end', () => {
+      result.on('end', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5000))
         log.error(PRE, 'grpc server end.')
+        process.exit(0)
       })
       result.on('close', () => {
         log.error(PRE, 'grpc server close')
