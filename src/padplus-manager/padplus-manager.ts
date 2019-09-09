@@ -71,6 +71,8 @@ export class PadplusManager {
   private memorySlot: PadplusMemorySlot
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
+  private subMemoryCard?: MemoryCard
+
   constructor (
     public options: ManagerOptions,
   ) {
@@ -114,7 +116,7 @@ export class PadplusManager {
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
   public emit (event: 'contact-delete', data: string): boolean
-  public emit (event: 'message', data: PadplusMessagePayload): boolean
+  public emit (event: 'message', msg: PadplusMessagePayload): boolean
   public emit (event: 'room-member-list', data: string): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
@@ -130,7 +132,7 @@ export class PadplusManager {
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
-  public on (event: 'message', listener: ((this: PadplusManager, data: PadplusMessagePayload) => void)): this
+  public on (event: 'message', listener: ((this: PadplusManager, msg: PadplusMessagePayload) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: never, listener: never): never
 
@@ -153,18 +155,23 @@ export class PadplusManager {
     await this.parseGrpcData()
 
     if (this.options.memory) {
-      const slot = await this.options.memory.get(String(this.options.name))
-      log.silly(`==P==A==D==P==L==U==S==<test slot>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `slot : ${util.inspect(slot)}`)
-      let uin
-      if (!slot) {
-        uin = ''
-      } else {
-        uin = slot.uin
-      }
+      const name = this.options.memory.name
+      const subMemoryCard = new MemoryCard({
+        name: name + '123',
+        storageOptions: { type: 'file' },
+      })
+      await subMemoryCard.load()
 
+      const data = await subMemoryCard.get(MEMORY_SLOT_NAME)
+
+      log.silly(PRE, `memory card: ${data}`)
+
+      const uin = (data && data.uin) || ''
+      this.subMemoryCard = subMemoryCard
+      log.silly(`==P==A==D==P==L==U==S==<sub memory>==P==A==D==P==L==U==S==`)
+      log.silly(PRE, `this.subMemoryCard : ${util.inspect(this.subMemoryCard)}`)
       if (uin) {
-        log.silly(PRE, `uin : ${util.inspect(uin)}`)
+        log.silly(PRE, `uin : ${uin}`)
         this.grpcGatewayEmmiter.setUIN(uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
@@ -181,8 +188,6 @@ export class PadplusManager {
 
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
-      log.silly(`==P==A==D==P==L==U==S==<manager.parsegrpcdata>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `msgdata : ${util.inspect(data.toObject())}`)
       const type = data.getResponsetype()
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
@@ -193,7 +198,6 @@ export class PadplusManager {
             this.grpcGatewayEmmiter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
-            await fileBox.toFile()
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
           }
@@ -216,6 +220,7 @@ export class PadplusManager {
           if (grpcLoginData) {
             log.silly(PRE, `QRCODE_LOGIN : ${util.inspect(grpcLoginData)}`)
             const loginData: GrpcQrCodeLogin = JSON.parse(grpcLoginData)
+            this.emit('login', loginData)
             this.grpcGatewayEmmiter.setQrcodeId('')
             this.grpcGatewayEmmiter.setUserName(loginData.userName)
             this.grpcGatewayEmmiter.setUIN(loginData.uin)
@@ -224,30 +229,52 @@ export class PadplusManager {
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
 
-            if (this.options.memory) {
-              this.memorySlot = {
+            const contactSelf = await this.getContact(loginData.userName)
+            if (contactSelf) {
+              await this.cacheManager.setContact(loginData.userName, contactSelf)
+            }
+
+            if (this.options.memory && this.subMemoryCard) {
+              const data = {
                 qrcodeId: '',
                 uin: loginData.uin,
                 userName: loginData.userName,
               }
-              log.silly(PRE, `memory slot : ${util.inspect(this.memorySlot)}`)
-              await this.options.memory.set(MEMORY_SLOT_NAME, this.memorySlot)
-              await this.options.memory.save()
+              log.silly(PRE, `MEMORY_SLOT_NAME data : ${util.inspect(data)}`)
+              await this.subMemoryCard.set(MEMORY_SLOT_NAME, data)
+              await this.subMemoryCard.save()
+              // this.memorySlot = {
+              //   qrcodeId: '',
+              //   uin: loginData.uin,
+              //   userName: loginData.userName,
+              // }
+              // log.silly(PRE, `name: ${this.options.name}, memory slot : ${util.inspect(this.memorySlot)}`)
+              // await this.options.memory.set(String(this.options.name), this.memorySlot)
+              // await this.options.memory.save()
             }
-            this.emit('login', loginData)
           }
           break
         case ResponseType.AUTO_LOGIN :
           const grpcAutoLoginData = data.getData()
           if (grpcAutoLoginData) {
             const autoLoginData = JSON.parse(grpcAutoLoginData)
-
-            log.verbose(PRE, `init cache manager`)
             log.silly(PRE, `user name : ${util.inspect(autoLoginData)}`)
-            await CacheManager.init(autoLoginData.wechatUser.userName)
-            this.cacheManager = CacheManager.Instance
-
-            this.emit('login', autoLoginData.wechatUser)
+            if (autoLoginData && autoLoginData.online) {
+              log.verbose(PRE, `init cache manager`)
+              await CacheManager.init(autoLoginData.wechatUser.userName)
+              this.cacheManager = CacheManager.Instance
+              this.emit('login', autoLoginData.wechatUser)
+            } else {
+              const uin = await this.grpcGatewayEmmiter.getUIN()
+              const wxid = await this.grpcGatewayEmmiter.getUserName()
+              const data = {
+                uin,
+                wxid,
+              }
+              await this.grpcGatewayEmmiter.setUIN('')
+              await this.grpcGatewayEmmiter.setUserName('')
+              await this.padplusUser.getWeChatQRCode(data)
+            }
           }
           break
         case ResponseType.ACCOUNT_LOGOUT :
@@ -447,7 +474,7 @@ export class PadplusManager {
   }
 
   public async syncContacts (): Promise<void> {
-    await this.padplusContact.syncContacts(this.grpcGatewayEmmiter.getUIN())
+    await this.padplusContact.syncContacts()
   }
 
   /**

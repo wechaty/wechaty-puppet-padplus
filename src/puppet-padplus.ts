@@ -48,8 +48,8 @@ export class PuppetPadplus extends Puppet {
   ) {
     super(options)
 
-    const token = options.token || padplusToken()
-    const name = options.name
+    const token = this.options.token || padplusToken()
+    const name = this.options.name
     if (token) {
       this.manager = new PadplusManager({
         token,
@@ -85,14 +85,13 @@ export class PuppetPadplus extends Puppet {
       this.emit('login', loginData.userName)
     })
 
-    manager.on('message', message => this.onMessage(message))
+    manager.on('message', msg => this.onMessage(msg))
 
     await manager.start()
   }
 
   async onMessage(message: PadplusMessagePayload) {
-    log.silly(`==P==A==D==P==L==U==S==<padplus.ts receive message>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `receive message : ${util.inspect(message)}`)
+    log.silly(PRE, `receive message : ${message}`)
     const messageType = message.msgType
     switch(messageType) {
       case PadplusMessageType.Text:
@@ -117,7 +116,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
-        this.emit('message', message.msgId)
         break
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -131,6 +129,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.N15_32768:
       default:
     }
+    this.emit('message', message.msgId)
   }
 
   stop(): Promise<void> {
@@ -213,9 +212,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async contactRawPayload(contactId: string): Promise<PadplusContactPayload> {
-    if (!this.id) {
-      throw new Error(`bot not login.`)
-    }
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
