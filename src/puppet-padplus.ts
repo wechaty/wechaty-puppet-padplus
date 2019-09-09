@@ -17,6 +17,8 @@ import {
   ScanStatus,
   Puppet,
   RoomInvitationPayload,
+  FriendshipType,
+  FriendshipPayloadReceive,
 }                           from 'wechaty-puppet'
 
 import {
@@ -292,18 +294,25 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  async confirmFriendship(v1: string, ticket: string) {
-    await this.manager.confirmFriendship(v1, ticket)
-  }
-
   friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
     log.silly(PRE, `contactId : ${util.inspect(contactId)}, hello: ${hello}`)
     throw new Error("Method not implemented.")
   }
 
-  friendshipAccept(friendshipId: string): Promise<void> {
-    log.silly(PRE, `friendshipId : ${util.inspect(friendshipId)}`)
-    throw new Error("Method not implemented.")
+  public async friendshipAccept(friendshipId: string): Promise<void> {
+    log.verbose(PRE,`friendshipAccept(${friendshipId})`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const payload = await this.manager.getFriendship(friendshipId)
+    if (!payload || payload.type !== FriendshipType.Receive) {
+      throw new Error(`friendship type error.`)
+    }
+    const {stranger, ticket} = payload as FriendshipPayloadReceive
+    if (!stranger || !ticket) {
+      throw new Error(`friendship data error, stranger or ticket is null.`)
+    }
+    await this.manager.confirmFriendship(stranger, ticket)
   }
 
   protected async friendshipRawPayload(friendshipId: string): Promise<PadplusFriendshipPayload> {
