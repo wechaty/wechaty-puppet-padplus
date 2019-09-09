@@ -640,8 +640,6 @@ export class PuppetPadplus extends Puppet {
 
   protected async roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
     log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
-    // const payload = roomInviteEventMessageParser(rawPayload)
-    // return payload
     const payload: RoomInvitationPayload = {
       id: rawPayload.id,
       inviterId: rawPayload.fromUser,
@@ -649,8 +647,6 @@ export class PuppetPadplus extends Puppet {
       roomMemberIdList: [],
       roomTopic: rawPayload.roomName,
       timestamp: rawPayload.timestamp,
-      avatar: rawPayload.url,
-      toId: '',
     }
     return payload
   }
