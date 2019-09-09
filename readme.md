@@ -49,7 +49,7 @@ import { Wechaty       } from 'wechaty';
 import { PuppetPadplus } from 'wechaty-puppet-padplus';
 import { generate      } from 'qrcode-terminal';
 
-const token = 'your token';
+const token = 'your-token';
 
 const puppet = new PuppetPadplus({
   token,
