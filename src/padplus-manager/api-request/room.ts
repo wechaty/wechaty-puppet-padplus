@@ -100,10 +100,8 @@ export class PadplusRoom {
     const data = {
       OpType: 'UPDATE',
       memberList: [memberId],
-      topic: '',
       roomId,
       type: 'addmember',
-      content: '',
     }
 
     await this.requestClient.request({
@@ -119,8 +117,6 @@ export class PadplusRoom {
       OpType: 'CREATE',
       memberList: memberIdList,
       topic,
-      type: '',
-      content: '',
     }
 
     await this.requestClient.request({
@@ -135,9 +131,7 @@ export class PadplusRoom {
     const data = {
       OpType: 'UPDATE',
       memberList: [memberId],
-      topic: '',
       roomId,
-      content: '',
     }
 
     await this.requestClient.request({
