@@ -99,9 +99,9 @@ export class PadplusRoom {
     log.verbose(PRE, `addMember(${roomId},${memberId})`)
     const data = {
       OpType: 'UPDATE',
-      memberList: [memberId],
+      memberList: memberId,
       roomId,
-      type: 'addmember',
+      type: 'ADD_MEMBER',
     }
 
     await this.requestClient.request({
@@ -123,7 +123,7 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    return ''
+    return topic
   }
 
   public quitRoom = async (roomId: string): Promise<RequestStatus> => {
