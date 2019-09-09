@@ -41,6 +41,7 @@ jobs:
         - ./scripts/package-publish-config-tag.sh
         - npm run dist
         - echo "NPM Building Finished."
+        - echo "$NPM_TOKEN"
 
       deploy:
         provider: npm
