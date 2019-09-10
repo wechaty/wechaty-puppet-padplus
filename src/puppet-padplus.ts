@@ -103,9 +103,6 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `receive message : ${message}`)
     const messageId = message.msgId
     const messageType = message.msgType
-    log.silly(`==P==A==D==P==L==U==S==<000000000000000000000000000>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
-    log.silly(`==P==A==D==P==L==U==S==<999999999999999999999999999>==P==A==D==P==L==U==S==`)
     switch(messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -272,12 +269,11 @@ export class PuppetPadplus extends Puppet {
     //       },
     //     }
     //   }
-    
+
     //   try {
     //     const jsonPayload: XmlSchema = await xmlToJson(
     //       message.content,
     //     )
-    
     //     const v1 = jsonPayload.msg.$.encryptusername
     //     const ticket = jsonPayload.msg.$.ticket
     //     log.silly(`==P==A==D==P==L==U==S==<receive friendship>==P==A==D==P==L==U==S==`)
@@ -293,7 +289,6 @@ export class PuppetPadplus extends Puppet {
         || friendshipVerifyContactId
     ) {
       // Maybe load contact here since we know a new friend is added
-      log.silly(`==P==A==D==P==L==U==S==<4567456784456777353637347474848>==P==A==D==P==L==U==S==`)
       if (!this.manager) {
         throw new Error(`no manager.`)
       }
@@ -486,7 +481,6 @@ export class PuppetPadplus extends Puppet {
   async onRoomJoinEvent(message: PadplusMessagePayload): Promise<void> {
     const joinEvent = await roomJoinEventMessageParser(message)
     if (joinEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<room join event>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive join event : ${util.inspect(joinEvent)}`)
       const inviteeNameList = joinEvent.inviteeNameList
       const inviterName     = joinEvent.inviterName
@@ -550,7 +544,6 @@ export class PuppetPadplus extends Puppet {
     const leaveEvent = roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<roomLeaveEvent>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive remove event : ${util.inspect(leaveEvent)}`)
       const leaverNameList = leaveEvent.leaverNameList
       const removerName    = leaveEvent.removerName
@@ -592,13 +585,11 @@ export class PuppetPadplus extends Puppet {
     const topicEvent = roomTopicEventMessageParser(message)
 
     if (topicEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<room topic event>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive topic event : ${util.inspect(topicEvent)}`)
       const changerName = topicEvent.changerName
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
       const timestamp   = topicEvent.timestamp
-      log.silly(PRE, 'onPadproMessageRoomEventTopic() roomTopicEvent="%s"', JSON.stringify(topicEvent))
 
       const roomOldPayload = await this.roomPayload(roomId)
       const oldTopic       = roomOldPayload.topic
@@ -618,9 +609,7 @@ export class PuppetPadplus extends Puppet {
        * Set Cache Dirty
        */
       await this.roomPayloadDirty(roomId)
-      log.silly(`==P==A==D==P==L==U==S==<last step room topic event>==P==A==D==P==L==U==S==`)
       this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
-      log.silly(`==P==A==D==P==L==U==S==<after emit>==P==A==D==P==L==U==S==`)
     }
   }
 

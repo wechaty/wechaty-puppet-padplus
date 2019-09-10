@@ -180,9 +180,6 @@ export class PadplusManager {
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
-      log.silly(`==P==A==D==P==L==U==S==<444444444444444>==P==A==D==P==L==U==S==`)
-      log.silly(PRE, `responsetype : ${util.inspect(type)}`)
-      log.silly(`==P==A==D==P==L==U==S==<333333333333333>==P==A==D==P==L==U==S==`)
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
@@ -356,9 +353,6 @@ export class PadplusManager {
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
-            log.silly(`==P==A==D==P==L==U==S==<333333333333333333>==P==A==D==P==L==U==S==`)
-            log.silly(PRE, `rawmessage : ${util.inspect(message.msgType)};${message.msgId}`)
-            log.silly(`==P==A==D==P==L==U==S==<555555555555555555>==P==A==D==P==L==U==S==`)
             this.emit('message', message)
           }
           break
