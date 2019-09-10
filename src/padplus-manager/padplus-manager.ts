@@ -103,7 +103,7 @@ export class PadplusManager {
     }
     this.grpcGateway = GrpcGateway.Instance
 
-    this.requestClient = new RequestClient(this.grpcGateway, this.grpcGatewayEmmiter) // TODO: 将 this.grpcGatewayEmmiter 传入，用来获取 uin
+    this.requestClient = new RequestClient(this.grpcGateway, this.grpcGatewayEmmiter)
     this.padplusUser = new PadplusUser(this.requestClient)
     this.padplusMesasge = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
@@ -182,7 +182,6 @@ export class PadplusManager {
   public async parseGrpcData () {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
-      log.silly(PRE, `responsetype : ${util.inspect(type)}`)
       switch (type) {
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
@@ -339,9 +338,9 @@ export class PadplusManager {
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
           if (logoutRawData) {
-            // TODO: parse logout data
             const logoutData = JSON.parse(logoutRawData)
             this.emit('logout', logoutData)
+            // TODO: modify the logic for quit WeChat
             process.exit(0)
           }
           break
@@ -389,7 +388,6 @@ export class PadplusManager {
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
-            log.silly(PRE, `rawmessage : ${util.inspect(message.msgType)};${message.msgId}`)
             this.emit('message', message)
           }
           break
@@ -550,8 +548,8 @@ export class PadplusManager {
    * Room Section
    */
   public async setRoomTopic (
-    roomId: string,
     selfId: string,
+    roomId: string,
     topic: string,
   ) {
     await this.padplusRoom.setTopic(selfId, roomId, topic)

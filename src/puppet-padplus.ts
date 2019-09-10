@@ -102,9 +102,8 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${message}`)
-    const messageId = message.msgId
+    // const messageId = message.msgId
     const messageType = message.msgType
-    log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
     switch(messageType) {
       case PadplusMessageType.Recalled:
       case PadplusMessageType.Sys:
@@ -186,7 +185,6 @@ export class PuppetPadplus extends Puppet {
     }
     const selfId = this.selfId()
     await this.manager.setContactAlias(selfId, contactId, alias || '')
-    // TODO: await this.manager.updateContact(contactId)
   }
 
   contactAvatar(contactId: string): Promise<FileBox>
@@ -200,7 +198,6 @@ export class PuppetPadplus extends Puppet {
         throw new Error(`no padplus manager.`)
       }
       return
-      // TODO: set avatar for self.
     }
     const payload = await this.contactRawPayload(contactId)
     if (!payload || !payload.bigHeadUrl) {
@@ -259,33 +256,6 @@ export class PuppetPadplus extends Puppet {
      * 3. Look for friendship verify event
      */
     const friendshipVerifyContactId = friendshipVerifyEventMessageParser(message)
-
-    // if (friendshipReceiveContactId) {
-    //   interface XmlSchema {
-    //     msg: {
-    //       $: {
-    //         fromusername    : string,
-    //         encryptusername : string,
-    //         content         : string,
-    //         ticket          : string,
-    //       },
-    //     }
-    //   }
-    
-    //   try {
-    //     const jsonPayload: XmlSchema = await xmlToJson(
-    //       message.content,
-    //     )
-    
-    //     const v1 = jsonPayload.msg.$.encryptusername
-    //     const ticket = jsonPayload.msg.$.ticket
-    //     log.silly(`==P==A==D==P==L==U==S==<receive friendship>==P==A==D==P==L==U==S==`)
-    //     log.silly(PRE, `v1 and v2 : ${util.inspect(v1)};;;${ticket}`)
-    //     await this.confirmFriendship(v1, ticket)
-    //   } catch (e) {
-    //     // not receive event
-    //   }
-    // }
 
     if (friendshipConfirmContactId
         || friendshipReceiveContactId
@@ -484,7 +454,6 @@ export class PuppetPadplus extends Puppet {
   async onRoomJoinEvent(message: PadplusMessagePayload): Promise<void> {
     const joinEvent = await roomJoinEventMessageParser(message)
     if (joinEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<room join event>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive join event : ${util.inspect(joinEvent)}`)
       const inviteeNameList = joinEvent.inviteeNameList
       const inviterName     = joinEvent.inviterName
@@ -548,7 +517,6 @@ export class PuppetPadplus extends Puppet {
     const leaveEvent = roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<roomLeaveEvent>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive remove event : ${util.inspect(leaveEvent)}`)
       const leaverNameList = leaveEvent.leaverNameList
       const removerName    = leaveEvent.removerName
@@ -590,13 +558,11 @@ export class PuppetPadplus extends Puppet {
     const topicEvent = roomTopicEventMessageParser(message)
 
     if (topicEvent) {
-      log.silly(`==P==A==D==P==L==U==S==<room topic event>==P==A==D==P==L==U==S==`)
       log.silly(PRE, `receive topic event : ${util.inspect(topicEvent)}`)
       const changerName = topicEvent.changerName
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
       const timestamp   = topicEvent.timestamp
-      log.silly(PRE, 'onPadproMessageRoomEventTopic() roomTopicEvent="%s"', JSON.stringify(topicEvent))
 
       const roomOldPayload = await this.roomPayload(roomId)
       const oldTopic       = roomOldPayload.topic
@@ -616,9 +582,7 @@ export class PuppetPadplus extends Puppet {
        * Set Cache Dirty
        */
       await this.roomPayloadDirty(roomId)
-      log.silly(`==P==A==D==P==L==U==S==<last step room topic event>==P==A==D==P==L==U==S==`)
       this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
-      log.silly(`==P==A==D==P==L==U==S==<after emit>==P==A==D==P==L==U==S==`)
     }
   }
 
