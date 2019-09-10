@@ -104,9 +104,7 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `receive message : ${message}`)
     const messageId = message.msgId
     const messageType = message.msgType
-    log.silly(`==P==A==D==P==L==U==S==<000000000000000000000000000>==P==A==D==P==L==U==S==`)
     log.silly(PRE, `messageid and messagetype : ${util.inspect(messageId)};${messageType}`)
-    log.silly(`==P==A==D==P==L==U==S==<999999999999999999999999999>==P==A==D==P==L==U==S==`)
     switch(messageType) {
       case PadplusMessageType.Recalled:
       case PadplusMessageType.Sys:
@@ -294,7 +292,6 @@ export class PuppetPadplus extends Puppet {
         || friendshipVerifyContactId
     ) {
       // Maybe load contact here since we know a new friend is added
-      log.silly(`==P==A==D==P==L==U==S==<4567456784456777353637347474848>==P==A==D==P==L==U==S==`)
       if (!this.manager) {
         throw new Error(`no manager.`)
       }
