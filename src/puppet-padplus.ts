@@ -19,6 +19,7 @@ import {
   RoomInvitationPayload,
   FriendshipType,
   FriendshipPayloadReceive,
+  MessageType,
 }                           from 'wechaty-puppet'
 
 import {
@@ -36,18 +37,12 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser } from './pure-function-helpers';
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser } from './pure-function-helpers';
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
 
 export class PuppetPadplus extends Puppet {
-  roomInvitationSerialize(roomInvitationId: string): Promise<string> {
-    throw new Error("Method not implemented.");
-  }
-  roomInvitationDeserialize(payload: string): Promise<RoomInvitationPayload> {
-    throw new Error("Method not implemented.");
-  }
 
   private manager: PadplusManager
 
@@ -320,24 +315,104 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
 
-  messageFile(messageId: string): Promise<FileBox> {
+  public async messageFile (messageId: string): Promise<FileBox> {
     log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
-    throw new Error("Method not implemented.")
+    const rawPayload = await this.messageRawPayload(messageId)
+    const payload    = await this.messagePayload(messageId)
+
+    let filename = payload.filename || payload.id
+    switch (payload.type) {
+      case MessageType.Audio:
+      case MessageType.Video:
+      case MessageType.Emoticon:
+        throw new Error(`not supported.`)
+      case MessageType.Image:
+        log.silly(PRE, `rawPawload ${rawPayload}`)
+        /* const imagePayload = await imagePayloadParser(rawPayload)
+        if (imagePayload === null) {
+          throw new Error(`can not parse image payload.`)
+        }
+        return FileBox.fromBase64('', '') */
+        throw new Error(`not supported.`)
+        break
+      case MessageType.Attachment:
+        throw new Error(`Waiting...`)
+        break
+      default:
+        const base64 = 'Tm90IFN1cHBvcnRlZCBBdHRhY2htZW50IEZpbGUgVHlwZSBpbiBNZXNzYWdlLgpTZWU6IGh0dHBzOi8vZ2l0aHViLmNvbS9DaGF0aWUvd2VjaGF0eS9pc3N1ZXMvMTI0OQo='
+        filename = 'wechaty-puppet-padplus-message-attachment-' + messageId + '.txt'
+        return FileBox.fromBase64(
+          base64,
+          filename,
+        )
+    }
   }
 
-  messageUrl(messageId: string): Promise<UrlLinkPayload> {
+  public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
     log.silly(PRE, `messageUrl() messageId : ${util.inspect(messageId)}`)
-    throw new Error("Method not implemented.")
+    const rawPayload = await this.messageRawPayload(messageId)
+    const payload = await this.messagePayload(messageId)
+
+    if (payload.type !== MessageType.Url) {
+      throw new Error('Can not get url from non url payload')
+    } else {
+      const appPayload = await appMessageParser(rawPayload)
+      if (appPayload) {
+        return {
+          description: appPayload.des,
+          thumbnailUrl: appPayload.thumburl,
+          title: appPayload.title,
+          url: appPayload.url,
+        }
+      } else {
+        throw new Error('Can not parse url message payload')
+      }
+    }
   }
 
-  messageMiniProgram(messageId: string): Promise<MiniProgramPayload> {
+  messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
     log.silly(PRE, `messageMiniProgram() messageId : ${util.inspect(messageId)}`)
     throw new Error("Method not implemented.")
   }
 
-  messageForward(receiver: Receiver, messageId: string): Promise<void> {
+  public async messageForward (receiver: Receiver, messageId: string): Promise<void> {
     log.silly(PRE, `messageForward() receiver: ${receiver}, messageId : ${util.inspect(messageId)}`)
-    throw new Error("Method not implemented.")
+
+    const payload = await this.messagePayload(messageId)
+
+    if (payload.type === MessageType.Text) {
+      if (!payload.text) {
+        throw new Error('no text')
+      }
+      await this.messageSendText(
+        receiver,
+        payload.text,
+      )
+    } else if (payload.type === MessageType.Audio) {
+      throw new Error("Method Audio not supported.")
+    } else if (payload.type === MessageType.Url) {
+      await this.messageSendUrl(
+        receiver,
+        await this.messageUrl(messageId)
+      )
+    } else if (payload.type === MessageType.MiniProgram) {
+      await this.messageSendMiniProgram(
+        receiver,
+        await this.messageMiniProgram(messageId)
+      )
+    } else if (payload.type === MessageType.Video) {
+      throw new Error("Method Video not supported.")
+    } else if (
+      payload.type === MessageType.Attachment
+      || payload.type === MessageType.ChatHistory
+    ) {
+      throw new Error("Method Video not supported.")
+    } else {
+      await this.messageSendFile(
+        receiver,
+        await this.messageFile(messageId),
+      )
+    }
   }
 
   public async messageSendText(receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void> {
@@ -426,18 +501,18 @@ export class PuppetPadplus extends Puppet {
     throw new Error("Method not implemented.")
   }
 
-  protected async messageRawPayload(messageId: string): Promise<PadplusMessagePayload> {
+  public async messageRawPayload(messageId: string): Promise<PadplusMessagePayload> {
     log.verbose(PRE, 'messageRawPayload(%s)', messageId)
 
     const rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
     if (!rawPayload) {
-      throw new Error('no rawPayload')
+      throw new Error('no message rawPayload')
     }
 
     return rawPayload
   }
 
-  protected async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
+  public async messageRawPayloadParser(rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
     log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
 
     const payload = await messageRawPayloadParser(rawPayload)
