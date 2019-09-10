@@ -102,7 +102,7 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage(message: PadplusMessagePayload) {
     log.silly(PRE, `receive message : ${message}`)
-    const messageId = message.msgId
+    // const messageId = message.msgId
     const messageType = message.msgType
     switch(messageType) {
       case PadplusMessageType.Recalled:
@@ -258,32 +258,6 @@ export class PuppetPadplus extends Puppet {
      * 3. Look for friendship verify event
      */
     const friendshipVerifyContactId = friendshipVerifyEventMessageParser(message)
-
-    // if (friendshipReceiveContactId) {
-    //   interface XmlSchema {
-    //     msg: {
-    //       $: {
-    //         fromusername    : string,
-    //         encryptusername : string,
-    //         content         : string,
-    //         ticket          : string,
-    //       },
-    //     }
-    //   }
-
-    //   try {
-    //     const jsonPayload: XmlSchema = await xmlToJson(
-    //       message.content,
-    //     )
-    //     const v1 = jsonPayload.msg.$.encryptusername
-    //     const ticket = jsonPayload.msg.$.ticket
-    //     log.silly(`==P==A==D==P==L==U==S==<receive friendship>==P==A==D==P==L==U==S==`)
-    //     log.silly(PRE, `v1 and v2 : ${util.inspect(v1)};;;${ticket}`)
-    //     await this.confirmFriendship(v1, ticket)
-    //   } catch (e) {
-    //     // not receive event
-    //   }
-    // }
 
     if (friendshipConfirmContactId
         || friendshipReceiveContactId

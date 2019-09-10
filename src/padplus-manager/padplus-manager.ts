@@ -548,8 +548,8 @@ export class PadplusManager {
    * Room Section
    */
   public async setRoomTopic (
-    roomId: string,
     selfId: string,
+    roomId: string,
     topic: string,
   ) {
     await this.padplusRoom.setTopic(selfId, roomId, topic)
