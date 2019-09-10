@@ -28,6 +28,7 @@ import {
   PadplusRoomPayload,
   ScanData,
   FriendshipPayload,
+  QrcodeStatus,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -71,7 +72,8 @@ export class PadplusManager {
   private padplusFriendship  : PadplusFriendship
   private cacheManager?      : CacheManager
   private memory?            : MemoryCard
-  private memorySlot: PadplusMemorySlot
+  private memorySlot         : PadplusMemorySlot
+  private qrcodeStatus?      : ScanStatus
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
 
   constructor (
@@ -190,7 +192,8 @@ export class PadplusManager {
 
             const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
-            this.emit('scan', qrcodeUrl, ScanStatus.Waiting)
+            this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
+            this.qrcodeStatus = ScanStatus.Cancel
           }
           break
         case ResponseType.QRCODE_SCAN :
@@ -204,6 +207,36 @@ export class PadplusManager {
             =================================================
             `)
             this.grpcGatewayEmmiter.setQrcodeId(scanData.user_name)
+            switch (scanData.status as QrcodeStatus) {
+              case QrcodeStatus.Scanned:
+                if (this.qrcodeStatus !== ScanStatus.Waiting) {
+                  this.qrcodeStatus = ScanStatus.Waiting
+                  this.emit('scan', '', this.qrcodeStatus)
+                }
+                break
+
+              case QrcodeStatus.Confirmed:
+                if (this.qrcodeStatus !== ScanStatus.Scanned) {
+                  this.qrcodeStatus = ScanStatus.Scanned
+                  this.emit('scan', '', this.qrcodeStatus)
+                }
+                break
+
+              case QrcodeStatus.Canceled:
+              case QrcodeStatus.Expired:
+                const uin = await this.grpcGatewayEmmiter.getUIN()
+                const wxid = await this.grpcGatewayEmmiter.getUserName()
+                const data = {
+                  uin,
+                  wxid,
+                }
+                await this.padplusUser.getWeChatQRCode(data)
+                break
+
+              default:
+                break
+
+            }
           }
           break
         case ResponseType.QRCODE_LOGIN :
@@ -308,6 +341,7 @@ export class PadplusManager {
             // TODO: parse logout data
             const logoutData = JSON.parse(logoutRawData)
             this.emit('logout', logoutData)
+            process.exit(0)
           }
           break
         case ResponseType.CONTACT_LIST :
@@ -315,7 +349,7 @@ export class PadplusManager {
           if (grpcContact) {
             const _contact: GrpcContactPayload = JSON.parse(grpcContact)
             // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
-            const contact = convertFromGrpcContact(_contact)
+            const contact = convertFromGrpcContact(_contact, true)
 
             if (this.cacheManager) {
               await this.cacheManager.setContact(contact.userName, contact)
@@ -329,6 +363,7 @@ export class PadplusManager {
             if (!_data.ExtInfo) {
               const contactData: GrpcContactPayload = _data
               const contact = convertFromGrpcContact(contactData)
+              CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
               }
@@ -383,11 +418,7 @@ export class PadplusManager {
    */
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
     log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
-    if (mention) {
-      await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
-    } else {
-      await this.padplusMesasge.sendMessage(selfId, receiver, text, type)
-    }
+    await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
   }
 
   public async sendContact (selfId: string, receiver: string, contactId: string) {
@@ -409,7 +440,9 @@ export class PadplusManager {
     }
   }
 
-  private async getContact (contactId: string, count = 0): Promise<PadplusContactPayload | null | undefined> {
+  private async getContact (
+    contactId: string
+  ): Promise<PadplusContactPayload | null | undefined> {
     if (!this.cacheManager) {
       throw new Error()
     }
@@ -417,16 +450,14 @@ export class PadplusManager {
     if (contact) {
       return contact
     }
-    if (count === 0) {
-      await this.padplusContact.getContactInfo(contactId)
-    }
-
-    if (count > 4) {
-      return null
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 400))
-    return this.getContact(contactId, count + 1)
+    await this.padplusContact.getContactInfo(contactId)
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
+      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusContactPayload)
+      })
+    })
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -502,19 +533,11 @@ export class PadplusManager {
   public async getContactPayload (
     contactId: string,
   ): Promise<PadplusContactPayload> {
-    if (!this.cacheManager) {
-      throw new PadplusError(PadplusErrorType.NO_CACHE, 'getContactPayload')
+    const payload = await this.getContact(contactId)
+    if (!payload) {
+      throw new Error('Can not find payload for contactId ' + contactId)
     }
-    let contact = await this.cacheManager.getContact(contactId)
-
-    if (!contact) {
-      const contact = await this.getContact(contactId)
-      if (contact === null || contact === undefined) {
-        throw new Error(`can not get contact by contact ID : ${contactId}`)
-      }
-      return contact
-    }
-    return contact
+    return payload
   }
 
   public async syncContacts (): Promise<void> {
@@ -565,7 +588,7 @@ export class PadplusManager {
     }
   }
 
-  public async getRoom (roomId: string, count = 0): Promise<PadplusRoomPayload | null | undefined> {
+  public async getRoom (roomId: string): Promise<PadplusRoomPayload | null | undefined> {
     if (!this.cacheManager) {
       throw new Error()
     }
@@ -573,16 +596,14 @@ export class PadplusManager {
     if (room) {
       return room
     }
-    if (count === 0) {
-      await this.padplusRoom.getRoomInfo(roomId)
-    }
-
-    if (count > 4) {
-      return null
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 400))
-    return this.getRoom(roomId, count + 1)
+    await this.padplusContact.getContactInfo(roomId)
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
+      CallbackPool.Instance.pushContactCallback(roomId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusRoomPayload)
+      })
+    })
   }
 
   public async getRoomMembers (

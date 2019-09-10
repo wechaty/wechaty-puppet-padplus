@@ -25,6 +25,7 @@ import {
   log,
   padplusToken,
   retry,
+  GRPC_ENDPOINT,
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
@@ -61,7 +62,7 @@ export class PuppetPadplus extends Puppet {
       this.manager = new PadplusManager({
         token,
         name,
-        endpoint: '192.168.1.199:50051',
+        endpoint: this.options.endpoint || GRPC_ENDPOINT,
       })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
@@ -104,6 +105,7 @@ export class PuppetPadplus extends Puppet {
     const messageId = message.msgId
     const messageType = message.msgType
     switch(messageType) {
+      case PadplusMessageType.Recalled:
       case PadplusMessageType.Sys:
         await Promise.all([
           this.onRoomJoinEvent(message),
@@ -133,7 +135,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.MicroVideo:
       case PadplusMessageType.SelfInfo:
       case PadplusMessageType.SysNotice:
-      case PadplusMessageType.Recalled:
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:

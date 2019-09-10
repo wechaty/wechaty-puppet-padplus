@@ -1,5 +1,9 @@
 export enum QrcodeStatus {
-  Waiting = 1,
+  Waiting = 0,
+  Scanned = 1,
+  Confirmed = 2,
+  Canceled = 4,
+  Expired = 2007,
 }
 
 export enum LoginStatus {

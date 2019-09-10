@@ -1,7 +1,7 @@
 import { ContactGender } from 'wechaty-puppet'
 import { PadplusContactPayload, GrpcContactPayload } from '../schemas'
 
-export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): PadplusContactPayload => {
+export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSync?: boolean): PadplusContactPayload => {
   const payload: PadplusContactPayload = {
     alias            : contactPayload.Alias,
     bigHeadUrl       : contactPayload.BigHeadImgUrl,
@@ -15,7 +15,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload): Padp
     sex              : contactPayload.Sex as ContactGender.Male,
     signature        : contactPayload.Signature,
     smallHeadUrl     : contactPayload.SmallHeadImgUrl,
-    stranger         : contactPayload.EncryptUsername,
+    stranger         : isSync ? 'v1_xxx' : contactPayload.EncryptUsername,
     ticket           : '', // TODO: need to check
     userName         : contactPayload.UserName,
   }
