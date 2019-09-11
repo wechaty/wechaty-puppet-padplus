@@ -43,6 +43,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser } from '../pure-function-helpers/room-member-parser'
+import { isRoomId } from '../pure-function-helpers'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -364,9 +365,9 @@ export class PadplusManager {
           const roomRawData = data.getData()
           if (roomRawData) {
             const _data = JSON.parse(roomRawData)
-            if (!_data.ExtInfo) {
+            if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
-              const contact = convertFromGrpcContact(contactData)
+              const contact = convertFromGrpcContact(contactData, true)
               CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
@@ -639,9 +640,15 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error()
     }
-    const room = await this.cacheManager.getRoom(roomId)
-    if (room) {
-      return room
+    // retry
+    const retryCount = 10
+    const interval = 500
+    for (let i = 0; i < retryCount; i++) {
+      const room = await this.cacheManager.getRoom(roomId)
+      if (room) {
+        return room
+      }
+      await new Promise(resolve => setTimeout(resolve, interval))
     }
     await this.padplusContact.getContactInfo(roomId)
     return new Promise((resolve, reject) => {
