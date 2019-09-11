@@ -414,7 +414,7 @@ export class PadplusManager {
                 const contact = await this.cacheManager.getContact(member.UserName)
                 if (!contact || !contact.stranger) {
                   const newContact: PadplusContactPayload = {
-                    alias: member.DisplayName,
+                    alias: '',
                     bigHeadUrl: member.HeadImgUrl,
                     city: '',
                     contactType: 0,
@@ -422,7 +422,7 @@ export class PadplusManager {
                     labelLists: '',
                     nickName: member.NickName,
                     province: '',
-                    remark: member.RemarkName,
+                    remark: member.DisplayName,
                     sex: ContactGender.Unknown,
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
