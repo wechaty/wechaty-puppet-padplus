@@ -530,13 +530,6 @@ export class PadplusManager {
       await new Promise(resolve => setTimeout(resolve, interval))
     }
     return null
-    // return new Promise((resolve, reject) => {
-    //   const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
-    //   CallbackPool.Instance.pushContactCallback(contactId, (data) => {
-    //     clearTimeout(timeout)
-    //     resolve(data as PadplusContactPayload)
-    //   })
-    // })
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
