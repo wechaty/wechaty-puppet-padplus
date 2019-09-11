@@ -593,9 +593,15 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error()
     }
-    const room = await this.cacheManager.getRoom(roomId)
-    if (room) {
-      return room
+    // retry
+    const retryCount = 10
+    const interval = 500
+    for (let i = 0; i < retryCount; i++) {
+      const room = await this.cacheManager.getRoom(roomId)
+      if (room) {
+        return room
+      }
+      await new Promise(resolve => setTimeout(resolve, interval))
     }
     await this.padplusContact.getContactInfo(roomId)
     return new Promise((resolve, reject) => {
