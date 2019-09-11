@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-padplus",
-  "version": "0.0.80",
+  "version": "0.0.81",
   "description": "Puppet Padplus for Wechaty",
   "directories": {
     "test": "tests"
