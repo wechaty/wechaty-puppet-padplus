@@ -7,7 +7,11 @@ import {
 
 export interface PadplusRichMediaData {
   content: string,
-  messageType: string,
+  msgType: number,
+  contentType: string,
+  src?: string,
+  msgId: string,
+  createTime: number,
   fromUserName: string,
   toUserName: string,
 }
@@ -146,4 +150,9 @@ export interface PadplusUrlLink {
   thumbnailUrl? : string,
   title         : string,
   url           : string,
+}
+
+export interface PadplusMediaData {
+  msgId: string,
+  src: string,
 }

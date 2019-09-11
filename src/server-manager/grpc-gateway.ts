@@ -26,6 +26,7 @@ const PRE = 'GRPC_GATEWAY'
 const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEND_MESSAGE,
   ApiType.SEND_FILE,
+  ApiType.GET_MESSAGE_MEDIA,
 ]
 
 export type GrpcGatewayEvent = 'data'
@@ -115,13 +116,23 @@ export class GrpcGateway extends EventEmitter {
     try {
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        return new Promise<StreamResponse>((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('request timeout')), 2000)
-          CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
-            clearTimeout(timeout)
-            resolve(data)
+        if (apiType === ApiType.GET_MESSAGE_MEDIA) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 2000)
+            CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              resolve(data)
+            })
           })
-        })
+        } else {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 2000)
+            CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              resolve(data)
+            })
+          })
+        }
       }
     } catch (err) {
       log.verbose(PRE, `error : ${util.inspect(err)}`)
@@ -182,7 +193,19 @@ export class GrpcGateway extends EventEmitter {
           log.silly(PRE, `responseType: ${ResponseType[responseType!]}(${responseType}) data : ${data.getData()}`)
           log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         }
-        // FIXME: TODO: 若锻炼中不带requestId，如何返回？是不需要返回的？还是需要额外的操作？
+
+        /* if (responseType === ResponseType.MESSAGE_MEDIA_SRC) {
+          const mediaDataStr = data.getData()
+          if (mediaDataStr) {
+            const mediaData = JSON.parse(mediaDataStr)
+            const callback = CallbackPool.Instance.getCallback(mediaData.msgId)
+            callback(data)
+            CallbackPool.Instance.removeCallback(mediaData.msgId)
+          } else {
+            throw new Error(`MESSAGE_MEDIA_SRC can not get data from server`)
+          }
+        } */
+
         if (requestId) {
           const callback = CallbackPool.Instance.getCallback(requestId)
           callback(data)

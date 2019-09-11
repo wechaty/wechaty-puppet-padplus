@@ -37,7 +37,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser } from './pure-function-helpers';
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isRoomId } from './pure-function-helpers';
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
@@ -321,31 +321,38 @@ export class PuppetPadplus extends Puppet {
     const payload    = await this.messagePayload(messageId)
 
     let filename = payload.filename || payload.id
+    const type = payload.type === MessageType.Image ? 'img' : payload.type === MessageType.Video ? 'video' : 'file'
     switch (payload.type) {
+      case MessageType.Image:
+      case MessageType.Attachment:
       case MessageType.Video:
+        let content = rawPayload.content
+        if (isRoomId(rawPayload.fromUserName)) {
+          const index = rawPayload.content.indexOf(':\n')
+          content = rawPayload.content.slice(index !== -1 ? index + 2 : 0)
+        }
         const mediaData: PadplusRichMediaData = {
-          content: rawPayload.content,
-          messageType: String(rawPayload.msgType),
+          content,
+          msgType: rawPayload.msgType,
+          src: rawPayload.url,
+          contentType: type,
+          msgId: rawPayload.msgId,
+          createTime: rawPayload.createTime,
           fromUserName: rawPayload.fromUserName,
           toUserName: rawPayload.toUserName,
         }
-        const data = this.manager.loadRichMediaData(mediaData)
-        log.silly(PRE, `video media data : ${util.inspect(data)}`)
-        // TODO: waiting for test
-        return {} as FileBox
+        const data = await this.manager.loadRichMediaData(mediaData)
+        return FileBox.fromUrl(data.src)
         break
-      case MessageType.Audio:
       case MessageType.Emoticon:
         throw new Error(`not supported.`)
-      case MessageType.Image:
+        break
+      case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
           return FileBox.fromUrl(rawPayload.url)
         } else {
-          throw new Error(`can not get image url fot message id: ${messageId}`)
+          throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
-        break
-      case MessageType.Attachment:
-        throw new Error(`Waiting...`)
         break
       default:
         const base64 = 'Tm90IFN1cHBvcnRlZCBBdHRhY2htZW50IEZpbGUgVHlwZSBpbiBNZXNzYWdlLgpTZWU6IGh0dHBzOi8vZ2l0aHViLmNvbS9DaGF0aWUvd2VjaGF0eS9pc3N1ZXMvMTI0OQo='

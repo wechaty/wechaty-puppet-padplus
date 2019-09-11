@@ -1,6 +1,6 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
-import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { PadplusMessageType, RequestStatus, PadplusRichMediaData } from '../../schemas'
 
 const PRE = 'PadplusMessage'
@@ -119,15 +119,19 @@ export class PadplusMessage {
     return RequestStatus.Success
   }
 
-  public async loadRichMeidaData (mediaData: PadplusRichMediaData): Promise<RequestStatus> {
+  public async loadRichMeidaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {
     log.silly(PRE, `loadRichMeidaData()`)
 
     const res = await this.requestClient.request({
       apiType: ApiType.GET_MESSAGE_MEDIA,
       data: mediaData,
     })
-    log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
-    return RequestStatus.Success
+    log.silly(PRE, `loadRichMeidaData() : ${JSON.stringify(res)}`)
+    if (res) {
+      return res
+    } else {
+      throw new Error(`can not load rich media data.`)
+    }
   }
 
 }

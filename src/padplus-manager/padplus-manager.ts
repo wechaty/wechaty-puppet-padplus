@@ -30,6 +30,9 @@ import {
   FriendshipPayload,
   QrcodeStatus,
   PadplusRichMediaData,
+  GrpcRoomMemberPayload,
+  GrpcRoomMemberList,
+  PadplusMediaData,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -39,7 +42,7 @@ import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
-import { roomMemberParser } from '../pure-function-helpers/room-member-parser'
+import { briefRoomMemberParser } from '../pure-function-helpers/room-member-parser'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -372,7 +375,7 @@ export class PadplusManager {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
-                const roomMembers = roomMemberParser(roomPayload.members)
+                const roomMembers = briefRoomMemberParser(roomPayload.members)
                 await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
               } else {
@@ -393,13 +396,56 @@ export class PadplusManager {
           }
           break
         case ResponseType.ROOM_MEMBER_LIST :
-          // TODO: not support now
+          const roomMembersStr = data.getData()
+          if (roomMembersStr) {
+            if (this.cacheManager) {
+              const roomMemberList: GrpcRoomMemberList = JSON.parse(roomMembersStr)
+              const roomId = roomMemberList.roomId
+              const membersStr = roomMemberList.membersJson
+              const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
+              const members = briefRoomMemberParser(membersList)
+              await this.cacheManager.setRoomMember(roomId, members)
+
+              await Promise.all(membersList.map(async member => {
+                if (!this.cacheManager) {
+                  throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
+                }
+                const contact = await this.cacheManager.getContact(member.UserName)
+                if (contact) {
+                  if (!contact.stranger) {
+                    contact.userName = member.UserName
+                    contact.nickName = member.NickName
+                    contact.smallHeadUrl = member.HeadImgUrl
+                    contact.bigHeadUrl = member.HeadImgUrl
+                    contact.remark = member.RemarkName
+
+                    await this.cacheManager.setContact(contact.userName, contact)
+                  }
+                } else {
+                  throw new Error(`can not get contact when room member`)
+                }
+              }))
+            } else {
+              throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
+            }
+          } else {
+            throw new Error(`can not get receive room member data from server`)
+          }
           break
         case ResponseType.ROOM_MEMBER_MODIFY :
           // TODO: not support now
           break
         case ResponseType.STATUS_NOTIFY :
           // TODO: not support now
+          break
+        case ResponseType.MESSAGE_MEDIA_SRC :
+          const mediaDataStr = data.getData()
+          if (mediaDataStr) {
+            const mediaData = JSON.parse(mediaDataStr)
+            const callback = await CallbackPool.Instance.getCallback(mediaData.msgId)
+            callback && callback(data)
+            CallbackPool.Instance.removeCallback(mediaData.msgId)
+          }
           break
         case ResponseType.REQUEST_RESPONSE :
           const requestId = data.getRequestid()
@@ -418,10 +464,17 @@ export class PadplusManager {
    * Message Section
    */
 
-  public async loadRichMediaData (mediaData: PadplusRichMediaData) {
+  public async loadRichMediaData (mediaData: PadplusRichMediaData): Promise<PadplusMediaData> {
     log.silly(PRE, `loadRichMediaData()`)
 
-    await this.padplusMesasge.loadRichMeidaData(mediaData)
+    const data = await this.padplusMesasge.loadRichMeidaData(mediaData)
+    const mediaStr = data.getData()
+    if (mediaStr) {
+      const mediaData = JSON.parse(mediaStr)
+      return mediaData
+    } else {
+      throw new Error(`can not load media data on manager`)
+    }
   }
 
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
@@ -608,6 +661,7 @@ export class PadplusManager {
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
     if (!memberMap) {
+      log.silly(`==P==A==D==P==L==U==S==<Room Member From API>==P==A==D==P==L==U==S==`)
       const uin = this.grpcGatewayEmmiter.getUIN()
       await this.padplusRoom.getRoomMembers(uin, roomId)
     }
