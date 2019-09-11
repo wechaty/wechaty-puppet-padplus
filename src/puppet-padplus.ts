@@ -31,7 +31,7 @@ import {
 
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload } from './schemas';
-import { PadplusMessagePayload } from './schemas/model-message';
+import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message';
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
@@ -96,6 +96,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   async onMessage(message: PadplusMessagePayload) {
+    console.log(JSON.stringify(message))
     log.silly(PRE, `receive message : ${message}`)
     // const messageId = message.msgId
     const messageType = message.msgType
@@ -305,7 +306,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async friendshipRawPayloadParser(rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `friendship rawPayload : ${util.inspect(rawPayload)}`)
     return rawPayload as FriendshipPayload
   }
 
@@ -321,22 +322,40 @@ export class PuppetPadplus extends Puppet {
     const payload    = await this.messagePayload(messageId)
 
     let filename = payload.filename || payload.id
+    const type = payload.type === MessageType.Image ? 'img' : payload.type === MessageType.Video ? 'video' : 'file'
     switch (payload.type) {
-      case MessageType.Audio:
+      case MessageType.Image:
+      case MessageType.Attachment:
       case MessageType.Video:
+        let content = rawPayload.content
+        const mediaData: PadplusRichMediaData = {
+          content,
+          msgType: rawPayload.msgType,
+          fileName: rawPayload.fileName || '',
+          src: rawPayload.url,
+          contentType: type,
+          appMsgType: type === 'file' ? 6 : 0,
+          msgId: rawPayload.msgId,
+          createTime: rawPayload.createTime,
+          fromUserName: rawPayload.fromUserName,
+          toUserName: rawPayload.toUserName,
+        }
+        const data = await this.manager.loadRichMediaData(mediaData)
+        if (data.src) {
+          return FileBox.fromUrl(data.src)
+        } else {
+          throw new Error(`can not get the media data`)
+        }
+        break
       case MessageType.Emoticon:
         throw new Error(`not supported.`)
-      case MessageType.Image:
-        log.silly(PRE, `rawPawload ${rawPayload}`)
-        /* const imagePayload = await imagePayloadParser(rawPayload)
-        if (imagePayload === null) {
-          throw new Error(`can not parse image payload.`)
-        }
-        return FileBox.fromBase64('', '') */
-        throw new Error(`not supported.`)
         break
-      case MessageType.Attachment:
-        throw new Error(`Waiting...`)
+      case MessageType.Audio:
+        if (rawPayload && rawPayload.url) {
+          return FileBox.fromUrl(rawPayload.url)
+        } else {
+          throw new Error(`can not get image/audio url fot message id: ${messageId}`)
+        }
         break
       default:
         const base64 = 'Tm90IFN1cHBvcnRlZCBBdHRhY2htZW50IEZpbGUgVHlwZSBpbiBNZXNzYWdlLgpTZWU6IGh0dHBzOi8vZ2l0aHViLmNvbS9DaGF0aWUvd2VjaGF0eS9pc3N1ZXMvMTI0OQo='
@@ -472,6 +491,7 @@ export class PuppetPadplus extends Puppet {
       case '.png':
         await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'pic')
         break
+      case 'video/mp4':
       case '.mp4':
         await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
         break
@@ -517,7 +537,7 @@ export class PuppetPadplus extends Puppet {
 
     const payload = await messageRawPayloadParser(rawPayload)
 
-    return payload //{} as MessagePayload
+    return payload
   }
 
   /**
@@ -676,7 +696,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room invitation rawPayload : ${util.inspect(rawPayload)}`)
     const payload: RoomInvitationPayload = {
       id: rawPayload.id,
       inviterId: rawPayload.fromUser,
@@ -782,7 +802,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomRawPayloadParser(rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room rawPayload : ${util.inspect(rawPayload)}`)
     const room = roomRawPayloadParser(rawPayload)
     return room
   }
@@ -803,7 +823,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomMemberRawPayloadParser(rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room member rawPayload : ${util.inspect(rawPayload)}`)
     const member = convertToPuppetRoomMember(rawPayload)
     return member
   }

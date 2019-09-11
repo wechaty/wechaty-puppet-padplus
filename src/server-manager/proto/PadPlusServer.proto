@@ -65,6 +65,7 @@ enum ResponseType {
 
     MESSAGE_RECEIVE = 30;
     STATUS_NOTIFY = 31;
+    MESSAGE_MEDIA_SRC = 32;
 }
 
 message StreamResponse {

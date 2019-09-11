@@ -31,7 +31,7 @@ export interface GrpcQrCodeLogin {
 }
 
 export interface GrpcMessagePayload {
-  AppMsgType?: string,
+  AppMsgType?: number,
   Content: string,
   CreateTime: number,
   fileName?: string,

@@ -5,6 +5,19 @@ import {
   WechatAppMessageType,
 } from './padplus-enums'
 
+export interface PadplusRichMediaData {
+  content: string,
+  msgType: number,
+  contentType: string,
+  src?: string,
+  appMsgType?: number,
+  fileName: string,
+  msgId: string,
+  createTime: number,
+  fromUserName: string,
+  toUserName: string,
+}
+
 export interface PadplusMessageSource {
   silence?: boolean,
   memberCount?: number,
@@ -13,7 +26,7 @@ export interface PadplusMessageSource {
 }
 
 export interface PadplusMessagePayload {
-  appMsgType?: string,
+  appMsgType?: number,
   content: string,
   createTime: number,
   fileName?: string,
@@ -139,4 +152,9 @@ export interface PadplusUrlLink {
   thumbnailUrl? : string,
   title         : string,
   url           : string,
+}
+
+export interface PadplusMediaData {
+  msgId: string,
+  src: string,
 }

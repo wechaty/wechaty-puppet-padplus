@@ -190,4 +190,5 @@ export enum ResponseType {
     ROOM_MEMBER_MODIFY = 24,
     MESSAGE_RECEIVE = 30,
     STATUS_NOTIFY = 31,
+    MESSAGE_MEDIA_SRC = 32,
 }
