@@ -598,7 +598,7 @@ export class PadplusManager {
     }
     await this.padplusContact.getContactInfo(roomId)
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
+      const timeout = setTimeout(() => reject(new Error('get room timeout')), 1000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)

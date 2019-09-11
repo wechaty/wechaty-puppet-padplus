@@ -327,13 +327,11 @@ export class PuppetPadplus extends Puppet {
       case MessageType.Emoticon:
         throw new Error(`not supported.`)
       case MessageType.Image:
-        log.silly(PRE, `rawPawload ${rawPayload}`)
-        /* const imagePayload = await imagePayloadParser(rawPayload)
-        if (imagePayload === null) {
-          throw new Error(`can not parse image payload.`)
+        if (rawPayload && rawPayload.url) {
+          return FileBox.fromUrl(rawPayload.url)
+        } else {
+          throw new Error(`can not get image url fot message id: ${messageId}`)
         }
-        return FileBox.fromBase64('', '') */
-        throw new Error(`not supported.`)
         break
       case MessageType.Attachment:
         throw new Error(`Waiting...`)
@@ -517,7 +515,7 @@ export class PuppetPadplus extends Puppet {
 
     const payload = await messageRawPayloadParser(rawPayload)
 
-    return payload //{} as MessagePayload
+    return payload
   }
 
   /**
