@@ -194,18 +194,6 @@ export class GrpcGateway extends EventEmitter {
           log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         }
 
-        /* if (responseType === ResponseType.MESSAGE_MEDIA_SRC) {
-          const mediaDataStr = data.getData()
-          if (mediaDataStr) {
-            const mediaData = JSON.parse(mediaDataStr)
-            const callback = CallbackPool.Instance.getCallback(mediaData.msgId)
-            callback(data)
-            CallbackPool.Instance.removeCallback(mediaData.msgId)
-          } else {
-            throw new Error(`MESSAGE_MEDIA_SRC can not get data from server`)
-          }
-        } */
-
         if (requestId) {
           const callback = CallbackPool.Instance.getCallback(requestId)
           callback(data)
