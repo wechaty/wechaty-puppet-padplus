@@ -412,18 +412,25 @@ export class PadplusManager {
                   throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
                 }
                 const contact = await this.cacheManager.getContact(member.UserName)
-                if (contact) {
-                  if (!contact.stranger) {
-                    contact.userName = member.UserName
-                    contact.nickName = member.NickName
-                    contact.smallHeadUrl = member.HeadImgUrl
-                    contact.bigHeadUrl = member.HeadImgUrl
-                    contact.remark = member.RemarkName
-
-                    await this.cacheManager.setContact(contact.userName, contact)
+                if (!contact || !contact.stranger) {
+                  const newContact: PadplusContactPayload = {
+                    userName: member.UserName,
+                    nickName: member.NickName,
+                    smallHeadUrl: member.HeadImgUrl,
+                    bigHeadUrl: member.HeadImgUrl,
+                    remark: member.RemarkName,
+                    alias: member.DisplayName,
+                    contactType: 0,
+                    labelLists: '',
+                    city: '',
+                    country: '',
+                    province: '',
+                    sex: ContactGender.Unknown,
+                    signature: '',
+                    stranger: '',
+                    ticket: '',
                   }
-                } else {
-                  throw new Error(`can not get contact when room member`)
+                  await this.cacheManager.setContact(newContact.userName, newContact)
                 }
               }))
             } else {
