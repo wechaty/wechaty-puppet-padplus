@@ -96,6 +96,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   async onMessage(message: PadplusMessagePayload) {
+    console.log(JSON.stringify(message))
     log.silly(PRE, `receive message : ${message}`)
     // const messageId = message.msgId
     const messageType = message.msgType

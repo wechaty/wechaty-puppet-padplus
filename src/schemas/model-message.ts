@@ -26,7 +26,7 @@ export interface PadplusMessageSource {
 }
 
 export interface PadplusMessagePayload {
-  appMsgType?: string,
+  appMsgType?: number,
   content: string,
   createTime: number,
   fileName?: string,
