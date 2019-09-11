@@ -29,6 +29,7 @@ import {
   ScanData,
   FriendshipPayload,
   QrcodeStatus,
+  PadplusRichMediaData,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -416,6 +417,13 @@ export class PadplusManager {
   /**
    * Message Section
    */
+
+  public async loadRichMediaData (mediaData: PadplusRichMediaData) {
+    log.silly(PRE, `loadRichMediaData()`)
+
+    await this.padplusMesasge.loadRichMeidaData(mediaData)
+  }
+
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
     log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
     await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
@@ -492,20 +500,6 @@ export class PadplusManager {
     const payload: PadplusMessagePayload = await convertMessageFromGrpcToPadplus(rawMessage)
     this.cachePadplusMessagePayload.set(payload.msgId, payload)
     return payload
-  }
-
-  /**
-   *
-   * message
-   *
-   */
-  public async getMessageFromCache (
-    messageId: string,
-  ) {
-    log.silly(PRE, `getMessageFromCache : ${messageId}`)
-    if (!this.cacheManager) {
-      throw new Error(`no cache manager.`)
-    }
   }
 
   /**

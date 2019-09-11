@@ -31,7 +31,7 @@ import {
 
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload } from './schemas';
-import { PadplusMessagePayload } from './schemas/model-message';
+import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message';
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
@@ -305,7 +305,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async friendshipRawPayloadParser(rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `friendship rawPayload : ${util.inspect(rawPayload)}`)
     return rawPayload as FriendshipPayload
   }
 
@@ -322,8 +322,19 @@ export class PuppetPadplus extends Puppet {
 
     let filename = payload.filename || payload.id
     switch (payload.type) {
-      case MessageType.Audio:
       case MessageType.Video:
+        const mediaData: PadplusRichMediaData = {
+          content: rawPayload.content,
+          messageType: String(rawPayload.msgType),
+          fromUserName: rawPayload.fromUserName,
+          toUserName: rawPayload.toUserName,
+        }
+        const data = this.manager.loadRichMediaData(mediaData)
+        log.silly(PRE, `video media data : ${util.inspect(data)}`)
+        // TODO: waiting for test
+        return {} as FileBox
+        break
+      case MessageType.Audio:
       case MessageType.Emoticon:
         throw new Error(`not supported.`)
       case MessageType.Image:
@@ -470,6 +481,7 @@ export class PuppetPadplus extends Puppet {
       case '.png':
         await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'pic')
         break
+      case 'video/mp4':
       case '.mp4':
         await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
         break
@@ -674,7 +686,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomInvitationRawPayloadParser(rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room invitation rawPayload : ${util.inspect(rawPayload)}`)
     const payload: RoomInvitationPayload = {
       id: rawPayload.id,
       inviterId: rawPayload.fromUser,
@@ -778,7 +790,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomRawPayloadParser(rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room rawPayload : ${util.inspect(rawPayload)}`)
     const room = roomRawPayloadParser(rawPayload)
     return room
   }
@@ -799,7 +811,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomMemberRawPayloadParser(rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
-    log.silly(PRE, `rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `room member rawPayload : ${util.inspect(rawPayload)}`)
     const member = convertToPuppetRoomMember(rawPayload)
     return member
   }

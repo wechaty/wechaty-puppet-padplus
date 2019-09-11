@@ -5,6 +5,13 @@ import {
   WechatAppMessageType,
 } from './padplus-enums'
 
+export interface PadplusRichMediaData {
+  content: string,
+  messageType: string,
+  fromUserName: string,
+  toUserName: string,
+}
+
 export interface PadplusMessageSource {
   silence?: boolean,
   memberCount?: number,
