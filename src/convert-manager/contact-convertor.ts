@@ -12,7 +12,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     nickName         : contactPayload.NickName,
     province         : contactPayload.Province,
     remark           : contactPayload.Remark,
-    sex              : contactPayload.Sex as ContactGender.Male,
+    sex              : contactPayload.Sex as ContactGender,
     signature        : contactPayload.Signature,
     smallHeadUrl     : contactPayload.SmallHeadImgUrl,
     stranger         : isSync ? 'v1_xxx' : contactPayload.EncryptUsername,

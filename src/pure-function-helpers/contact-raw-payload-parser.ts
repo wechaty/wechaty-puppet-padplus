@@ -10,7 +10,7 @@ import {
 import {
   isContactOfficialId,
   isRoomId,
-  isStrangerV1,
+  // isStrangerV1,
 }                           from './is-type'
 
 export function contactRawPayloadParser (
@@ -53,23 +53,23 @@ export function contactRawPayloadParser (
   } else {
     contactType = ContactType.Personal
   }
-  let friend = false
-  if (rawPayload.stranger && isStrangerV1(rawPayload.stranger)) {
-    friend = true
-  }
+  // let friend = false
+  // if (rawPayload.stranger && isStrangerV1(rawPayload.stranger)) {
+  //   friend = true
+  // }
 
   const payload: ContactPayload = {
     alias     : rawPayload.remark,
     avatar    : rawPayload.bigHeadUrl,
     city      : rawPayload.city,
-    friend,
+    // friend,
     gender    : rawPayload.sex,
     id        : rawPayload.userName,
     name      : rawPayload.nickName,
     province  : rawPayload.province,
     signature : (rawPayload.signature).replace('+', ' '),          // Stay+Foolish
     type      : contactType,
-    weixin    : rawPayload.alias,
+    weixin    : rawPayload.userName,
   }
 
   return payload
