@@ -764,6 +764,8 @@ export class PuppetPadplus extends Puppet {
     const selfId = this.selfId()
     await this.manager.setRoomTopic(selfId, roomId, topic as string)
     await new Promise(r => setTimeout(r, 500))
+    await this.roomPayloadDirty(roomId)
+    await new Promise(resolve => setTimeout(resolve, 500))
     await this.roomTopic(roomId)
   }
 

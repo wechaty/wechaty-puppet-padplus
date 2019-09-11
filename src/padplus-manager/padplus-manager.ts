@@ -508,9 +508,14 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error()
     }
-    const contact = await this.cacheManager.getContact(contactId)
-    if (contact) {
-      return contact
+    const retryCount = 10
+    const interval = 500
+    for (let i = 0; i < retryCount; i++) {
+      const contact = await this.cacheManager.getContact(contactId)
+      if (contact) {
+        return contact
+      }
+      await new Promise(resolve => setTimeout(resolve, interval))
     }
     await this.padplusContact.getContactInfo(contactId)
     return new Promise((resolve, reject) => {
