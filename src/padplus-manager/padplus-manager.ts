@@ -346,7 +346,7 @@ export class PadplusManager {
             const logoutData = JSON.parse(logoutRawData)
             this.emit('logout', logoutData)
             // TODO: modify the logic for quit WeChat
-            process.exit(0)
+            process.exit(-1)
           }
           break
         case ResponseType.CONTACT_LIST :
