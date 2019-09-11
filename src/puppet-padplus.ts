@@ -37,7 +37,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isRoomId } from './pure-function-helpers';
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser } from './pure-function-helpers';
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
@@ -327,22 +327,24 @@ export class PuppetPadplus extends Puppet {
       case MessageType.Attachment:
       case MessageType.Video:
         let content = rawPayload.content
-        if (isRoomId(rawPayload.fromUserName)) {
-          const index = rawPayload.content.indexOf(':\n')
-          content = rawPayload.content.slice(index !== -1 ? index + 2 : 0)
-        }
         const mediaData: PadplusRichMediaData = {
           content,
           msgType: rawPayload.msgType,
+          fileName: rawPayload.fileName || '',
           src: rawPayload.url,
           contentType: type,
+          appMsgType: type === 'file' ? 6 : 0,
           msgId: rawPayload.msgId,
           createTime: rawPayload.createTime,
           fromUserName: rawPayload.fromUserName,
           toUserName: rawPayload.toUserName,
         }
         const data = await this.manager.loadRichMediaData(mediaData)
-        return FileBox.fromUrl(data.src)
+        if (data.src) {
+          return FileBox.fromUrl(data.src)
+        } else {
+          throw new Error(`can not get the media data`)
+        }
         break
       case MessageType.Emoticon:
         throw new Error(`not supported.`)

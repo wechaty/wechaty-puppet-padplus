@@ -515,6 +515,11 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error()
     }
+    const contact = await this.cacheManager.getContact(contactId)
+    if (contact) {
+      return contact
+    }
+    await this.padplusContact.getContactInfo(contactId)
     const retryCount = 10
     const interval = 500
     for (let i = 0; i < retryCount; i++) {
@@ -524,14 +529,14 @@ export class PadplusManager {
       }
       await new Promise(resolve => setTimeout(resolve, interval))
     }
-    await this.padplusContact.getContactInfo(contactId)
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
-      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
-        clearTimeout(timeout)
-        resolve(data as PadplusContactPayload)
-      })
-    })
+    return null
+    // return new Promise((resolve, reject) => {
+    //   const timeout = setTimeout(() => reject(new Error('get contact timeout')), 1000)
+    //   CallbackPool.Instance.pushContactCallback(contactId, (data) => {
+    //     clearTimeout(timeout)
+    //     resolve(data as PadplusContactPayload)
+    //   })
+    // })
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -652,6 +657,11 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error()
     }
+    const room = await this.cacheManager.getRoom(roomId)
+    if (room) {
+      return room
+    }
+    await this.padplusContact.getContactInfo(roomId)
     // retry
     const retryCount = 10
     const interval = 500
@@ -662,14 +672,14 @@ export class PadplusManager {
       }
       await new Promise(resolve => setTimeout(resolve, interval))
     }
-    await this.padplusContact.getContactInfo(roomId)
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get room timeout')), 1000)
-      CallbackPool.Instance.pushContactCallback(roomId, (data) => {
-        clearTimeout(timeout)
-        resolve(data as PadplusRoomPayload)
-      })
-    })
+    // return new Promise((resolve, reject) => {
+    //   const timeout = setTimeout(() => reject(new Error('get room timeout')), 1000)
+    //   CallbackPool.Instance.pushContactCallback(roomId, (data) => {
+    //     clearTimeout(timeout)
+    //     resolve(data as PadplusRoomPayload)
+    //   })
+    // })
+    return null
   }
 
   public async getRoomMembers (

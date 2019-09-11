@@ -10,6 +10,8 @@ export interface PadplusRichMediaData {
   msgType: number,
   contentType: string,
   src?: string,
+  appMsgType?: number,
+  fileName: string,
   msgId: string,
   createTime: number,
   fromUserName: string,
