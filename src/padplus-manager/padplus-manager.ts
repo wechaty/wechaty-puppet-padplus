@@ -39,6 +39,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { roomMemberParser } from '../pure-function-helpers/room-member-parser'
+import { isRoomId } from '../pure-function-helpers'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -360,9 +361,9 @@ export class PadplusManager {
           const roomRawData = data.getData()
           if (roomRawData) {
             const _data = JSON.parse(roomRawData)
-            if (!_data.ExtInfo) {
+            if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
-              const contact = convertFromGrpcContact(contactData)
+              const contact = convertFromGrpcContact(contactData, true)
               CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
