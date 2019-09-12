@@ -541,10 +541,10 @@ export class PadplusManager {
     return url
   }
 
-  public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string) {
+  public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string, fileSize?: number) {
     log.verbose(PRE, 'sendFile()')
 
-    await this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType)
+    await this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType, fileSize)
 
   }
 

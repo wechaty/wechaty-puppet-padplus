@@ -468,6 +468,7 @@ export class PuppetPadplus extends Puppet {
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
     const fileUrl = await this.manager.generatorFileUrl(file)
+    const fileSize = (await file.toBuffer()).length
     log.silly(PRE, `file url : ${util.inspect(fileUrl)}`)
     // this needs to run before mimeType is available
     await file.ready()
@@ -496,7 +497,7 @@ export class PuppetPadplus extends Puppet {
         await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
         break
       default:
-        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc')
+        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         break
     }
   }

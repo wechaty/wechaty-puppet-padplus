@@ -2,6 +2,7 @@ import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { PadplusMessageType, RequestStatus, PadplusRichMediaData } from '../../schemas'
+import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PadplusMessage'
 
@@ -62,7 +63,14 @@ export class PadplusMessage {
     return RequestStatus.Success
   }
 
-  public sendFile = async (selfId: string, receiver: string, url: string, fileName: string, subType: string): Promise<RequestStatus> => {
+  public sendFile = async (
+    selfId: string,
+    receiver: string,
+    url: string,
+    fileName: string,
+    subType: string,
+    fileSize?: number,
+  ): Promise<RequestStatus> => {
     log.verbose(PRE, `sendFile()`)
     let data = {}
     if (subType === 'pic') {
@@ -95,12 +103,13 @@ export class PadplusMessage {
     } else if (subType === 'doc') {
       const content = {
         des: fileName,
+        fileSize,
         thumburl: '',
         title: fileName,
-        type: 5,
         url,
       }
       data = {
+        appMsgType: WechatAppMessageType.Attach,
         content: JSON.stringify(content),
         fileName,
         fromUserName: selfId,
@@ -112,7 +121,7 @@ export class PadplusMessage {
     }
 
     const res = await this.requestClient.request({
-      apiType: ApiType.SEND_FILE,
+      apiType: ApiType.SEND_MESSAGE,
       data,
     })
     log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
