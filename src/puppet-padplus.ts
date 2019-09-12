@@ -489,7 +489,7 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'pic')
+        await this.manager.sendFile(this.id, contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
         break
       case 'video/mp4':
       case '.mp4':
