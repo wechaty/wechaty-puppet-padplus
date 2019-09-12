@@ -342,7 +342,8 @@ export class PuppetPadplus extends Puppet {
         }
         const data = await this.manager.loadRichMediaData(mediaData)
         if (data.src) {
-          return FileBox.fromUrl(data.src)
+          const name = path.parse(data.src).base
+          return FileBox.fromUrl(encodeURI(data.src), name)
         } else {
           throw new Error(`can not get the media data`)
         }
