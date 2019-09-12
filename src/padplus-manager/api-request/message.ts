@@ -73,6 +73,31 @@ export class PadplusMessage {
   ): Promise<RequestStatus> => {
     log.verbose(PRE, `sendFile()`)
     let data = {}
+    if (subType === 'doc') {
+      const content = {
+        des: fileName,
+        fileSize,
+        thumburl: '',
+        title: fileName,
+        url,
+      }
+      data = {
+        appMsgType: WechatAppMessageType.Attach,
+        content: JSON.stringify(content),
+        fileName,
+        fromUserName: selfId,
+        messageType: PadplusMessageType.App,
+        subType,
+        toUserName: receiver,
+        url,
+      }
+      const res = await this.requestClient.request({
+        apiType: ApiType.SEND_MESSAGE,
+        data,
+      })
+      log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
+      return RequestStatus.Success
+    }
     if (subType === 'pic') {
       data = {
         fileName,
@@ -100,28 +125,9 @@ export class PadplusMessage {
         toUserName: receiver,
         url,
       }
-    } else if (subType === 'doc') {
-      const content = {
-        des: fileName,
-        fileSize,
-        thumburl: '',
-        title: fileName,
-        url,
-      }
-      data = {
-        appMsgType: WechatAppMessageType.Attach,
-        content: JSON.stringify(content),
-        fileName,
-        fromUserName: selfId,
-        messageType: PadplusMessageType.App,
-        subType,
-        toUserName: receiver,
-        url,
-      }
     }
-
     const res = await this.requestClient.request({
-      apiType: ApiType.SEND_MESSAGE,
+      apiType: ApiType.SEND_FILE,
       data,
     })
     log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)

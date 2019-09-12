@@ -118,7 +118,7 @@ export class GrpcGateway extends EventEmitter {
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
         if (apiType === ApiType.GET_MESSAGE_MEDIA) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('request timeout')), 2000)
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
@@ -126,7 +126,7 @@ export class GrpcGateway extends EventEmitter {
           })
         } else {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('request timeout')), 2000)
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
