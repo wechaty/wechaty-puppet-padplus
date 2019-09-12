@@ -196,8 +196,10 @@ export class GrpcGateway extends EventEmitter {
 
         if (requestId) {
           const callback = CallbackPool.Instance.getCallback(requestId)
-          callback(data)
-          CallbackPool.Instance.removeCallback(requestId)
+          if (callback) {
+            callback(data)
+            CallbackPool.Instance.removeCallback(requestId)
+          }
         } else { // 长连接推送的内容
           if (responseType === ResponseType.LOGIN_QRCODE) {
             const name = Object.keys(this.eventEmitterMap).find(name => {

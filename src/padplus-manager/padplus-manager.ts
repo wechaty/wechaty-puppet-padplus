@@ -188,6 +188,7 @@ export class PadplusManager {
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
+
         case ResponseType.LOGIN_QRCODE :
           const qrcodeRawData = data.getData()
           if (qrcodeRawData) {
@@ -201,6 +202,7 @@ export class PadplusManager {
             this.qrcodeStatus = ScanStatus.Cancel
           }
           break
+
         case ResponseType.QRCODE_SCAN :
           const scanRawData = data.getData()
           if (scanRawData) {
@@ -244,6 +246,7 @@ export class PadplusManager {
             }
           }
           break
+
         case ResponseType.QRCODE_LOGIN :
           const grpcLoginData = data.getData()
           if (grpcLoginData) {
@@ -296,6 +299,7 @@ export class PadplusManager {
             }
           }
           break
+
         case ResponseType.AUTO_LOGIN :
           const grpcAutoLoginData = data.getData()
           if (grpcAutoLoginData) {
@@ -340,6 +344,7 @@ export class PadplusManager {
             }
           }
           break
+
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
           if (logoutRawData) {
@@ -349,18 +354,8 @@ export class PadplusManager {
             process.exit(-1)
           }
           break
-        case ResponseType.CONTACT_LIST :
-          const grpcContact = data.getData()
-          if (grpcContact) {
-            const _contact: GrpcContactPayload = JSON.parse(grpcContact)
-            // log.silly(PRE, `contact list : ${util.inspect(_contact)}`)
-            const contact = convertFromGrpcContact(_contact, true)
 
-            if (this.cacheManager) {
-              await this.cacheManager.setContact(contact.userName, contact)
-            }
-          }
-          break
+        case ResponseType.CONTACT_LIST :
         case ResponseType.CONTACT_MODIFY :
           const roomRawData = data.getData()
           if (roomRawData) {
@@ -375,6 +370,7 @@ export class PadplusManager {
             } else {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
+              CallbackPool.Instance.resolveContactCallBack(roomPayload.chatroomId, roomPayload)
               if (this.cacheManager) {
                 const roomMembers = briefRoomMemberParser(roomPayload.members)
                 await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
@@ -520,16 +516,23 @@ export class PadplusManager {
       return contact
     }
     await this.padplusContact.getContactInfo(contactId)
-    const retryCount = 10
-    const interval = 500
-    for (let i = 0; i < retryCount; i++) {
-      const contact = await this.cacheManager.getContact(contactId)
-      if (contact) {
-        return contact
-      }
-      await new Promise(resolve => setTimeout(resolve, interval))
-    }
-    return null
+    // const retryCount = 10
+    // const interval = 500
+    // for (let i = 0; i < retryCount; i++) {
+    //   const contact = await this.cacheManager.getContact(contactId)
+    //   if (contact) {
+    //     return contact
+    //   }
+    //   await new Promise(resolve => setTimeout(resolve, interval))
+    // }
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 5000)
+      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusContactPayload)
+      })
+    })
+    // return null
   }
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
@@ -656,23 +659,23 @@ export class PadplusManager {
     }
     await this.padplusContact.getContactInfo(roomId)
     // retry
-    const retryCount = 10
-    const interval = 500
-    for (let i = 0; i < retryCount; i++) {
-      const room = await this.cacheManager.getRoom(roomId)
-      if (room) {
-        return room
-      }
-      await new Promise(resolve => setTimeout(resolve, interval))
-    }
-    // return new Promise((resolve, reject) => {
-    //   const timeout = setTimeout(() => reject(new Error('get room timeout')), 1000)
-    //   CallbackPool.Instance.pushContactCallback(roomId, (data) => {
-    //     clearTimeout(timeout)
-    //     resolve(data as PadplusRoomPayload)
-    //   })
-    // })
-    return null
+    // const retryCount = 10
+    // const interval = 500
+    // for (let i = 0; i < retryCount; i++) {
+    //   const room = await this.cacheManager.getRoom(roomId)
+    //   if (room) {
+    //     return room
+    //   }
+    //   await new Promise(resolve => setTimeout(resolve, interval))
+    // }
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get room timeout')), 5000)
+      CallbackPool.Instance.pushContactCallback(roomId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusRoomPayload)
+      })
+    })
+    // return null
   }
 
   public async getRoomMembers (
