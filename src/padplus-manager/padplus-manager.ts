@@ -605,7 +605,7 @@ export class PadplusManager {
     // return null
   }
 
-  public async addFriend(
+  public async addFriend (
     strangerV1: string,
     strangerV2: string,
     isPhoneNumber: number,
@@ -730,14 +730,14 @@ export class PadplusManager {
       await Promise.all(
         room.members.map(m => {
           const _member: PadplusRoomMemberPayload = {
-            contactId: m.UserName,
-            nickName: m.NickName || '',
-            displayName: '',
             bigHeadUrl: '',
-            smallHeadUrl: '',
+            contactId: m.UserName,
+            displayName: '',
             inviterId: '',
+            nickName: m.NickName || '',
+            smallHeadUrl: '',
           }
-          memberMap = {contactId: _member}
+          memberMap = { contactId: _member }
         })
       )
     }

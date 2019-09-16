@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcSearchContact } from '../../schemas';
+import { GrpcSearchContact } from '../../schemas'
 
 const PRE = 'PadplusContact'
 
@@ -37,12 +37,12 @@ export class PadplusContact {
     })
 
     if (result) {
-       const contactStr = result.getData()
-       if (contactStr) {
-         return JSON.parse(contactStr)
-       } else {
-         throw new Error(`can not parse data`)
-       }
+      const contactStr = result.getData()
+      if (contactStr) {
+        return JSON.parse(contactStr)
+      } else {
+        throw new Error(`can not parse data`)
+      }
     } else {
       throw new Error(`can not get callback result`)
     }

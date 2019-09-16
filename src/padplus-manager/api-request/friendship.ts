@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { AddContactGrpcResponse } from '../../schemas';
+import { AddContactGrpcResponse } from '../../schemas'
 
 const PRE = 'PadplusFriendship'
 
@@ -33,11 +33,11 @@ export class PadplusFriendship {
     log.verbose(PRE, `addFriend()`)
 
     const data = {
+      type: isPhoneNumber,
       userName: contactId,
       v1: strangerV1,
       v2: strangerV2,
       verify: hello,
-      type: isPhoneNumber,
     }
 
     const result = await this.requestClient.request({
@@ -52,8 +52,9 @@ export class PadplusFriendship {
       } else {
         throw new Error(`can not parse data`)
       }
-   } else {
-     throw new Error(`can not get callback result`)
-   }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
   }
+
 }
