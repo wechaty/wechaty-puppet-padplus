@@ -310,7 +310,7 @@ test('recalled message in room', async t => {
     id: '7451323945505661106',
     mentionIdList: undefined,
     roomId: '18295482296@chatroom',
-    text: '1672045621',
+    text: '6800642263058603981',
     timestamp: 1568207817.258,
     toId: 'wxid_zovb9ol86m7l22',
     type: 11,
