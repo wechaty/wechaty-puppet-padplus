@@ -92,6 +92,8 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('message', msg => this.onMessage(msg))
 
+    manager.on('ready', () => this.emit('ready'))
+
     await manager.start()
   }
 
@@ -239,7 +241,7 @@ export class PuppetPadplus extends Puppet {
    */
 
   async onFriendshipEvent(message: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onPadproMessageFriendshipEvent({id=%s})', message.msgId)
+    log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
     /**
      * 1. Look for friendship confirm event
      */
@@ -559,7 +561,7 @@ export class PuppetPadplus extends Puppet {
       log.silly(PRE, 'onRoomJoinEvent() roomJoinEvent="%s"', JSON.stringify(joinEvent))
 
       const inviteeIdList = await retry(async (retryException, attempt) => {
-        log.verbose(PRE, 'onPadproMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
+        log.verbose(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
 
         const tryIdList = flatten<string>(
           await Promise.all(
@@ -585,7 +587,7 @@ export class PuppetPadplus extends Puppet {
         return retryException(new Error('roomMemberSearch() not found'))
 
       }).catch(e => {
-        log.verbose(PRE, 'onPadproMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
+        log.verbose(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
         return [] as string[]
       })
 
@@ -594,7 +596,7 @@ export class PuppetPadplus extends Puppet {
       if (inviterIdList.length < 1) {
         throw new Error('no inviterId found')
       } else if (inviterIdList.length > 1) {
-        log.verbose(PRE, 'onPadproMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+        log.verbose(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
       }
 
       const inviterId = inviterIdList[0]
@@ -608,6 +610,7 @@ export class PuppetPadplus extends Puppet {
       this.emit('room-join', roomId, inviteeIdList,  inviterId, timestamp)
     }
   }
+
   async onRoomLeaveEvent(message: PadplusMessagePayload): Promise<void> {
     log.verbose(PRE, 'onRoomLeaveEvent({id=%s})', message.msgId)
 
@@ -632,12 +635,12 @@ export class PuppetPadplus extends Puppet {
       if (removerIdList.length < 1) {
         throw new Error('no removerId found')
       } else if (removerIdList.length > 1) {
-        log.verbose(PRE, 'onPadproMessageRoomEventLeave(): removerId found more than 1, use the first one.')
+        log.verbose(PRE, 'onPadplusMessageRoomEventLeave(): removerId found more than 1, use the first one.')
       }
       const removerId = removerIdList[0]
 
       if (!this.manager) {
-        throw new Error('no padproManager')
+        throw new Error('no padplusManager')
       }
 
       /**
@@ -649,8 +652,9 @@ export class PuppetPadplus extends Puppet {
       this.emit('room-leave', roomId, leaverIdList, removerId, timestamp)
     }
   }
+
   async onRoomTopicEvent(message: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onPadproMessageRoomEventTopic({id=%s})', message.msgId)
+    log.verbose(PRE, 'onPadplusMessageRoomEventTopic({id=%s})', message.msgId)
 
     const topicEvent = roomTopicEventMessageParser(message)
 
@@ -668,12 +672,12 @@ export class PuppetPadplus extends Puppet {
       if (changerIdList.length < 1) {
         throw new Error('no changerId found')
       } else if (changerIdList.length > 1) {
-        log.verbose(PRE, 'onPadproMessageRoomEventTopic() changerId found more than 1, use the first one.')
+        log.verbose(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
       }
       const changerId = changerIdList[0]
 
       if (!this.manager) {
-        throw new Error('no padproManager')
+        throw new Error('no padplusManager')
       }
       /**
        * Set Cache Dirty

@@ -27,6 +27,8 @@ export const GRPC_ENDPOINT = process.env[WECHATY_PUPPET_PADPLUS_ENDPOINT_ENV_VAR
 export const MESSAGE_CACHE_AGE = 1000 * 60 * 60
 export const MESSAGE_CACHE_MAX = 1000
 
+export const WAIT_FOR_READY_TIME = 1000 * 60 * 1
+
 export {
   log,
 }

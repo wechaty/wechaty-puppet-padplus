@@ -3,7 +3,7 @@ import {
   DelayQueueExecutor,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME } from '../config'
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
@@ -43,7 +43,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId } from '../pure-function-helpers'
+import { isRoomId, isStrangerV1 } from '../pure-function-helpers'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -61,7 +61,7 @@ export interface ManagerOptions {
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify'
+export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready'
 
 export class PadplusManager {
 
@@ -80,6 +80,13 @@ export class PadplusManager {
   private memorySlot         : PadplusMemorySlot
   private qrcodeStatus?      : ScanStatus
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
+  private contactAndRoomData? : {
+    contactTotal: number,
+    friendTotal: number,
+    roomTotal: number,
+    updatedTime: number,
+    readyEmitted: boolean,
+  }
 
   constructor (
     public options: ManagerOptions,
@@ -128,6 +135,7 @@ export class PadplusManager {
   public emit (event: 'room-member-list', data: string): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
+  public emit (event: 'ready'): boolean
   public emit (event: never, listener: never): never
 
   public emit (
@@ -142,6 +150,7 @@ export class PadplusManager {
   public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
   public on (event: 'message', listener: ((this: PadplusManager, msg: PadplusMessagePayload) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
+  public on (event: 'ready', listener: ((this: PadplusManager) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -157,9 +166,11 @@ export class PadplusManager {
 
     return this
   }
+
   public async start (): Promise<void> {
     log.silly(PRE, `start()`)
 
+    await this.setContactAndRoomData()
     await this.parseGrpcData()
 
     if (this.memory) {
@@ -182,6 +193,49 @@ export class PadplusManager {
 
   public setMemory (memory: MemoryCard) {
     this.memory = memory
+  }
+
+  public async setContactAndRoomData () {
+    log.silly(PRE, `setContactAndRoomData()`)
+    if (!this.cacheManager) {
+      log.verbose(PRE, `setContactAndRoomData() can not proceed due to no cache.`)
+      return
+    }
+    const contactTotal = await this.cacheManager.getContactCount()
+    const roomTotal = await this.cacheManager.getRoomCount()
+    const friendTotal = (await this.cacheManager.getAllContacts()).filter(contact => {
+      isStrangerV1(contact.stranger)
+    }).length
+    const now = new Date().getTime()
+    if (this.contactAndRoomData) {
+
+      if (this.contactAndRoomData.contactTotal === contactTotal
+       && this.contactAndRoomData.roomTotal    === roomTotal
+       && this.contactAndRoomData.friendTotal  === friendTotal) {
+        if (now - this.contactAndRoomData.updatedTime > WAIT_FOR_READY_TIME
+          && !this.contactAndRoomData.readyEmitted) {
+          log.info(PRE, `setContactAndRoomData() more than ${WAIT_FOR_READY_TIME / 1000 / 60} minutes no change on data, emit ready event.`)
+          this.contactAndRoomData.readyEmitted = true
+          this.emit('ready')
+        }
+        log.silly(PRE, `setContactAndRoomData() found contact, room, friend data no change.`)
+      } else {
+        log.silly(PRE, `setContactAndRoomData() found contact or room or friend change. Record changes...`)
+        this.contactAndRoomData.contactTotal = contactTotal
+        this.contactAndRoomData.roomTotal    = roomTotal
+        this.contactAndRoomData.friendTotal  = friendTotal
+        this.contactAndRoomData.updatedTime  = now
+      }
+    } else {
+      log.silly(PRE, `setContactAndRoomData() initialize contact and room data.`)
+      this.contactAndRoomData = {
+        contactTotal,
+        friendTotal,
+        readyEmitted: false,
+        roomTotal,
+        updatedTime: now,
+      }
+    }
   }
 
   public async parseGrpcData () {
@@ -602,6 +656,8 @@ export class PadplusManager {
   }
 
   public async syncContacts (): Promise<void> {
+    log.silly(PRE, `sync all contacts`)
+
     await this.padplusContact.syncContacts()
   }
 

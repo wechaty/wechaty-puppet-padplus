@@ -42,7 +42,7 @@ export class PadplusContact {
   }
 
   public syncContacts = async (): Promise<void> => {
-    log.verbose(PRE, `contactList()`)
+    log.verbose(PRE, `syncContacts()`)
 
     await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,
