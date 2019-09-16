@@ -33,6 +33,8 @@ import {
   GrpcRoomMemberPayload,
   GrpcRoomMemberList,
   PadplusMediaData,
+  PadplusRoomMemberPayload,
+  GrpcSearchContact,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -446,6 +448,20 @@ export class PadplusManager {
             this.emit('message', message)
           }
           break
+        case ResponseType.CONTACT_ADD :
+          const addContactCallback = CallbackPool.Instance.getCallback(data.getRequestid()!)
+          addContactCallback && addContactCallback(data)
+          CallbackPool.Instance.removeCallback(data.getRequestid()!)
+          break
+        case ResponseType.CONTACT_SEARCH :
+          const contactStr = data.getData()
+          if (contactStr) {
+            const contact: GrpcSearchContact = JSON.parse(contactStr)
+            const searchContactCallback = CallbackPool.Instance.getCallback(contact.wxid)
+            searchContactCallback && searchContactCallback(data)
+            CallbackPool.Instance.removeCallback(contact.wxid)
+          }
+          break
         case ResponseType.ROOM_MEMBER_LIST :
           const roomMembersStr = data.getData()
           if (roomMembersStr) {
@@ -589,6 +605,18 @@ export class PadplusManager {
     // return null
   }
 
+  public async addFriend(
+    strangerV1: string,
+    strangerV2: string,
+    isPhoneNumber: number,
+    contactId: string,
+    hello: string | undefined,
+  ) {
+    log.verbose(PRE, `addFriend(), isPhoneNumber: ${isPhoneNumber}`)
+
+    return this.padplusFriendship.addFriend(strangerV1, strangerV2, isPhoneNumber, contactId, hello)
+  }
+
   public async generatorFileUrl (file: FileBox): Promise<string> {
     log.verbose(PRE, 'generatorFileUrl(%s)', file)
     const url = await this.requestClient.uploadFile(file.name, await file.toStream())
@@ -627,11 +655,12 @@ export class PadplusManager {
    * Contact Section
    */
   public async setContactAlias (
-    alias: string,
     contactId: string,
-    selfId: string,
+    alias: string,
   ): Promise<void> {
-    await this.padplusContact.setAlias(selfId, contactId, alias)
+    log.silly(PRE, `setContactAlias(), contactId : ${contactId}, alias: ${alias}`)
+
+    await this.padplusContact.setAlias(contactId, alias)
   }
 
   public async getContactIdList (
@@ -649,6 +678,16 @@ export class PadplusManager {
     contactId: string,
   ): Promise<PadplusContactPayload> {
     const payload = await this.getContact(contactId)
+    if (!payload) {
+      throw new Error('Can not find payload for contactId ' + contactId)
+    }
+    return payload
+  }
+
+  public async searchContact (
+    contactId: string,
+  ): Promise<GrpcSearchContact> {
+    const payload = await this.padplusContact.searchContact(contactId)
     if (!payload) {
       throw new Error('Can not find payload for contactId ' + contactId)
     }
@@ -685,11 +724,28 @@ export class PadplusManager {
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
     }
-    const memberMap = await this.cacheManager.getRoomMember(roomId)
+    let memberMap = await this.cacheManager.getRoomMember(roomId)
     if (!memberMap) {
+      const room = await this.getRoomInfo(roomId)
+      await Promise.all(
+        room.members.map(m => {
+          const _member: PadplusRoomMemberPayload = {
+            contactId: m.UserName,
+            nickName: m.NickName || '',
+            displayName: '',
+            bigHeadUrl: '',
+            smallHeadUrl: '',
+            inviterId: '',
+          }
+          memberMap = {contactId: _member}
+        })
+      )
+    }
+    if (memberMap) {
+      return Object.keys(memberMap)
+    } else {
       return []
     }
-    return Object.keys(memberMap)
   }
 
   public async getRoomInfo (roomId: string) {
@@ -777,13 +833,14 @@ export class PadplusManager {
     topic: string,
     memberIdList: string[],
   ) {
-    log.silly(PRE, `careteRoom : ${topic};${memberIdList.join(',')}`)
+    log.silly(PRE, `careteRoom : ${topic}, ${memberIdList.join(',')}`)
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
     const result = await this.padplusRoom.createRoom(topic, memberIdList)
     return result
   }
+
   public async quitRoom (
     roomId: string,
   ) {

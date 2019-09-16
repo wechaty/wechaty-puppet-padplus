@@ -40,3 +40,7 @@ export type FriendshipPayloadVerify = FriendshipPayloadBase & {
 }
 
 export type FriendshipPayload = FriendshipPayloadConfirm | FriendshipPayloadReceive | FriendshipPayloadVerify
+
+export interface AddContactGrpcResponse {
+  status: string,
+}

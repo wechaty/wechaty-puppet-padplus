@@ -30,14 +30,14 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload } from './schemas';
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact } from './schemas';
 import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message';
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor';
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser';
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser';
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser';
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser';
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser } from './pure-function-helpers';
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers';
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser';
 
 const PRE = 'PUPPET_PADPLUS'
@@ -172,7 +172,7 @@ export class PuppetPadplus extends Puppet {
   contactAlias(contactId: string): Promise<string>
   contactAlias(contactId: string, alias: string | null): Promise<void>
   public async contactAlias(contactId: string, alias?: string | null): Promise<string | void>  {
-    log.silly(PRE, `contactId and alias : ${util.inspect(contactId)}`)
+    log.silly(PRE, `contactAlias(), contactId: ${contactId}, alias : ${alias}`)
     if (typeof alias === 'undefined') {
       const payload = await this.contactPayload(contactId);
       return payload.alias || ''
@@ -181,8 +181,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    const selfId = this.selfId()
-    await this.manager.setContactAlias(selfId, contactId, alias || '')
+    await this.manager.setContactAlias(contactId, alias || '')
   }
 
   contactAvatar(contactId: string): Promise<FileBox>
@@ -274,9 +273,48 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
-    log.silly(PRE, `contactId : ${util.inspect(contactId)}, hello: ${hello}`)
-    throw new Error("Method not implemented.")
+  public async friendshipAdd(contactId: string, hello?: string | undefined): Promise<void> {
+    log.verbose(PRE, `friendshipAdd(${contactId}, ${hello})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId)
+    /**
+     * If the contact is not stranger, than using WXSearchContact can get userName
+     */
+    if (searchContact.wxid !== '' && !isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+      log.verbose(PRE, `friendshipAdd ${contactId} has been friend with bot, no need to send friend request!`)
+      return
+    }
+
+    let strangerV1
+    let strangerV2
+    if (isStrangerV1(searchContact.v1)) {
+      strangerV1 = searchContact.v1
+      strangerV2 = searchContact.v2
+    } else if (isStrangerV2(searchContact.v2)) {
+      strangerV2 = searchContact.v2
+      strangerV1 = searchContact.v1
+    } else {
+      throw new Error('stranger neither v1 nor v2!')
+    }
+
+    const isPhoneNumber = contactId.match(/^[1]([3-9])[0-9]{9}$/)
+    const res = await this.manager.addFriend(
+      strangerV1 || '',
+      strangerV2 || '',
+      isPhoneNumber ? SearchContactTypeStatus.MOBILE : SearchContactTypeStatus.WXID, // default to wxid
+      contactId,
+      hello,
+    )
+
+    if (res && res.status !== '0') {
+      throw new Error(`add friend failed.`)
+    } else if (res && res.status === '0') {
+      log.silly(PRE, `add friend request success.`)
+    }
   }
 
   public async friendshipAccept(friendshipId: string): Promise<void> {
@@ -732,6 +770,10 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
+    if (!this.id) {
+      throw new Error(`no id.`)
+    }
+    contactIdList.push(this.id)
     const result = await this.manager.createRoom(topic || '', contactIdList)
     return result
   }
@@ -793,7 +835,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   async roomMemberList(roomId: string): Promise<string[]> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomMemberList(), roomId : ${util.inspect(roomId)}`)
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -802,7 +844,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomRawPayload(roomId: string): Promise<PadplusRoomPayload> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomRawPayload(), roomId : ${util.inspect(roomId)}`)
     const rawRoom = await this.manager.getRoomInfo(roomId)
     return rawRoom
   }

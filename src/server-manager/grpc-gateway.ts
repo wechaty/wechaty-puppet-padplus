@@ -27,6 +27,8 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEND_MESSAGE,
   ApiType.SEND_FILE,
   ApiType.GET_MESSAGE_MEDIA,
+  ApiType.SEARCH_CONTACT,
+  ApiType.ADD_CONTACT,
 ]
 
 export type GrpcGatewayEvent = 'data'
@@ -104,7 +106,7 @@ export class GrpcGateway extends EventEmitter {
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {
     const request = new RequestObject()
     const requestId = uuid()
-    log.silly(PRE, `GRPC : ${this.token}, ${apiType}, uin : ${uin}, ${JSON.stringify(data)}`)
+    log.silly(PRE, `GRPC : token: ${this.token}, apiType: ${apiType}, uin : ${uin}, ${JSON.stringify(data)}`)
     request.setToken(this.token)
     if (uin !== '') {
       request.setUin(uin)
@@ -120,6 +122,22 @@ export class GrpcGateway extends EventEmitter {
           return new Promise<StreamResponse>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              resolve(data)
+            })
+          })
+        } else if (apiType === ApiType.SEARCH_CONTACT) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
+            CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              resolve(data)
+            })
+          })
+        } else if (apiType === ApiType.ADD_CONTACT) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
+            CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
             })
@@ -190,8 +208,8 @@ export class GrpcGateway extends EventEmitter {
         const responseType = data.getResponsetype()
         if (responseType !== ResponseType.LOGIN_QRCODE) {
           log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
-          log.silly(PRE, `responseType: ${ResponseType[responseType!]}(${responseType}) data : ${data.getData()}`)
-          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
+          log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
+          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
         }
 
         if (requestId) {

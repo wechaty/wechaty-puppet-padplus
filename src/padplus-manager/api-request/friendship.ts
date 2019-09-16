@@ -1,6 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { AddContactGrpcResponse } from '../../schemas';
 
 const PRE = 'PadplusFriendship'
 
@@ -28,4 +29,31 @@ export class PadplusFriendship {
     return true
   }
 
+  public addFriend = async (strangerV1: string, strangerV2: string, isPhoneNumber: number, contactId: string, hello: string | undefined,): Promise<AddContactGrpcResponse> => {
+    log.verbose(PRE, `addFriend()`)
+
+    const data = {
+      userName: contactId,
+      v1: strangerV1,
+      v2: strangerV2,
+      verify: hello,
+      type: isPhoneNumber,
+    }
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.ADD_CONTACT,
+      data,
+    })
+
+    if (result) {
+      const addFriendStr = result.getData()
+      if (addFriendStr) {
+        return JSON.parse(addFriendStr)
+      } else {
+        throw new Error(`can not parse data`)
+      }
+   } else {
+     throw new Error(`can not get callback result`)
+   }
+  }
 }

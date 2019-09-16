@@ -1,6 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { GrpcSearchContact } from '../../schemas';
 
 const PRE = 'PadplusContact'
 
@@ -24,18 +25,40 @@ export class PadplusContact {
     return true
   }
 
+  public searchContact = async (contactId: string): Promise<GrpcSearchContact> => {
+    log.verbose(PRE, `searchContact(${contactId})`)
+
+    const data = {
+      wxid: contactId,
+    }
+    const result = await this.requestClient.request({
+      apiType: ApiType.SEARCH_CONTACT,
+      data,
+    })
+
+    if (result) {
+       const contactStr = result.getData()
+       if (contactStr) {
+         return JSON.parse(contactStr)
+       } else {
+         throw new Error(`can not parse data`)
+       }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
+  }
+
   // Set alias for contact
-  public setAlias = async (selfId: string, contactId: string, alias: string): Promise<boolean> => {
+  public setAlias = async (contactId: string, alias: string): Promise<boolean> => {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
-      alias,
-      contactId,
-      selfId,
+      newRemarkName: alias,
+      userName: contactId,
     }
 
     await this.requestClient.request({
-      apiType: ApiType.SEARCH_CONTACT,
+      apiType: ApiType.CONTACT_ALIAS,
       data,
     })
     return true

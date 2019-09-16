@@ -51,3 +51,14 @@ export interface GrpcContactPayload {
   Seq: string,
   BigHeadImgUrl: string,
 }
+
+export interface GrpcSearchContact {
+  avatar: string,
+  v1: string,
+  v2: string,
+  searchId: string,
+  nickName: string,
+  wxid: string,
+  message: string,
+  status: string,
+}
