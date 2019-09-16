@@ -25,6 +25,13 @@ export interface PadplusMessageSource {
   atUserList?: string[],
 }
 
+export interface PadplusRecalledMessagePayload {
+  session: string,
+  msgId: string,
+  newMsgId: string,
+  replaceMsg: string,
+}
+
 export interface PadplusMessagePayload {
   appMsgType?: number,
   content: string,

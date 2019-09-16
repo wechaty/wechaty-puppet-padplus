@@ -103,7 +103,6 @@ export class PuppetPadplus extends Puppet {
     // const messageId = message.msgId
     const messageType = message.msgType
     switch(messageType) {
-      case PadplusMessageType.Recalled:
       case PadplusMessageType.Sys:
         await Promise.all([
           this.onRoomJoinEvent(message),
@@ -114,6 +113,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.VerifyMsg:
         await this.onFriendshipEvent(message)
         break
+      case PadplusMessageType.Recalled:
       case PadplusMessageType.Text:
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
