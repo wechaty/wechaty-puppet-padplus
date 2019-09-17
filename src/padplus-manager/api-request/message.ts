@@ -11,7 +11,6 @@ export class PadplusMessage {
   private requestClient: RequestClient
   constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
-    log.silly(PRE, `re : ${this.requestClient}`)
   }
 
   // Send message (text, image, url, video, file, gif)
