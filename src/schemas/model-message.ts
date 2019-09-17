@@ -25,6 +25,12 @@ export interface PadplusMessageSource {
   atUserList?: string[],
 }
 
+export interface GrpcResponseMessageData {
+  msgId: string,
+  timestamp: number,
+  success: boolean,
+}
+
 export interface PadplusMessagePayload {
   appMsgType?: number,
   content: string,

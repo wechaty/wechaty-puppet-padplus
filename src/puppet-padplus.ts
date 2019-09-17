@@ -29,7 +29,7 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact } from './schemas'
+import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -471,32 +471,62 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  private generateBaseMsg (msgId: string, to: string): PadplusMessagePayload {
+    const msg: PadplusMessagePayload = {
+      content: '',
+      createTime: new Date().getTime(),
+      fromUserName: this.selfId(),
+      imgStatus: 0,
+      l1MsgType: 0,
+      msgId,
+      msgSource: '',
+      msgSourceCd: 0,
+      msgType: PadplusMessageType.Text,
+      newMsgId: Number(msgId),
+      pushContent: '',
+      status: PadplusMessageStatus.One,
+      toUserName: to,
+      uin: '',
+      wechatUserName: this.selfId(),
+    }
+    log.silly(PRE, 'generateBaseMsg(%s) %s', to, JSON.stringify(msg))
+    this.manager.cachePadplusMessagePayload.set(msgId, msg)
+    return msg
+  }
+
   public async messageSendText (receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void> {
     log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
-    if (this.id) {
-      if (mentionIdList && mentionIdList.length > 0) {
-        await this.manager.sendMessage(this.id, contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
-      } else {
-        await this.manager.sendMessage(this.id, contactIdOrRoomId!, text, PadplusMessageType.Text)
-      }
+    if (mentionIdList && mentionIdList.length > 0) {
+      const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
+
+      this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
     } else {
-      throw new Error('Can not get the logined account id')
+      const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
+
+      this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text)
     }
 
+  }
+
+  private replayTextMsg (msgId: string, to: string, text: string, atUserList?: string[]): void {
+    const payload = this.generateBaseMsg(msgId, to)
+    payload.msgType = PadplusMessageType.Text
+    payload.content = text
+    if (atUserList) {
+      payload.msgSource = `<msgsource>\n\t<atuserlist>${atUserList.join(',')}</atuserlist>\n</msgsource>\n`
+    }
+    log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
+    this.emit('message', payload.msgId)
   }
 
   public async messageSendContact (receiver: Receiver, contactId: string): Promise<void> {
     log.verbose(PRE, `messageSend('%s', %s)`, receiver, contactId)
 
-    if (!this.id) {
-      throw new PadplusError(PadplusErrorType.NO_ID, 'messageSendContact()')
-    }
-
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
-    await this.manager.sendContact(this.id, contactIdOrRoomId!, contactId)
+    await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, contactId)
   }
 
   public async messageSendFile (receiver: Receiver, file: FileBox): Promise<void> {
@@ -527,16 +557,36 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        await this.manager.sendFile(this.id, contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.id, contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
+        this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
         break
       case 'video/mp4':
       case '.mp4':
-        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
+        this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
         break
       default:
-        await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
+        const docData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
+        this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
         break
     }
+  }
+
+  private replayImageMsg (msgId: string, to: string, url: string): void {
+    const payload = this.generateBaseMsg(msgId, to)
+    payload.msgType = PadplusMessageType.Image
+    payload.content = `<msg>${url}</msg>`
+    payload.url = url
+    log.silly(PRE, 'replayImageMsg replaying message: %s', JSON.stringify(payload))
+    this.emit('message', payload.msgId)
+  }
+
+  private replayAppMsg (msgId: string, to: string, content: string): void {
+    const payload = this.generateBaseMsg(msgId, to)
+    payload.msgType = PadplusMessageType.App
+    payload.content = `<msg>${content}</msg>`
+    log.silly(PRE, 'replayAppMsg replaying message: %s', JSON.stringify(payload))
+    this.emit('message', payload.msgId)
   }
 
   public async messageSendUrl (receiver: Receiver, urlLinkPayload: UrlLinkPayload): Promise<void> {

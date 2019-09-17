@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, RequestStatus, PadplusRichMediaData } from '../../schemas'
+import { PadplusMessageType, RequestStatus, PadplusRichMediaData, GrpcResponseMessageData } from '../../schemas'
 import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PadplusMessage'
@@ -21,7 +21,7 @@ export class PadplusMessage {
     content: string,
     messageType: PadplusMessageType,
     mentionListStr?: string,
-  ): Promise<boolean | null> {
+  ): Promise<GrpcResponseMessageData> {
     log.verbose(PRE, `sendMessage()`)
 
     const data = {
@@ -37,11 +37,21 @@ export class PadplusMessage {
         apiType: ApiType.SEND_MESSAGE,
         data,
       })
-      // TODO: read send result from the response, and generate message
+
       log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
-      return true
+      if (res) {
+        const msgDataStr = res.getData()
+        if (msgDataStr) {
+          const msgData: GrpcResponseMessageData = JSON.parse(msgDataStr)
+          return msgData
+        } else {
+          throw new Error(`can not parse message data from grpc`)
+        }
+      } else {
+        throw new Error(`can not get response from grpc server`)
+      }
     } catch (e) {
-      return null
+      throw new Error(`can not send message due to this error: ${e}`)
     }
 
   }
@@ -70,7 +80,7 @@ export class PadplusMessage {
     fileName: string,
     subType: string,
     fileSize?: number,
-  ): Promise<RequestStatus> => {
+  ): Promise<GrpcResponseMessageData> => {
     log.verbose(PRE, `sendFile()`)
     let data = {}
     if (subType === 'doc') {
@@ -95,8 +105,17 @@ export class PadplusMessage {
         apiType: ApiType.SEND_MESSAGE,
         data,
       })
-      log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
-      return RequestStatus.Success
+      if (res) {
+        const msgDataStr = res.getData()
+        if (msgDataStr) {
+          const msgData: GrpcResponseMessageData = JSON.parse(msgDataStr)
+          return msgData
+        } else {
+          throw new Error(`can not parse message data from grpc`)
+        }
+      } else {
+        throw new Error(`can not get response from grpc server`)
+      }
     }
     if (subType === 'pic') {
       data = {
@@ -130,8 +149,17 @@ export class PadplusMessage {
       apiType: ApiType.SEND_FILE,
       data,
     })
-    log.silly(PRE, `sendFile() : ${JSON.stringify(res)}`)
-    return RequestStatus.Success
+    if (res) {
+      const msgDataStr = res.getData()
+      if (msgDataStr) {
+        const msgData: GrpcResponseMessageData = JSON.parse(msgDataStr)
+        return msgData
+      } else {
+        throw new Error(`can not parse message data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get response from grpc server`)
+    }
   }
 
   public async loadRichMeidaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {

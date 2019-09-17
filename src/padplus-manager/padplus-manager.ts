@@ -555,8 +555,8 @@ export class PadplusManager {
   }
 
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
-    log.silly(PRE, ` : ${selfId}, : ${receiver}, : ${text}, : ${type}`)
-    await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    log.silly(PRE, `selfId : ${selfId}, receiver : ${receiver}, text : ${text}, type : ${type}`)
+    return this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
   }
 
   public async sendContact (selfId: string, receiver: string, contactId: string) {
@@ -599,7 +599,7 @@ export class PadplusManager {
   public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string, fileSize?: number) {
     log.verbose(PRE, 'sendFile()')
 
-    await this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType, fileSize)
+    return this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType, fileSize)
 
   }
 
