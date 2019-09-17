@@ -227,8 +227,9 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async contactRawPayloadParser (rawPayload: PadplusContactPayload): Promise<ContactPayload> {
+    log.verbose(PRE, `contactRawPayloadParser()`)
+
     const payload = contactRawPayloadParser(rawPayload)
-    log.verbose(PRE, `contactRawPayloadParser(${rawPayload})`)
     return payload
   }
 
@@ -526,7 +527,26 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `messageSend('%s', %s)`, receiver, contactId)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
-    await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, contactId)
+    let contact = await this.manager.getContact(contactId)
+    if (contact) {
+      const content = {
+        headImgUrl: contact.smallHeadUrl,
+        nickName: contact.nickName,
+        userName: contact.userName,
+      }
+      const contactData = await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, JSON.stringify(content))
+      this.replayContactMsg(contactData.msgId, contactIdOrRoomId!, JSON.stringify(content))
+    } else {
+      throw new Error('not able to send contact')
+    }
+  }
+
+  private replayContactMsg (msgId: string, to: string, content: string): void {
+    const payload = this.generateBaseMsg(msgId, to)
+    payload.msgType = PadplusMessageType.ShareCard
+    payload.content = content
+    log.silly(PRE, 'replayContactMsg replaying message: %s', JSON.stringify(payload))
+    this.emit('message', payload.msgId)
   }
 
   public async messageSendFile (receiver: Receiver, file: FileBox): Promise<void> {
@@ -600,8 +620,25 @@ export class PuppetPadplus extends Puppet {
     if (!this.id) {
       throw new PadplusError(PadplusErrorType.NO_ID, `messageSendUrl()`)
     }
+    const { url, title, thumbnailUrl, description } = urlLinkPayload
 
-    await this.manager.sendUrlLink(this.id, contactIdOrRoomId!, urlLinkPayload)
+    const payload = {
+      des: description,
+      thumburl: thumbnailUrl,
+      title,
+      type: 5,
+      url,
+    }
+    const urlLinkData = await this.manager.sendUrlLink(this.id, contactIdOrRoomId!, JSON.stringify(payload))
+    this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
+  }
+
+  private replayUrlLinkMsg (msgId: string, to: string, content: string): void {
+    const payload = this.generateBaseMsg(msgId, to)
+    payload.msgType = PadplusMessageType.App
+    payload.content = content
+    log.silly(PRE, 'replayUrlLinkMsg replaying message: %s', JSON.stringify(payload))
+    this.emit('message', payload.msgId)
   }
 
   messageSendMiniProgram (receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void> {
@@ -883,19 +920,19 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomRawPayload (roomId: string): Promise<PadplusRoomPayload> {
-    log.silly(PRE, `roomRawPayload(), roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomRawPayload(), roomId : ${roomId}`)
     const rawRoom = await this.manager.getRoomInfo(roomId)
     return rawRoom
   }
 
   protected async roomRawPayloadParser (rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
-    log.silly(PRE, `room rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `roomRawPayloadParser()`)
     const room = roomRawPayloadParser(rawPayload)
     return room
   }
 
   protected async roomMemberRawPayload (roomId: string, contactId: string): Promise<PadplusRoomMemberPayload> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
+    log.silly(PRE, `roomId : ${roomId}, contactId: ${contactId}`)
     if (!this.manager) {
       throw new Error(`no manager.`)
     }

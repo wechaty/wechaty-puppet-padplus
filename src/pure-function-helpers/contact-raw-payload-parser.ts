@@ -10,7 +10,6 @@ import {
 import {
   isContactOfficialId,
   isRoomId,
-  isStrangerV1,
 }                           from './is-type'
 
 export function contactRawPayloadParser (
@@ -54,7 +53,7 @@ export function contactRawPayloadParser (
     contactType = ContactType.Personal
   }
   let friend = false
-  if (rawPayload.stranger && isStrangerV1(rawPayload.stranger)) {
+  if (rawPayload.stranger && rawPayload.stranger !== '0') {
     friend = true
   }
 

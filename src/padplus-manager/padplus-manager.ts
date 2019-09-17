@@ -11,7 +11,7 @@ import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, UrlLinkPayload, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -559,23 +559,12 @@ export class PadplusManager {
     return this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
   }
 
-  public async sendContact (selfId: string, receiver: string, contactId: string) {
-    log.silly(PRE, `selfId : ${selfId},receiver : ${receiver},contactId : ${contactId}`)
+  public async sendContact (selfId: string, receiver: string, contentStr: string) {
+    log.silly(PRE, `selfId : ${selfId},receiver : ${receiver}`)
     if (!this.cacheManager) {
       throw new PadplusError(PadplusErrorType.NO_CACHE, `sendContact()`)
     }
-    let contact = await this.getContact(contactId)
-    if (contact) {
-      const content = {
-        headImgUrl: contact.smallHeadUrl,
-        nickName: contact.nickName,
-        userName: contact.userName,
-      }
-      const contentStr = JSON.stringify(content)
-      await this.padplusMesasge.sendContact(selfId, receiver, contentStr)
-    } else {
-      throw new Error('not able to send contact')
-    }
+    return this.padplusMesasge.sendContact(selfId, receiver, contentStr)
   }
 
   public async addFriend (
@@ -603,19 +592,9 @@ export class PadplusManager {
 
   }
 
-  public async sendUrlLink (selfId: string, receiver: string, urlLinkPayload: UrlLinkPayload) {
-    const { url, title, thumbnailUrl, description } = urlLinkPayload
+  public async sendUrlLink (selfId: string, receiver: string, content: string) {
 
-    const payload = {
-      des: description,
-      thumburl: thumbnailUrl,
-      title,
-      type: 5,
-      url,
-    }
-    const content = JSON.stringify(payload)
-
-    await this.padplusMesasge.sendUrlLink(selfId, receiver, content)
+    return this.padplusMesasge.sendUrlLink(selfId, receiver, content)
   }
 
   private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
@@ -656,7 +635,7 @@ export class PadplusManager {
     return this.cacheManager.getContactIds()
   }
 
-  private async getContact (
+  public async getContact (
     contactId: string
   ): Promise<PadplusContactPayload | null | undefined> {
     if (!this.cacheManager) {

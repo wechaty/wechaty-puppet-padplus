@@ -253,7 +253,7 @@ export class GrpcGateway extends EventEmitter {
       })
 
       await new Promise((resolve, reject) => {
-        longSocket.once('data', () => {
+        longSocket.once('connect', () => {
           log.silly(PRE, 'initLongSocket() Promise() longSocket.on(connect)')
           return resolve()
         })

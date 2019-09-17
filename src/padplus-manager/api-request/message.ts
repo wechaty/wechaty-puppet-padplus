@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, RequestStatus, PadplusRichMediaData, GrpcResponseMessageData } from '../../schemas'
+import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData } from '../../schemas'
 import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PadplusMessage'
@@ -57,20 +57,17 @@ export class PadplusMessage {
   }
 
   // Send url link
-  public sendUrlLink = async (selfId: string, receiverId: string, content: string): Promise<RequestStatus> => {
+  public sendUrlLink = async (selfId: string, receiverId: string, content: string): Promise<GrpcResponseMessageData> => {
     log.verbose(PRE, `sendUrlLink()`)
 
-    await this.sendMessage(selfId, receiverId, content, PadplusMessageType.App)
-
-    return RequestStatus.Success
+    return this.sendMessage(selfId, receiverId, content, PadplusMessageType.App)
   }
 
   // send contact card
-  public sendContact = async (selfId: string, receiver: string, content: string): Promise<RequestStatus> => {
+  public sendContact = async (selfId: string, receiver: string, content: string): Promise<GrpcResponseMessageData> => {
     log.verbose(PRE, `sendContact()`)
 
-    await this.sendMessage(selfId, receiver, content, PadplusMessageType.ShareCard)
-    return RequestStatus.Success
+    return this.sendMessage(selfId, receiver, content, PadplusMessageType.ShareCard)
   }
 
   public sendFile = async (

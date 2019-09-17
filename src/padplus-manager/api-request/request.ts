@@ -31,7 +31,6 @@ export class RequestClient {
   }
 
   public async uploadFile (filename: string, stream: NodeJS.ReadableStream) {
-    log.silly(PRE, `stream length : ${stream}`)
     filename = decodeURIComponent(filename)
     let option: AWS.S3.PutObjectRequest = {
       ACL: 'public-read',
@@ -53,7 +52,7 @@ export class RequestClient {
         if (err) {
           reject(err)
         } else {
-          log.silly(PRE, `err : ${err}, data : ${JSON.stringify(data)}`)
+          log.silly(PRE, `data : ${JSON.stringify(data)}`)
           resolve(data)
         }
       })

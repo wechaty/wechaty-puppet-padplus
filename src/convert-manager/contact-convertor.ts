@@ -15,7 +15,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     sex              : contactPayload.Sex as ContactGender,
     signature        : contactPayload.Signature,
     smallHeadUrl     : contactPayload.SmallHeadImgUrl,
-    stranger         : isSync ? 'v1_xxx' : contactPayload.EncryptUsername,
+    stranger         : isSync ? contactPayload.ContactFlag.toString() : contactPayload.EncryptUsername,
     ticket           : '', // TODO: need to check
     userName         : contactPayload.UserName,
   }
