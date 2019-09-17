@@ -58,7 +58,6 @@ export async function recalledPayloadParser (
       replaceMsg: jsonPayload.sysmsg.revokemsg.replacemsg,
       session: jsonPayload.sysmsg.revokemsg.session,
     }
-
     return result
   } catch (e) {
     return null

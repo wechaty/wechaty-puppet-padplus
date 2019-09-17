@@ -128,6 +128,8 @@ export async function messageRawPayloadParser (
 
     const recalledPayload = await recalledPayloadParser(rawPayload)
     const pattern = [
+      /你撤回了一条消息/,
+      /You recalled a message/,
       /"(.+)" 撤回了一条消息/,
       /"(.+)" has recalled a message./,
     ]
