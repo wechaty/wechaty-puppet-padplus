@@ -31,7 +31,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.ADD_CONTACT,
 ]
 
-export type GrpcGatewayEvent = 'data'
+export type GrpcGatewayEvent = 'data' | 'grpc-error' | 'grpc-end' | 'grpc-close'
 
 export class GrpcGateway extends EventEmitter {
 
@@ -76,6 +76,8 @@ export class GrpcGateway extends EventEmitter {
   }
 
   public emit (event: 'data', data: StreamResponse): boolean
+  public emit (event: 'grpc-error'): boolean
+  public emit (event: 'grpc-end' | 'grpc-close'): boolean
   public emit (event: never, data: any): never
 
   public emit (
@@ -86,6 +88,8 @@ export class GrpcGateway extends EventEmitter {
   }
 
   public on (event: 'data', listener: ((data: StreamResponse) => any)): this
+  public on (event: 'grpc-error', listener: (() => any)): this
+  public on (event: 'grpc-end' | 'grpc-close', listener: (() => any)): this
   public on (event: never, listener: ((data: any) => any)): never
 
   public on (
@@ -187,23 +191,24 @@ export class GrpcGateway extends EventEmitter {
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
     try {
-      const result = this.client.init(initConfig)
-      log.silly(JSON.stringify(result))
+      const longSocket = this.client.init(initConfig)
+      log.silly(JSON.stringify(longSocket))
 
-      result.on('error', async (err: any) => {
+      longSocket.on('error', async (err: any) => {
         await new Promise(resolve => setTimeout(resolve, 5000))
         log.error(PRE, err.stack)
-        process.exit(-1)
+        // process.exit(-1)
+        this.emit('grpc-error')
       })
-      result.on('end', async () => {
+      longSocket.on('end', async () => {
         await new Promise(resolve => setTimeout(resolve, 5000))
         log.error(PRE, 'grpc server end.')
         process.exit(-1)
       })
-      result.on('close', () => {
+      longSocket.on('close', () => {
         log.error(PRE, 'grpc server close')
       })
-      result.on('data', async (data: StreamResponse) => {
+      longSocket.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
         const responseType = data.getResponsetype()
         if (responseType !== ResponseType.LOGIN_QRCODE) {
@@ -218,7 +223,7 @@ export class GrpcGateway extends EventEmitter {
             callback(data)
             CallbackPool.Instance.removeCallback(requestId)
           }
-        } else { // 长连接推送的内容
+        } else {
           if (responseType === ResponseType.LOGIN_QRCODE) {
             const name = Object.keys(this.eventEmitterMap).find(name => {
               const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
@@ -245,6 +250,25 @@ export class GrpcGateway extends EventEmitter {
           }
 
         }
+      })
+
+      await new Promise((resolve, reject) => {
+        longSocket.once('data', () => {
+          log.silly(PRE, 'initLongSocket() Promise() longSocket.on(connect)')
+          return resolve()
+        })
+        longSocket.once('error', (e) => {
+          log.error(PRE, `initLongSocket() Promise() longSocket.on(error) ${e}`)
+          return reject(new Error('ERROR'))
+        })
+        longSocket.once('close', () => {
+          log.silly(PRE, 'initLongSocket() Promise() longSocket.on(close)')
+          return reject(new Error('CLOSE'))
+        })
+        longSocket.once('end', () => {
+          log.silly(PRE, `initLongSocket() Promise() longSocket.on(timeout)`)
+          return reject(new Error('TIMEOUT'))
+        })
       })
     } catch (err) {
       log.silly(PRE, `error : ${err}`)

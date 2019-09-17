@@ -241,6 +241,9 @@ export class PadplusManager {
   }
 
   public async parseGrpcData () {
+    this.grpcGatewayEmmiter.on('grpc-error', async () => {
+      await this.start()
+    })
     this.grpcGatewayEmmiter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
