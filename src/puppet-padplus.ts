@@ -802,6 +802,9 @@ export class PuppetPadplus extends Puppet {
        * Set Cache Dirty
        */
       await this.roomPayloadDirty(roomId)
+      if (this.manager && this.manager.cacheManager) {
+        await this.manager.cacheManager.deleteRoom(roomId)
+      }
       this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
     }
   }

@@ -77,7 +77,7 @@ export class PadplusManager {
   private padplusContact     : PadplusContact
   private padplusRoom        : PadplusRoom
   private padplusFriendship  : PadplusFriendship
-  private cacheManager?      : CacheManager
+  public cacheManager?      : CacheManager
   private memory?            : MemoryCard
   private memorySlot         : PadplusMemorySlot
   private qrcodeStatus?      : ScanStatus
