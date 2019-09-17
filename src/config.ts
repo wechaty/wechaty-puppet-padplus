@@ -18,6 +18,8 @@ export const padplusToken = () => {
   return token
 }
 
+export const PADPLUS_REPLAY_MESSAGE = process.env.PADPRO_REPLAY_MESSAGE === 'true'
+
 /**
  * GRPC server
  */

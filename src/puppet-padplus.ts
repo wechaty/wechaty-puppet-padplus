@@ -26,6 +26,7 @@ import {
   padplusToken,
   retry,
   GRPC_ENDPOINT,
+  PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
@@ -506,8 +507,9 @@ export class PuppetPadplus extends Puppet {
       this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
     } else {
       const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
-
-      this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text)
+      if (PADPLUS_REPLAY_MESSAGE) {
+        this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text)
+      }
     }
 
   }
@@ -535,7 +537,9 @@ export class PuppetPadplus extends Puppet {
         userName: contact.userName,
       }
       const contactData = await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, JSON.stringify(content))
-      this.replayContactMsg(contactData.msgId, contactIdOrRoomId!, JSON.stringify(content))
+      if (PADPLUS_REPLAY_MESSAGE) {
+        this.replayContactMsg(contactData.msgId, contactIdOrRoomId!, JSON.stringify(content))
+      }
     } else {
       throw new Error('not able to send contact')
     }
@@ -578,16 +582,22 @@ export class PuppetPadplus extends Puppet {
       case '.jpeg':
       case '.png':
         const picData = await this.manager.sendFile(this.id, contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
-        this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
+        if (PADPLUS_REPLAY_MESSAGE) {
+          this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
+        }
         break
       case 'video/mp4':
       case '.mp4':
         const videoData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
-        this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
+        if (PADPLUS_REPLAY_MESSAGE) {
+          this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
+        }
         break
       default:
         const docData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
-        this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
+        if (PADPLUS_REPLAY_MESSAGE) {
+          this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
+        }
         break
     }
   }
@@ -630,7 +640,9 @@ export class PuppetPadplus extends Puppet {
       url,
     }
     const urlLinkData = await this.manager.sendUrlLink(this.id, contactIdOrRoomId!, JSON.stringify(payload))
-    this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
+    if (PADPLUS_REPLAY_MESSAGE) {
+      this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
+    }
   }
 
   private replayUrlLinkMsg (msgId: string, to: string, content: string): void {
