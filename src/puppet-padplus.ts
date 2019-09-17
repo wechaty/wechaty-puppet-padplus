@@ -503,8 +503,9 @@ export class PuppetPadplus extends Puppet {
 
     if (mentionIdList && mentionIdList.length > 0) {
       const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
-
-      this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
+      if (PADPLUS_REPLAY_MESSAGE) {
+        this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
+      }
     } else {
       const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
       if (PADPLUS_REPLAY_MESSAGE) {
