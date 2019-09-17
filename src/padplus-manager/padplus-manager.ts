@@ -606,11 +606,11 @@ export class PadplusManager {
   }
 
   public async addFriend (
-    strangerV1: string,
-    strangerV2: string,
-    isPhoneNumber: number,
     contactId: string,
     hello: string | undefined,
+    isPhoneNumber: number,
+    strangerV1: string,
+    strangerV2: string,
   ) {
     log.verbose(PRE, `addFriend(), isPhoneNumber: ${isPhoneNumber}`)
 
