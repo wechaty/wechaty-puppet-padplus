@@ -13,8 +13,8 @@ export class PadplusRoom {
   }
 
   // 修改微信群名称
-  public setTopic = async (loginId: string, roomId: string, topic: string): Promise<RequestStatus> => {
-    log.verbose(PRE, `setTopic(${loginId}, ${roomId}, ${topic})`)
+  public setTopic = async (roomId: string, topic: string): Promise<RequestStatus> => {
+    log.verbose(PRE, `setTopic(${roomId}, ${topic})`)
     const OpType = 'UPDATE'
     const type = 'MOD_TOPIC'
     const data = {

@@ -419,14 +419,13 @@ export class PadplusManager {
             if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
               const contact = convertFromGrpcContact(contactData, true)
-              CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
               }
+              CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
             } else {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
-              CallbackPool.Instance.resolveContactCallBack(roomPayload.chatroomId, roomPayload)
               if (this.cacheManager) {
                 const roomMembers = briefRoomMemberParser(roomPayload.members)
                 await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
@@ -434,6 +433,7 @@ export class PadplusManager {
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
+              CallbackPool.Instance.resolveRoomCallBack(roomPayload.chatroomId, roomPayload)
             }
           }
           break
@@ -575,36 +575,6 @@ export class PadplusManager {
     }
   }
 
-  private async getContact (
-    contactId: string
-  ): Promise<PadplusContactPayload | null | undefined> {
-    if (!this.cacheManager) {
-      throw new Error()
-    }
-    const contact = await this.cacheManager.getContact(contactId)
-    if (contact) {
-      return contact
-    }
-    await this.padplusContact.getContactInfo(contactId)
-    // const retryCount = 10
-    // const interval = 500
-    // for (let i = 0; i < retryCount; i++) {
-    //   const contact = await this.cacheManager.getContact(contactId)
-    //   if (contact) {
-    //     return contact
-    //   }
-    //   await new Promise(resolve => setTimeout(resolve, interval))
-    // }
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 5000)
-      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
-        clearTimeout(timeout)
-        resolve(data as PadplusContactPayload)
-      })
-    })
-    // return null
-  }
-
   public async addFriend (
     contactId: string,
     hello: string | undefined,
@@ -661,6 +631,15 @@ export class PadplusManager {
     log.silly(PRE, `setContactAlias(), contactId : ${contactId}, alias: ${alias}`)
 
     await this.padplusContact.setAlias(contactId, alias)
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('set alias failed since timeout'))
+      }, 5000)
+      CallbackPool.Instance.pushContactAliasCallback(contactId, alias, () => {
+        clearTimeout(timeout)
+        resolve()
+      })
+    })
   }
 
   public async getContactIdList (
@@ -672,6 +651,27 @@ export class PadplusManager {
     }
 
     return this.cacheManager.getContactIds()
+  }
+
+  private async getContact (
+    contactId: string
+  ): Promise<PadplusContactPayload | null | undefined> {
+    if (!this.cacheManager) {
+      throw new Error()
+    }
+    const contact = await this.cacheManager.getContact(contactId)
+    if (contact) {
+      return contact
+    }
+    await this.padplusContact.getContactInfo(contactId)
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 5000)
+      CallbackPool.Instance.pushContactCallback(contactId, (data) => {
+        clearTimeout(timeout)
+        resolve(data as PadplusContactPayload)
+      })
+    })
   }
 
   public async getContactPayload (
@@ -704,11 +704,24 @@ export class PadplusManager {
    * Room Section
    */
   public async setRoomTopic (
-    selfId: string,
     roomId: string,
     topic: string,
   ) {
-    await this.padplusRoom.setTopic(selfId, roomId, topic)
+    await this.padplusRoom.setTopic(roomId, topic)
+    if (this.cacheManager) {
+      await this.cacheManager.deleteRoom(roomId)
+    } else {
+      throw new Error(`no cache manager.`)
+    }
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('set alias failed since timeout'))
+      }, 5000)
+      CallbackPool.Instance.pushRoomTopicCallback(roomId, topic, () => {
+        clearTimeout(timeout)
+        resolve()
+      })
+    })
   }
 
   public async getRoomIdList ():Promise<string[]> {

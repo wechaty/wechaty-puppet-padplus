@@ -11,7 +11,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     labelLists       : contactPayload.LabelLists,
     nickName         : contactPayload.NickName,
     province         : contactPayload.Province,
-    remark           : contactPayload.Remark,
+    remark           : contactPayload.RemarkName,
     sex              : contactPayload.Sex as ContactGender,
     signature        : contactPayload.Signature,
     smallHeadUrl     : contactPayload.SmallHeadImgUrl,

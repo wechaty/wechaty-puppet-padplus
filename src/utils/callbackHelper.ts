@@ -17,6 +17,15 @@ export class CallbackPool {
   private contactRequestMap: {
     [contactId: string]: Array<(data: PadplusContactPayload | PadplusRoomPayload) => void>
   } = {}
+
+  private contactAliasMap: {
+    [contactId: string]: { [alias: string]: () => void },
+  } = {}
+
+  private roomTopicMap: {
+    [roomId: string]: { [topic: string]: () => void },
+  } = {}
+
   public pushCallbackToPool (requestId: string, callback: (data: StreamResponse) => void) {
     this.poolMap[requestId] = callback
   }
@@ -39,10 +48,50 @@ export class CallbackPool {
     this.contactRequestMap[contactId].push(callback)
   }
 
-  public resolveContactCallBack (contactId: string, data: PadplusContactPayload | PadplusRoomPayload) {
+  public resolveContactCallBack (contactId: string, data: PadplusContactPayload) {
     const callbacks = this.contactRequestMap[contactId] || []
     callbacks.map(callback => callback(data))
+
+    this.resolveContactAliasCallback(contactId, data.remark)
     delete this.contactRequestMap[contactId]
+  }
+
+  public resolveRoomCallBack (roomId: string, data: PadplusRoomPayload) {
+    const callbacks = this.contactRequestMap[roomId] || []
+    callbacks.map(callback => callback(data))
+
+    this.resolveRoomTopicCallback(data.chatroomId, data.nickName)
+    delete this.contactRequestMap[roomId]
+  }
+
+  public pushContactAliasCallback (contactId: string, alias: string, callback: () => void) {
+    if (!this.contactAliasMap[contactId]) {
+      this.contactAliasMap[contactId] = {}
+    }
+    this.contactAliasMap[contactId][alias] = callback
+  }
+
+  private resolveContactAliasCallback (contactId: string, alias: string) {
+    const callback = this.contactAliasMap[contactId] && this.contactAliasMap[contactId][alias]
+    if (callback) {
+      callback()
+      delete this.contactAliasMap[contactId][alias]
+    }
+  }
+
+  public pushRoomTopicCallback (roomId: string, topic: string, callback: () => void) {
+    if (!this.roomTopicMap[roomId]) {
+      this.roomTopicMap[roomId] = {}
+    }
+    this.roomTopicMap[roomId][topic] = callback
+  }
+
+  private resolveRoomTopicCallback (roomId: string, topic: string) {
+    const callback = this.roomTopicMap[roomId] && this.roomTopicMap[roomId][topic]
+    if (callback) {
+      callback()
+      delete this.roomTopicMap[roomId][topic]
+    }
   }
 
 }

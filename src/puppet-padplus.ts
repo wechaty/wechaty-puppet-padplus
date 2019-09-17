@@ -800,9 +800,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const selfId = this.selfId()
-    await this.manager.setRoomTopic(selfId, roomId, topic as string)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await this.manager.setRoomTopic(roomId, topic as string)
     await this.roomPayloadDirty(roomId)
     await new Promise(resolve => setTimeout(resolve, 500))
     await this.roomTopic(roomId)
