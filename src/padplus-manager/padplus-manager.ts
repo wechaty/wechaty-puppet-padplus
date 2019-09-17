@@ -750,7 +750,10 @@ export class PadplusManager {
             nickName: m.NickName || '',
             smallHeadUrl: '',
           }
-          memberMap = { contactId: _member }
+          if (!memberMap) {
+            memberMap = {}
+          }
+          memberMap[m.UserName] = _member
         })
       )
     }
