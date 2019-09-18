@@ -114,7 +114,7 @@ export class PadplusRoom {
   public createRoom = async (topic: string, memberIdList: string[]): Promise<string> => {
     log.verbose(PRE, `createRoom(${topic},memberIds${memberIdList.join(',')})`)
     const data = {
-      OpType: 'CREATE',
+      OpType: 'CREATE_CHAT_ROOM',
       memberList: memberIdList,
       topic,
     }

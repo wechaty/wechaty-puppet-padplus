@@ -62,3 +62,12 @@ export interface GrpcSearchContact {
   message: string,
   status: string,
 }
+
+export interface GrpcDeleteContact {
+  field: string,
+  loginer: string,
+  mqType: number,
+  source: string,
+  uin: string,
+  userName: string,
+}

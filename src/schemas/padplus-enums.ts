@@ -258,3 +258,15 @@ export enum RequestStatus {
   Fail,
   Success,
 }
+
+export enum GrpcMQType {
+  RECEIVE_MESSAGE = 2,
+  CONTACT_INFO_CHANGE = 3,
+  DELETE_CONTACT = 4,
+  GET_ROOM_MEMBER = 5,
+  ROOM_MEMBER_CHANGE = 6,
+  GET_CONTACT = 7,
+  ADD_CONTACT = 15,
+  SYNC = 51,
+  LOGOUT = 1100,
+}

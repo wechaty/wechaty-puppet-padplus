@@ -35,6 +35,7 @@ import {
   PadplusMediaData,
   PadplusRoomMemberPayload,
   GrpcSearchContact,
+  GrpcDeleteContact,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -454,7 +455,15 @@ export class PadplusManager {
           }
           break
         case ResponseType.CONTACT_DELETE :
-          // TODO: delete contact in cache
+          const contactDataStr = data.getData()
+          if (contactDataStr) {
+            const contactData: GrpcDeleteContact = JSON.parse(contactDataStr)
+            log.silly(PRE, `delete contact data : ${util.inspect(contactData)}`)
+            const deleteUserName = contactData.field
+            if (this.cacheManager) {
+              await this.cacheManager.deleteContact(deleteUserName)
+            }
+          }
           break
         case ResponseType.MESSAGE_RECEIVE :
           const rawMessageStr = data.getData()
