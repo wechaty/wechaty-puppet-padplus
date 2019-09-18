@@ -1,5 +1,5 @@
 import { log } from '../../config'
-import { RequestStatus } from '../../schemas'
+import { RequestStatus, GrpcCreateRoomData } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
@@ -114,17 +114,31 @@ export class PadplusRoom {
   public createRoom = async (topic: string, memberIdList: string[]): Promise<string> => {
     log.verbose(PRE, `createRoom(${topic},memberIds${memberIdList.join(',')})`)
     const data = {
-      OpType: 'CREATE',
       memberList: memberIdList,
-      chatRoomType: 'CREATE_CHAT_ROOM',
       topic,
     }
 
-    await this.requestClient.request({
-      apiType: ApiType.ROOM_OPERATION,
+    const res = await this.requestClient.request({
+      apiType: ApiType.CREATE_ROOM,
       data,
     })
-    return topic
+
+    if (res) {
+      const roomDataStr = res.getData()
+
+      if (roomDataStr) {
+        const roomData: GrpcCreateRoomData = JSON.parse(roomDataStr)
+        if (roomData.roomId) {
+          return roomData.roomId
+        } else {
+          throw new Error(`can not create room by member: ${JSON.stringify(roomData.createMessage)}`)
+        }
+      } else {
+        throw new Error(`can not parse room data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get response from grpc server`)
+    }
   }
 
   public quitRoom = async (roomId: string): Promise<RequestStatus> => {

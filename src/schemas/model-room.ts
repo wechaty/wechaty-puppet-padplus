@@ -91,3 +91,15 @@ export interface PadplusRoomInviteEvent {
   timestamp: number,
   url: string,
 }
+
+export interface GrpcCreateRoomData {
+  status: number,
+  roomId: string,
+  message: string,
+  createMessage: GrpcCreateRoomMember[]
+}
+
+export interface GrpcCreateRoomMember {
+  wxid: string,
+  status: number,
+}

@@ -29,6 +29,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.GET_MESSAGE_MEDIA,
   ApiType.SEARCH_CONTACT,
   ApiType.ADD_CONTACT,
+  ApiType.CREATE_ROOM,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'grpc-error' | 'grpc-end' | 'grpc-close'
@@ -43,27 +44,29 @@ export class GrpcGateway extends EventEmitter {
 
   private eventEmitterMap: { [name: string]: GrpcEventEmitter } = {}
 
-  public static init (
+  public static async init (
     token: string,
     endpoint: string,
     name: string,
-  ): GrpcEventEmitter {
+  ): Promise<GrpcEventEmitter> {
     if (!this._instance) {
       this._instance = new GrpcGateway(token, endpoint)
+      await this._instance.initSelf()
     }
     if (!this._instance.isAlive) {
-      if (this._instance.longSocket) {
-        this._instance.longSocket.removeAllListeners()
+      if (this._instance.stream) {
+        this._instance.stream.removeAllListeners()
       }
       this._instance.client.close()
       this._instance = new GrpcGateway(token, endpoint)
+      await this._instance.initSelf()
     }
     return this._instance.addNewInstance(name)
   }
 
   private client: PadPlusServerClient
   private isAlive: boolean
-  private longSocket?: grpc.ClientReadableStream<StreamResponse>
+  private stream?: grpc.ClientReadableStream<StreamResponse>
 
   private constructor (
     private token: string,
@@ -71,9 +74,11 @@ export class GrpcGateway extends EventEmitter {
   ) {
     super()
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
-    this.initGrpcGateway().catch(err => {
-      throw new Error(err)
-    })
+    this.isAlive = false
+  }
+
+  private async initSelf () {
+    await this.initGrpcGateway()
     this.isAlive = true
   }
 
@@ -202,9 +207,9 @@ export class GrpcGateway extends EventEmitter {
 
   public async stop () {
     log.silly(PRE, `stop()`)
-    if (this.longSocket) {
-      this.longSocket.destroy()
-      this.longSocket.removeAllListeners()
+    if (this.stream) {
+      this.stream.destroy()
+      this.stream.removeAllListeners()
     }
     this.client.close()
   }
@@ -213,101 +218,74 @@ export class GrpcGateway extends EventEmitter {
     log.silly(PRE, `initGrpcGateway()`)
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
-    try {
-      const longSocket = this.client.init(initConfig)
 
-      longSocket.on('error', async (err: any) => {
-        await new Promise(resolve => setTimeout(resolve, 5000))
-        if (err.code === 14) {
-          this.isAlive = false
-        } else {
-          log.error(PRE, util.inspect(err.stack))
-        }
-      })
-      longSocket.on('end', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5000))
-        log.error(PRE, 'grpc server end.')
+    const stream = this.client.init(initConfig)
+
+    stream.on('error', async (err: any) => {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      if (err.code === 14) {
         this.isAlive = false
-        // process.exit(-1)
-      })
-      longSocket.on('close', () => {
-        log.error(PRE, 'grpc server close')
-        this.isAlive = false
-      })
-      longSocket.on('data', async (data: StreamResponse) => {
-        const requestId = data.getRequestid()
-        const responseType = data.getResponsetype()
-        if (responseType !== ResponseType.LOGIN_QRCODE) {
-          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
-          log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
-          log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
-        }
-
-        if (requestId) {
-          const callback = CallbackPool.Instance.getCallback(requestId)
-          if (callback) {
-            callback(data)
-            CallbackPool.Instance.removeCallback(requestId)
-          }
-        } else {
-          if (responseType === ResponseType.LOGIN_QRCODE) {
-            const name = Object.keys(this.eventEmitterMap).find(name => {
-              const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
-              const uin = this.eventEmitterMap[name].getUIN()
-              const userName = this.eventEmitterMap[name].getUserName()
-              log.silly(PRE, `uin : ${uin}, userName: ${userName}`)
-              return qrcodeId === '' && uin === '' && userName === ''
-            })
-            if (name) {
-              this.eventEmitterMap[name].emit('data', data)
-            }
-          } else {
-            const uin = data.getUin()
-            try {
-              const userName = JSON.parse(data.getData()!).userName
-              const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
-              if (!emitter) {
-                return
-              }
-              emitter.emit('data', data)
-            } catch (error) {
-              throw new Error(error)
-            }
-          }
-
-        }
-      })
-
-      await new Promise((resolve, reject) => {
-        longSocket.once('readable', () => {
-          log.silly(PRE, 'initLongSocket() Promise() longSocket.on(connect)')
-          resolve()
+        Object.values(this.eventEmitterMap).map(emitter => {
+          emitter.emit('grpc-error')
         })
-        longSocket.once('error', (e) => {
-          log.error(PRE, `initLongSocket() Promise() longSocket.on(error) ${e}`)
-          Object.values(this.eventEmitterMap).map(emitter => {
-            emitter.emit('grpc-error')
+      } else {
+        log.error(PRE, util.inspect(err.stack))
+      }
+    })
+    stream.on('end', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      log.error(PRE, 'grpc server end.')
+      this.isAlive = false
+      // process.exit(-1)
+    })
+    stream.on('close', () => {
+      log.error(PRE, 'grpc server close')
+      this.isAlive = false
+    })
+    stream.on('data', async (data: StreamResponse) => {
+      const requestId = data.getRequestid()
+      const responseType = data.getResponsetype()
+      if (responseType !== ResponseType.LOGIN_QRCODE) {
+        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
+        log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
+        log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
+      }
+
+      if (requestId) {
+        const callback = CallbackPool.Instance.getCallback(requestId)
+        if (callback) {
+          callback(data)
+          CallbackPool.Instance.removeCallback(requestId)
+        }
+      } else {
+        if (responseType === ResponseType.LOGIN_QRCODE) {
+          const name = Object.keys(this.eventEmitterMap).find(name => {
+            const qrcodeId = this.eventEmitterMap[name].getQrcodeId()
+            const uin = this.eventEmitterMap[name].getUIN()
+            const userName = this.eventEmitterMap[name].getUserName()
+            log.silly(PRE, `uin : ${uin}, userName: ${userName}`)
+            return qrcodeId === '' && uin === '' && userName === ''
           })
-          reject(new Error())
-        })
-        longSocket.once('close', () => {
-          log.silly(PRE, 'initLongSocket() Promise() longSocket.on(close)')
-          this.emit('grpc-close')
-          reject(new Error('CLOSE'))
-        })
-        longSocket.once('end', () => {
-          log.silly(PRE, `initLongSocket() Promise() longSocket.on(timeout)`)
-          this.emit('grpc-end')
-          reject(new Error('TIMEOUT'))
-        })
-      })
-      this.longSocket = longSocket
-    } catch (err) {
-      log.silly(PRE, `longsocket error : ${err}`)
-      Object.values(this.eventEmitterMap).map(emitter => {
-        emitter.emit('grpc-error')
-      })
-    }
+          if (name) {
+            this.eventEmitterMap[name].emit('data', data)
+          }
+        } else {
+          const uin = data.getUin()
+          try {
+            const userName = JSON.parse(data.getData()!).userName
+            const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
+            if (!emitter) {
+              return
+            }
+            emitter.emit('data', data)
+          } catch (error) {
+            throw new Error(error)
+          }
+        }
+
+      }
+    })
+    this.stream = stream
   }
 
 }

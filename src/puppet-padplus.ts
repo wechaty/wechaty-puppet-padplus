@@ -93,6 +93,10 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('ready', () => this.emit('ready'))
 
+    manager.on('reset', (reason: string) => {
+      this.emit('reset', reason)
+    })
+
     manager.on('logout', () => this.logout())
 
     await manager.start()
@@ -884,10 +888,6 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    if (!this.id) {
-      throw new Error(`no id.`)
-    }
-    contactIdList.push(this.id)
     const result = await this.manager.createRoom(topic || '', contactIdList)
     return result
   }
