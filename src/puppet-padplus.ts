@@ -673,7 +673,6 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, 'messageRawPayloadParser()')
 
     const payload = await messageRawPayloadParser(rawPayload)
-
     return payload
   }
 

@@ -128,17 +128,26 @@ export async function messageRawPayloadParser (
 
     const recalledPayload = await recalledPayloadParser(rawPayload)
     const pattern = [
-      /你撤回了一条消息/,
-      /You recalled a message/,
       /"(.+)" 撤回了一条消息/,
       /"(.+)" has recalled a message./,
     ]
+    const patternSelf = [
+      /你撤回了一条消息/,
+      /You recalled a message/,
+    ]
     if (recalledPayload) {
       const isRecalled = pattern.some(regex => regex.test(recalledPayload.replaceMsg))
-      if (isRecalled) {
+      const isRecalledSelf = patternSelf.some(regex => regex.test(recalledPayload.replaceMsg))
+      if (isRecalled || isRecalledSelf) {
         text = recalledPayload.newMsgId
-        fromId = rawPayload.toUserName
-        toId = rawPayload.fromUserName
+        if (isRecalledSelf) {
+          fromId = rawPayload.toUserName
+          if (isRoomId(rawPayload.fromUserName)) {
+            roomId = rawPayload.fromUserName
+          } else if (isContactId(rawPayload.fromUserName)) {
+            toId = rawPayload.fromUserName
+          }
+        }
       } else {
         payloadBase.type = MessageType.Unknown
       }

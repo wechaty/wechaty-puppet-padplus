@@ -284,7 +284,7 @@ test('attachment file with ext .xlsx', async t => {
   t.deepEqual(payload, EXPECTED_PAYLOAD, 'should parse share card message peer to peer')
 })
 
-test('recalled message in room', async t => {
+test('others recalled message in room', async t => {
   const MESSAGE_PAYLOAD: PadplusMessagePayload = {
     content: 'lylezhuifeng:\n<sysmsg type="revokemsg"><revokemsg><session>18295482296@chatroom</session><msgid>1672045621</msgid><newmsgid>6800642263058603981</newmsgid><replacemsg><![CDATA["高原ོ" 撤回了一条消息]]></replacemsg></revokemsg></sysmsg>',
     createTime: 1568207817258,
@@ -306,17 +306,142 @@ test('recalled message in room', async t => {
   }
 
   const EXPECTED_PAYLOAD: MessagePayload = {
-    fromId: 'wxid_zovb9ol86m7l22',
+    fromId: 'lylezhuifeng',
     id: '7451323945505661106',
     mentionIdList: undefined,
     roomId: '18295482296@chatroom',
     text: '6800642263058603981',
     timestamp: 1568207817.258,
-    toId: '18295482296@chatroom',
+    toId: 'wxid_zovb9ol86m7l22',
     type: 11,
   }
   const payload = await messageRawPayloadParser(MESSAGE_PAYLOAD)
-  t.deepEqual(payload, EXPECTED_PAYLOAD, 'should parse recalled message in room')
+  t.deepEqual(payload,
+    EXPECTED_PAYLOAD,
+    'should parse recalled message in room')
+})
+
+test('bot recalled message in room', async t => {
+  const MESSAGE_PAYLOAD: PadplusMessagePayload = {
+    appMsgType: undefined,
+    content: '<sysmsg type="revokemsg"><revokemsg><session>23446751259@chatroom</session><msgid>1670494294</msgid><newmsgid>245587684513446090</newmsgid><replacemsg><![CDATA[你撤回了一条消息]]></replacemsg></revokemsg></sysmsg>',
+    createTime: 1568776956065,
+    fileName: undefined,
+    fromMemberNickName: undefined,
+    fromMemberUserName: undefined,
+    fromUserName: '23446751259@chatroom',
+    imgBuf: '',
+    imgStatus: 1,
+    l1MsgType: 5,
+    msgId: '3195375600040238004',
+    msgSource: '',
+    msgSourceCd: 2,
+    msgType: 10002,
+    newMsgId: 3195375600040238000,
+    pushContent: '',
+    status: 4,
+    toUserName: 'wxid_v7j3e9kna9l912',
+    uin: '2978186714',
+    url: undefined,
+    wechatUserName: 'wxid_v7j3e9kna9l912',
+  }
+
+  const EXPECTED_PAYLOAD: MessagePayload = {
+    fromId: 'wxid_v7j3e9kna9l912',
+    id: '3195375600040238004',
+    mentionIdList: undefined,
+    roomId: '23446751259@chatroom',
+    text: '245587684513446090',
+    timestamp: 1568776956.065,
+    toId: 'wxid_v7j3e9kna9l912',
+    type: 11,
+  }
+  const payload = await messageRawPayloadParser(MESSAGE_PAYLOAD)
+  t.deepEqual(payload,
+    EXPECTED_PAYLOAD,
+    'should parse recalled message in room')
+})
+
+test('others recalled message in private chat', async t => {
+  const MESSAGE_PAYLOAD: PadplusMessagePayload = {
+    appMsgType: undefined,
+    content: '<sysmsg type="revokemsg">\n\t<revokemsg>\n\t\t<session>Soul001001</session>\n\t\t<msgid>1093970572</msgid>\n\t\t<newmsgid>3169605043756821364</newmsgid>\n\t\t<replacemsg><![CDATA["苏畅183" 撤回了一条消息]]></replacemsg>\n\t</revokemsg>\n</sysmsg>\n',
+    createTime: 1568777325070,
+    fileName: undefined,
+    fromMemberNickName: undefined,
+    fromMemberUserName: undefined,
+    fromUserName: 'Soul001001',
+    imgBuf: '',
+    imgStatus: 1,
+    l1MsgType: 5,
+    msgId: '8551294433062845570',
+    msgSource: '',
+    msgSourceCd: 2,
+    msgType: 10002,
+    newMsgId: 8551294433062845000,
+    pushContent: '',
+    status: 4,
+    toUserName: 'wxid_v7j3e9kna9l912',
+    uin: '2978186714',
+    url: undefined,
+    wechatUserName: 'wxid_v7j3e9kna9l912',
+  }
+
+  const EXPECTED_PAYLOAD: MessagePayload = {
+    fromId: 'Soul001001',
+    id: '8551294433062845570',
+    mentionIdList: undefined,
+    roomId: undefined,
+    text: '3169605043756821364',
+    timestamp: 1568777325.07,
+    toId: 'wxid_v7j3e9kna9l912',
+    type: 11,
+  }
+  const payload = await messageRawPayloadParser(MESSAGE_PAYLOAD)
+  t.deepEqual(payload,
+    EXPECTED_PAYLOAD,
+    'should parse recalled message in private message')
+})
+
+test('bot recalled message in private chat', async t => {
+  const MESSAGE_PAYLOAD: PadplusMessagePayload = {
+    appMsgType: undefined,
+    content: '<sysmsg type="revokemsg"><revokemsg><session>Soul001001</session><msgid>1670494297</msgid><newmsgid>5435185973422451659</newmsgid><replacemsg><![CDATA[你撤回了一条消息]]></replacemsg></revokemsg></sysmsg>',
+    createTime: 1568777162068,
+    fileName: undefined,
+    fromMemberNickName: undefined,
+    fromMemberUserName: undefined,
+    fromUserName: 'Soul001001',
+    imgBuf: '',
+    imgStatus: 1,
+    l1MsgType: 5,
+    msgId: '5403623995065243191',
+    msgSource: '',
+    msgSourceCd: 2,
+    msgType: 10002,
+    newMsgId: 5403623995065244000,
+    pushContent: '',
+    status: 4,
+    toUserName: 'wxid_v7j3e9kna9l912',
+    uin: '2978186714',
+    url: undefined,
+    wechatUserName: 'wxid_v7j3e9kna9l912',
+  }
+
+  const EXPECTED_PAYLOAD: MessagePayload = {
+    fromId: 'wxid_v7j3e9kna9l912',
+    id: '5403623995065243191',
+    mentionIdList: undefined,
+    roomId: undefined,
+    text: '5435185973422451659',
+    timestamp: 1568777162.068,
+    toId: 'Soul001001',
+    type: 11,
+  }
+  const payload = await messageRawPayloadParser(MESSAGE_PAYLOAD)
+  t.deepEqual(payload,
+    EXPECTED_PAYLOAD,
+    'should parse recalled message in private message')
 })
 
 // test('Official account sent url', async t => {
