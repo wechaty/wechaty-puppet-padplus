@@ -37,7 +37,6 @@ export class PadplusMessage {
         data,
       })
 
-      log.silly(PRE, `sendMessage : ${JSON.stringify(res)}`)
       if (res) {
         const msgDataStr = res.getData()
         if (msgDataStr) {

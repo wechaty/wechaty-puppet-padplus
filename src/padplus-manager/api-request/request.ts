@@ -26,7 +26,6 @@ export class RequestClient {
     log.silly(PRE, `request()`)
     const uin = this.emitter.getUIN()
     const res = await this.grpcGateway.request(option.apiType, uin, option.data)
-    log.silly(PRE, `res : ${JSON.stringify(res)}`)
     return res
   }
 

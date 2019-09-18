@@ -666,12 +666,11 @@ export class PuppetPadplus extends Puppet {
     if (!rawPayload) {
       throw new Error('no message rawPayload')
     }
-
     return rawPayload
   }
 
   public async messageRawPayloadParser (rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
-    log.verbose(PRE, 'messageRawPayloadParser(%s)', rawPayload)
+    log.verbose(PRE, 'messageRawPayloadParser()')
 
     const payload = await messageRawPayloadParser(rawPayload)
 
@@ -953,8 +952,6 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     const memberMap = await this.manager.getRoomMembers(roomId)
-    log.silly(`==P==A==D==P==L==U==S==<Room Member>==P==A==D==P==L==U==S==`)
-    log.silly(PRE, `member map : ${util.inspect(memberMap)}`)
     if (!memberMap) {
       throw new Error('can not find members. may be you are removed.')
     }

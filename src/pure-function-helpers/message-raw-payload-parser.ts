@@ -137,6 +137,8 @@ export async function messageRawPayloadParser (
       const isRecalled = pattern.some(regex => regex.test(recalledPayload.replaceMsg))
       if (isRecalled) {
         text = recalledPayload.newMsgId
+        fromId = rawPayload.toUserName
+        toId = rawPayload.fromUserName
       } else {
         payloadBase.type = MessageType.Unknown
       }
