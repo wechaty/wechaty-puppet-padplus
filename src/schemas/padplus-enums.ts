@@ -3,7 +3,7 @@ export enum QrcodeStatus {
   Scanned = 1,
   Confirmed = 2,
   Canceled = 4,
-  Expired = 2007,
+  Expired = 3,
 }
 
 export enum LoginStatus {

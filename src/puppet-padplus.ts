@@ -85,7 +85,6 @@ export class PuppetPadplus extends Puppet {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
       await super.login(loginData.userName)
       await this.manager.syncContacts()
-
     })
 
     manager.setMemory(this.memory)
@@ -94,7 +93,38 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('ready', () => this.emit('ready'))
 
+    manager.on('logout', () => this.logout())
+
     await manager.start()
+  }
+
+  public async stop (): Promise<void> {
+    log.verbose(PRE, 'stop()')
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    if (this.state.off()) {
+      log.verbose(PRE, 'stop() is called on a OFF puppet. await ready(off) and return.')
+      await this.state.ready('off')
+      return
+    }
+
+    this.state.off('pending')
+
+    await this.manager.stop()
+
+    this.state.off(true)
+    log.verbose(PRE, `stop() finished`)
+  }
+
+  public async logout (): Promise<void> {
+    log.verbose(PRE, 'logout()')
+
+    // TODO: need to logout wechat
+    this.emit('logout', this.selfId())
+    this.id = undefined
   }
 
   async onMessage (message: PadplusMessagePayload) {
@@ -139,14 +169,6 @@ export class PuppetPadplus extends Puppet {
         this.emit('message', message.msgId)
         break
     }
-  }
-
-  stop (): Promise<void> {
-    throw new Error('Method not implemented.')
-  }
-
-  logout (): Promise<void> {
-    throw new Error('Method not implemented.')
   }
 
   /**
@@ -628,9 +650,6 @@ export class PuppetPadplus extends Puppet {
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
-    if (!this.id) {
-      throw new PadplusError(PadplusErrorType.NO_ID, `messageSendUrl()`)
-    }
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
     const payload = {
@@ -640,7 +659,7 @@ export class PuppetPadplus extends Puppet {
       type: 5,
       url,
     }
-    const urlLinkData = await this.manager.sendUrlLink(this.id, contactIdOrRoomId!, JSON.stringify(payload))
+    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), contactIdOrRoomId!, JSON.stringify(payload))
     if (PADPLUS_REPLAY_MESSAGE) {
       this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
     }

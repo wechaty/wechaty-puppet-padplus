@@ -167,7 +167,11 @@ export class GrpcGateway extends EventEmitter {
         }
       }
     } catch (err) {
-      log.verbose(PRE, `request error : ${util.inspect(err)}`)
+      if (err.code === 14) {
+        this.client.close()
+      } else {
+        log.error(PRE, util.inspect(err))
+      }
       if (err.details === 'INVALID_TOKEN') {
         padplusToken()
       }
@@ -196,27 +200,39 @@ export class GrpcGateway extends EventEmitter {
     })
   }
 
+  public async stop () {
+    log.silly(PRE, `stop()`)
+    if (this.longSocket) {
+      this.longSocket.destroy()
+      this.longSocket.removeAllListeners()
+    }
+    this.client.close()
+  }
+
   public async initGrpcGateway () {
-    log.silly(PRE, `notify()`)
+    log.silly(PRE, `initGrpcGateway()`)
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
     try {
       const longSocket = this.client.init(initConfig)
-      log.silly(JSON.stringify(longSocket))
 
       longSocket.on('error', async (err: any) => {
         await new Promise(resolve => setTimeout(resolve, 5000))
-        log.error(PRE, err.stack)
-        // process.exit(-1)
-        this.isAlive = false
+        if (err.code === 14) {
+          this.isAlive = false
+        } else {
+          log.error(PRE, util.inspect(err.stack))
+        }
       })
       longSocket.on('end', async () => {
         await new Promise(resolve => setTimeout(resolve, 5000))
         log.error(PRE, 'grpc server end.')
-        process.exit(-1)
+        this.isAlive = false
+        // process.exit(-1)
       })
       longSocket.on('close', () => {
         log.error(PRE, 'grpc server close')
+        this.isAlive = false
       })
       longSocket.on('data', async (data: StreamResponse) => {
         const requestId = data.getRequestid()
@@ -263,25 +279,26 @@ export class GrpcGateway extends EventEmitter {
       })
 
       await new Promise((resolve, reject) => {
-        longSocket.once('connect', () => {
+        longSocket.once('readable', () => {
           log.silly(PRE, 'initLongSocket() Promise() longSocket.on(connect)')
-          return resolve()
+          resolve()
         })
         longSocket.once('error', (e) => {
           log.error(PRE, `initLongSocket() Promise() longSocket.on(error) ${e}`)
           Object.values(this.eventEmitterMap).map(emitter => {
             emitter.emit('grpc-error')
           })
+          reject(new Error())
         })
         longSocket.once('close', () => {
           log.silly(PRE, 'initLongSocket() Promise() longSocket.on(close)')
           this.emit('grpc-close')
-          return reject(new Error('CLOSE'))
+          reject(new Error('CLOSE'))
         })
         longSocket.once('end', () => {
           log.silly(PRE, `initLongSocket() Promise() longSocket.on(timeout)`)
           this.emit('grpc-end')
-          return reject(new Error('TIMEOUT'))
+          reject(new Error('TIMEOUT'))
         })
       })
       this.longSocket = longSocket

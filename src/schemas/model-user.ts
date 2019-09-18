@@ -42,3 +42,10 @@ export interface ScanData {
   status: number,
   user_name: string,
 }
+
+export interface GrpcLogout {
+  code: number,
+  uin: string,
+  message: string,
+  mqType: number,
+}

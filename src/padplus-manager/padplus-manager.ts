@@ -36,6 +36,7 @@ import {
   PadplusRoomMemberPayload,
   GrpcSearchContact,
   GrpcDeleteContact,
+  GrpcLogout,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -131,7 +132,7 @@ export class PadplusManager {
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
   public emit (event: 'login', data: GrpcQrCodeLogin): boolean
-  public emit (event: 'logout', userIdOrReasonOrData: string): boolean
+  public emit (event: 'logout'): boolean
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
   public emit (event: 'contact-delete', data: string): boolean
@@ -151,7 +152,7 @@ export class PadplusManager {
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
-  public on (event: 'logout', listener: ((this: PadplusManager, userIdOrReasonOrData: string) => void)): this
+  public on (event: 'logout', listener: ((this: PadplusManager) => void)): this
   public on (event: 'message', listener: ((this: PadplusManager, msg: PadplusMessagePayload) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'ready', listener: ((this: PadplusManager) => void)): this
@@ -193,6 +194,19 @@ export class PadplusManager {
       }
     }
 
+  }
+
+  public async stop (): Promise<void> {
+    log.info(PRE, `stop()`)
+    this.state.off('pending')
+
+    this.grpcGatewayEmitter.removeAllListeners()
+    this.grpcGateway.stop()
+    await CacheManager.release()
+    this.cacheManager = undefined
+
+    this.state.off(true)
+    log.info(PRE, `stop() finished`)
   }
 
   public setMemory (memory: MemoryCard) {
@@ -421,10 +435,15 @@ export class PadplusManager {
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
           if (logoutRawData) {
-            const logoutData = JSON.parse(logoutRawData)
-            this.emit('logout', logoutData)
-            // TODO: modify the logic for quit WeChat
-            process.exit(-1)
+            const logoutData: GrpcLogout = JSON.parse(logoutRawData)
+            const uin = logoutData.uin
+            const _uin = this.grpcGatewayEmitter.getUIN()
+            if (uin === _uin) {
+              this.emit('logout')
+            } else {
+              const userName = this.grpcGatewayEmitter.getUserName()
+              throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)
+            }
           }
           break
 
