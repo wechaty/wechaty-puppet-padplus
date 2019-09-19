@@ -136,7 +136,6 @@ export class PadplusManager extends EventEmitter {
       delete this.requestClient
 
       await this.start()
-      // this.emit('reset', 'ready to reconnect grpc server')
     })
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
@@ -246,9 +245,29 @@ export class PadplusManager extends EventEmitter {
     }
     await CacheManager.release()
     this.cacheManager = undefined
+    this.loginStatus = false
 
     this.state.off(true)
     log.info(PRE, `stop() finished`)
+  }
+
+  public async logout (): Promise<void> {
+    log.info(PRE, `logout()`)
+    this.state.off('pending')
+
+    if (this.grpcGatewayEmitter) {
+      this.grpcGatewayEmitter.removeAllListeners()
+    }
+
+    if (GrpcGateway.Instance) {
+      await GrpcGateway.Instance.stop()
+    }
+    await CacheManager.release()
+    this.cacheManager = undefined
+    this.loginStatus = false
+
+    this.state.off(true)
+    log.info(PRE, `logout() finished`)
   }
 
   public setMemory (memory: MemoryCard) {

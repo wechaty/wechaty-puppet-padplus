@@ -132,6 +132,8 @@ export class PuppetPadplus extends Puppet {
     // TODO: need to logout wechat
     this.emit('logout', this.selfId())
     this.id = undefined
+    await this.manager.logout()
+    // this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {

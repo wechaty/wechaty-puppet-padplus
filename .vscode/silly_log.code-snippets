@@ -25,9 +25,9 @@
 		"scope": "javascript,typescript",
 		"prefix": "line",
 		"body": [
-			"log.silly(`\n==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==`)",
-			"log.silly(JSON.stringify($1))",
-			"log.silly(`==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==\n`)",
+			"log.silly(`\\n==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==`)",
+			"log.silly(`$1, ${JSON.stringify($1)}`)",
+			"log.silly(`==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==\\n`)",
 		],
 		"description": "line for split"
 	}
