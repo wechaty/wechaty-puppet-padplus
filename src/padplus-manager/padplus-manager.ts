@@ -121,8 +121,23 @@ export class PadplusManager extends EventEmitter {
 
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
 
-    this.resetThrottleQueue = new ThrottleQueue<string>(1000)
+    this.resetThrottleQueue = new ThrottleQueue<string>(5000)
+    this.resetThrottleQueue.subscribe(async reason => {
+      log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
 
+      if (this.grpcGatewayEmitter) {
+        this.grpcGatewayEmitter.removeAllListeners()
+      }
+      delete this.padplusUser
+      delete this.padplusContact
+      delete this.padplusFriendship
+      delete this.padplusRoom
+      delete this.padplusMesasge
+      delete this.requestClient
+
+      await this.start()
+      // this.emit('reset', 'ready to reconnect grpc server')
+    })
     log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
   }
 
@@ -287,22 +302,6 @@ export class PadplusManager extends EventEmitter {
       this.resetThrottleQueue.next('reconnect')
     })
 
-    this.resetThrottleQueue.subscribe(async reason => {
-      log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
-
-      if (this.grpcGatewayEmitter) {
-        this.grpcGatewayEmitter.removeAllListeners()
-      }
-      delete this.padplusUser
-      delete this.padplusContact
-      delete this.padplusFriendship
-      delete this.padplusRoom
-      delete this.padplusMesasge
-      delete this.requestClient
-
-      await this.start()
-      // this.emit('reset', 'ready to reconnect grpc server')
-    })
     grpcGatewayEmitter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
