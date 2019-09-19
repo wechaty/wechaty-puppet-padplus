@@ -224,7 +224,7 @@ export class GrpcGateway extends EventEmitter {
     const channel = this.client.getChannel()
 
     let state = -1
-    try{
+    try {
       state = channel.getConnectivityState(false)
     } catch (e) {
       state = grpc.connectivityState.SHUTDOWN
