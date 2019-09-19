@@ -196,7 +196,7 @@ export class PadplusManager extends EventEmitter {
     try {
       emitter = await GrpcGateway.init(this.options.token, this.options.endpoint || GRPC_ENDPOINT, String(this.options.name))
     } catch (e) {
-      log.info('start grpc gateway failed, retry start in 5 seconds.')
+      log.info(`start grpc gateway failed for reason: ${e}, retry start in 5 seconds.`)
       await new Promise(resolve => setTimeout(resolve, 5000))
       await this.start()
       return

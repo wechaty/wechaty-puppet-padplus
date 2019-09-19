@@ -75,6 +75,7 @@ export class GrpcGateway extends EventEmitter {
     private endpoint: string,
   ) {
     super()
+    log.silly(PRE, 'constructor')
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
     this.isAlive = false
   }
@@ -221,10 +222,31 @@ export class GrpcGateway extends EventEmitter {
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
 
+    const channel = this.client.getChannel()
+    if (channel) {
+      await new Promise((resolve, reject) => {
+        channel.getConnectivityState(true)
+        const beforeState = channel.getConnectivityState(false)
+        channel.watchConnectivityState(beforeState, Date.now() + 5000, (err) => {
+          if (err) {
+            reject(new Error('Try to connect to server timeout.'))
+          } else {
+            const state = channel.getConnectivityState(false)
+            if (state !== grpc.connectivityState.READY) {
+              reject(new Error(`Failed to connect to server, state changed to ${state}`))
+            } else {
+              resolve()
+            }
+          }
+        })
+      })
+    } else {
+      throw new Error('No channel for grpc client.')
+    }
+
     const stream = this.client.init(initConfig)
 
     stream.on('error', async (err: any) => {
-      await new Promise(resolve => setTimeout(resolve, 5000))
       if (err.code === 14 || err.code === 13) {
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {
@@ -235,13 +257,14 @@ export class GrpcGateway extends EventEmitter {
       }
     })
     stream.on('end', async () => {
-      await new Promise(resolve => setTimeout(resolve, 5000))
       log.error(PRE, 'grpc server end.')
       this.isAlive = false
+      Object.values(this.eventEmitterMap).map(emitter => {
+        emitter.emit('grpc-error')
+      })
     })
     stream.on('close', async () => {
       log.error(PRE, 'grpc server close')
-      await new Promise(resolve => setTimeout(resolve, 5000))
       this.isAlive = false
       Object.values(this.eventEmitterMap).map(emitter => {
         emitter.emit('grpc-error')
