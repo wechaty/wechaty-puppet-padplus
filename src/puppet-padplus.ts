@@ -133,7 +133,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('logout', this.selfId())
     this.id = undefined
     await this.manager.logout()
-    this.emit('reset', 'padplus reset')
+    // this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {
