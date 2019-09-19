@@ -99,6 +99,9 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('logout', () => this.logout())
 
+    manager.on('error', (err: Error) => {
+      this.emit('error', err)
+    })
     await manager.start()
   }
 
@@ -752,6 +755,9 @@ export class PuppetPadplus extends Puppet {
         return [] as string[]
       })
 
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500)
+      })
       const inviterIdList = await this.roomMemberSearch(roomId, inviterName)
 
       if (inviterIdList.length < 1) {

@@ -225,7 +225,7 @@ export class GrpcGateway extends EventEmitter {
 
     stream.on('error', async (err: any) => {
       await new Promise(resolve => setTimeout(resolve, 5000))
-      if (err.code === 14) {
+      if (err.code === 14 || err.code === 13) {
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {
           emitter.emit('grpc-error')
@@ -238,11 +238,14 @@ export class GrpcGateway extends EventEmitter {
       await new Promise(resolve => setTimeout(resolve, 5000))
       log.error(PRE, 'grpc server end.')
       this.isAlive = false
-      // process.exit(-1)
     })
-    stream.on('close', () => {
+    stream.on('close', async () => {
       log.error(PRE, 'grpc server close')
+      await new Promise(resolve => setTimeout(resolve, 5000))
       this.isAlive = false
+      Object.values(this.eventEmitterMap).map(emitter => {
+        emitter.emit('grpc-error')
+      })
     })
     stream.on('data', async (data: StreamResponse) => {
       const requestId = data.getRequestid()

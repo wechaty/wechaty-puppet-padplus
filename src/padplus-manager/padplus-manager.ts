@@ -46,7 +46,7 @@ import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
-import { briefRoomMemberParser } from '../pure-function-helpers/room-member-parser'
+import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
 import { isRoomId, isStrangerV1 } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 
@@ -66,7 +66,7 @@ export interface ManagerOptions {
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset'
+export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset'
 
 export class PadplusManager extends EventEmitter {
 
@@ -153,6 +153,7 @@ export class PadplusManager extends EventEmitter {
   public emit (event: 'status-notify', data: string): boolean
   public emit (event: 'ready'): boolean
   public emit (event: 'reset', reason: string): boolean
+  public emit (event: 'error', error: Error): boolean
   public emit (event: never, listener: never): never
 
   public emit (
@@ -169,6 +170,7 @@ export class PadplusManager extends EventEmitter {
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'ready', listener: ((this: PadplusManager) => void)): this
   public on (event: 'reset', listener: ((this: PadplusManager, reason: string) => void)): this
+  public on (event: 'error', listener: ((this: PadplusManager, error: Error) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -396,6 +398,7 @@ export class PadplusManager extends EventEmitter {
               alias: '',
               bigHeadUrl: loginData.headImgUrl,
               city: '',
+              contactFlag: 3,
               contactType: 0,
               country: '',
               labelLists: '',
@@ -408,6 +411,7 @@ export class PadplusManager extends EventEmitter {
               stranger: '',
               ticket: '',
               userName: loginData.userName,
+              verifyFlag: 0,
             }
             await this.cacheManager.setContact(contactSelf.userName, contactSelf)
 
@@ -436,6 +440,7 @@ export class PadplusManager extends EventEmitter {
                   alias: '',
                   bigHeadUrl: wechatUser.headImgUrl,
                   city: '',
+                  contactFlag: 3,
                   contactType: 0,
                   country: '',
                   labelLists: '',
@@ -448,6 +453,7 @@ export class PadplusManager extends EventEmitter {
                   stranger: '',
                   ticket: '',
                   userName: wechatUser.userName,
+                  verifyFlag: 0,
                 }
                 await this.cacheManager.setContact(contactSelf.userName, contactSelf)
 
@@ -478,6 +484,8 @@ export class PadplusManager extends EventEmitter {
             const _uin = grpcGatewayEmitter.getUIN()
             if (uin === _uin) {
               this.loginStatus = false
+              const errStr = `PADPLUS_ERROR ${logoutData.mqType} ${logoutData.message}`
+              this.emit('error', new Error(errStr))
               this.emit('logout')
             } else {
               const userName = grpcGatewayEmitter.getUserName()
@@ -497,6 +505,7 @@ export class PadplusManager extends EventEmitter {
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
               }
+
               CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
             } else {
               const roomData: GrpcRoomPayload = _data
@@ -553,7 +562,7 @@ export class PadplusManager extends EventEmitter {
               const roomId = roomMemberList.roomId
               const membersStr = roomMemberList.membersJson
               const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
-              const members = briefRoomMemberParser(membersList)
+              const members = roomMemberParser(membersList)
               await this.cacheManager.setRoomMember(roomId, members)
 
               await Promise.all(membersList.map(async member => {
@@ -561,11 +570,12 @@ export class PadplusManager extends EventEmitter {
                   throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
                 }
                 const contact = await this.cacheManager.getContact(member.UserName)
-                if (!contact || !contact.stranger) {
+                if (!contact || contact.stranger !== '3') {
                   const newContact: PadplusContactPayload = {
                     alias: '',
                     bigHeadUrl: member.HeadImgUrl,
                     city: '',
+                    contactFlag: 0,
                     contactType: 0,
                     country: '',
                     labelLists: '',
@@ -578,6 +588,7 @@ export class PadplusManager extends EventEmitter {
                     stranger: '',
                     ticket: '',
                     userName: member.UserName,
+                    verifyFlag: 0,
                   }
                   await this.cacheManager.setContact(newContact.userName, newContact)
                 }

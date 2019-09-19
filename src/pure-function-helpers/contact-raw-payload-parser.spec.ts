@@ -43,6 +43,7 @@ test('contactRawPayloadParser', async t => {
     alias              : '',
     bigHeadUrl         : 'http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/132',
     city               : 'Haidian',
+    contactFlag        : 3,
     contactType        : 1,
     country            : '',
     labelLists         : '',
@@ -55,12 +56,14 @@ test('contactRawPayloadParser', async t => {
     stranger           : 'v1_xxx',
     ticket             : '',
     userName           : 'lylezhuifeng',
+    verifyFlag         : 0,
   }
 
   const PADCHAT_CONTACT_PAYLOAD_OFFICIAL: PadplusContactPayload = {
     alias                : '',
     bigHeadUrl           : 'http://wx.qlogo.cn/mmhead/ver_1/icxUZE0qz1c1HubRfXHscMA1PialA7q3OEIWiaRtUjYmpj2EDFhTNGwlicUFe1NQR67gVGgjhILV1ZTsZ1qO3XTMehhH1k6icF1adbaibUMJXbMWk/132',
     city                 : 'Fengtai',
+    contactFlag          : 3,
     contactType          : 1,
     country              : '',
     labelLists           : '',
@@ -73,6 +76,7 @@ test('contactRawPayloadParser', async t => {
     stranger             : 'v1_xxx',
     ticket               : '',
     userName             : 'wxid_v7j3e9kna9l912',
+    verifyFlag           : 0,
   }
 
   const EXPECTED_CONTACT_PAYLOAD_PERSONAL: ContactPayload = {

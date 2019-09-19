@@ -6,7 +6,8 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     alias            : contactPayload.Alias,
     bigHeadUrl       : contactPayload.BigHeadImgUrl,
     city             : contactPayload.City,
-    contactType      : 1, // TOEO: contact type convert
+    contactFlag      : contactPayload.ContactFlag,
+    contactType      : Number(contactPayload.ContactType),
     country          : '', // TODO: need to CHECK
     labelLists       : contactPayload.LabelLists,
     nickName         : contactPayload.NickName,
@@ -18,6 +19,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     stranger         : isSync ? contactPayload.ContactFlag.toString() : contactPayload.EncryptUsername,
     ticket           : '', // TODO: need to check
     userName         : contactPayload.UserName,
+    verifyFlag       : contactPayload.VerifyFlag,
   }
   return payload
 }

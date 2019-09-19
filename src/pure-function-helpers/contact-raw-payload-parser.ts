@@ -47,13 +47,13 @@ export function contactRawPayloadParser (
   }
 
   let contactType = ContactType.Unknown
-  if (isContactOfficialId(rawPayload.userName)) {
+  if (isContactOfficialId(rawPayload.userName) || rawPayload.verifyFlag !== 0) {
     contactType = ContactType.Official
   } else {
     contactType = ContactType.Personal
   }
   let friend = false
-  if (rawPayload.stranger && rawPayload.stranger !== '0') {
+  if (rawPayload.stranger && rawPayload.stranger !== '0' && rawPayload.verifyFlag === 0) {
     friend = true
   }
 
