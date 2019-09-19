@@ -97,7 +97,7 @@ export class PadplusRoom {
       const announcementDataStr = res.getData()
       if (announcementDataStr) {
         const announcementData: GrpcSetAnnouncementData = JSON.parse(announcementDataStr)
-        if (announcementData.status !== 0) {
+        if (announcementData.status !== 0) { // status: -2025 '仅群主可编辑群公告。'
           throw new Error(`set announcement failed.`)
         }
       } else {

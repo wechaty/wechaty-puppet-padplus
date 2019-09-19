@@ -696,6 +696,13 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, 'messageRawPayloadParser()')
 
     const payload = await messageRawPayloadParser(rawPayload)
+
+    if (payload.mentionIdList && payload.mentionIdList.length === 1 && payload.mentionIdList[0] === 'announcement@all') {
+      const memberIds = await this.roomMemberList(payload.roomId!)
+      payload.mentionIdList = memberIds.filter(m => m !== payload.fromId)
+      payload.text = `@所有人\n${payload.text || ''}`
+    }
+
     return payload
   }
 
