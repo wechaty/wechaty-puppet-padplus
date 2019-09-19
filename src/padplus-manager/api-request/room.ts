@@ -85,11 +85,11 @@ export class PadplusRoom {
     log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 
     const data = {
-      wxid: roomId,
       announcement,
+      wxid: roomId,
     }
 
-    const res =await this.requestClient.request({
+    const res = await this.requestClient.request({
       apiType: ApiType.SET_ROOM_ANNOUNCEMENT,
       data,
     })
@@ -112,7 +112,7 @@ export class PadplusRoom {
     log.verbose(PRE, `setAnnouncement(${roomId})`)
 
     const data = {
-      wxid: roomId
+      wxid: roomId,
     }
 
     const res = await this.requestClient.request({
