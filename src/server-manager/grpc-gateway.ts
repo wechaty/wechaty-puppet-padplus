@@ -30,6 +30,8 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEARCH_CONTACT,
   ApiType.ADD_CONTACT,
   ApiType.CREATE_ROOM,
+  ApiType.GET_ROOM_ANNOUNCEMENT,
+  ApiType.SET_ROOM_ANNOUNCEMENT,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'grpc-error' | 'grpc-end' | 'grpc-close'

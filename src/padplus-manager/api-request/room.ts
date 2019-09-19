@@ -1,5 +1,5 @@
 import { log } from '../../config'
-import { RequestStatus, GrpcCreateRoomData } from '../../schemas'
+import { RequestStatus, GrpcCreateRoomData, GrpcGetAnnouncementData, GrpcSetAnnouncementData } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
@@ -81,18 +81,55 @@ export class PadplusRoom {
     })
   }
 
-  // 获取微信群列表
-  public setAnnouncement = async (loginId: string, roomId: string, announcement: string): Promise<RequestStatus> => {
-    log.verbose(PRE, `setAnnouncement(${loginId}, ${roomId},${announcement})`)
+  public setAnnouncement = async (roomId: string, announcement: string): Promise<void> => {
+    log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 
     const data = {
+      wxid: roomId,
+      announcement,
     }
 
-    await this.requestClient.request({
-      apiType: ApiType.ROOM_OPERATION,
+    const res =await this.requestClient.request({
+      apiType: ApiType.SET_ROOM_ANNOUNCEMENT,
       data,
     })
-    return RequestStatus.Success
+    if (res) {
+      const announcementDataStr = res.getData()
+      if (announcementDataStr) {
+        const announcementData: GrpcSetAnnouncementData = JSON.parse(announcementDataStr)
+        if (announcementData.status !== 0) {
+          throw new Error(`set announcement failed.`)
+        }
+      } else {
+        throw new Error(`can not parse announcement data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get announcement response from grpc server`)
+    }
+  }
+
+  public getAnnouncement = async (roomId: string): Promise<string> => {
+    log.verbose(PRE, `setAnnouncement(${roomId})`)
+
+    const data = {
+      wxid: roomId
+    }
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.GET_ROOM_ANNOUNCEMENT,
+      data,
+    })
+    if (res) {
+      const announcementDataStr = res.getData()
+      if (announcementDataStr) {
+        const announcementData: GrpcGetAnnouncementData = JSON.parse(announcementDataStr)
+        return announcementData.announcement
+      } else {
+        throw new Error(`can not parse announcement data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get announcement response from grpc server`)
+    }
   }
 
   public addMember = async (roomId: string, memberId: string): Promise<RequestStatus> => {

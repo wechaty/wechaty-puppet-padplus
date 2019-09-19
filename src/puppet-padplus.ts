@@ -993,8 +993,7 @@ export class PuppetPadplus extends Puppet {
     if (text) {
       await this.manager.setAnnouncement(roomId, text)
     } else {
-      log.warn(`get room announcement is not supported by wechaty-puppet-padplus.`)
-      return ''
+      return this.manager.getAnnouncement(roomId)
     }
   }
 

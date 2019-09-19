@@ -528,9 +528,6 @@ export class PadplusManager extends EventEmitter {
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
-            log.silly(`==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==`)
-            log.silly(JSON.stringify(message))
-            log.silly(`==P==A==D==P==L==U==S==<TEST LOG -> NEED TO BE REMOVED>==P==A==D==P==L==U==S==`)
             this.emit('message', message)
           }
           break
@@ -943,14 +940,19 @@ export class PadplusManager extends EventEmitter {
     roomId: string,
     announcement: string,
   ) {
-    if (!this.grpcGatewayEmitter) {
-      throw new Error(`no grpcGatewayEmitter.`)
-    }
-    const uin = this.grpcGatewayEmitter.getUIN()
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
-    await this.padplusRoom.setAnnouncement(uin, roomId, announcement)
+    await this.padplusRoom.setAnnouncement(roomId, announcement)
+  }
+
+  public async getAnnouncement (
+    roomId: string,
+  ): Promise<string> {
+    if (!this.padplusRoom) {
+      throw new Error(`no padplus Room.`)
+    }
+    return this.padplusRoom.getAnnouncement(roomId)
   }
 
   public async roomAddMember (

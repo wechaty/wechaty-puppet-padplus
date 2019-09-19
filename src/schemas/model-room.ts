@@ -103,3 +103,17 @@ export interface GrpcCreateRoomMember {
   wxid: string,
   status: number,
 }
+
+export interface GrpcGetAnnouncementData {
+  annoumcementPublisher: string,
+  annoumcementPublishTime: number,
+  message: string,
+  status: number,
+  announcement: string,
+}
+
+export interface GrpcSetAnnouncementData {
+  message: string,
+  content: string,
+  status: number,
+}
