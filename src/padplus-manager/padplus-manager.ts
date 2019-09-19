@@ -47,7 +47,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId, isStrangerV1 } from '../pure-function-helpers'
+import { isRoomId, isStrangerV1, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
@@ -240,9 +240,7 @@ export class PadplusManager extends EventEmitter {
       this.grpcGatewayEmitter.removeAllListeners()
     }
 
-    if (GrpcGateway.Instance) {
-      await GrpcGateway.Instance.stop()
-    }
+    await GrpcGateway.release()
     await CacheManager.release()
     this.cacheManager = undefined
     this.loginStatus = false
@@ -531,7 +529,10 @@ export class PadplusManager extends EventEmitter {
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
                 const roomMembers = briefRoomMemberParser(roomPayload.members)
-                await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
+                const _roomMembers = await this.cacheManager.getRoomMember(roomPayload.chatroomId)
+                if (!_roomMembers) {
+                  await this.cacheManager.setRoomMember(roomPayload.chatroomId, roomMembers)
+                }
                 await this.cacheManager.setRoom(roomPayload.chatroomId, roomPayload)
               } else {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
@@ -547,7 +548,14 @@ export class PadplusManager extends EventEmitter {
             log.silly(PRE, `delete contact data : ${util.inspect(contactData)}`)
             const deleteUserName = contactData.field
             if (this.cacheManager) {
-              await this.cacheManager.deleteContact(deleteUserName)
+              if (isRoomId(deleteUserName)) {
+                await this.cacheManager.deleteRoomMember(deleteUserName)
+                await this.cacheManager.deleteRoom(deleteUserName)
+              } else if (isContactId(deleteUserName)) {
+                await this.cacheManager.deleteContact(deleteUserName)
+              } else {
+                throw new Error(`the filed is not right.`)
+              }
             }
           }
           break
@@ -610,7 +618,29 @@ export class PadplusManager extends EventEmitter {
                     verifyFlag: 0,
                   }
                   await this.cacheManager.setContact(newContact.userName, newContact)
+                } else {
+                  const newContact: PadplusContactPayload = {
+                    alias: contact.alias,
+                    bigHeadUrl: member.HeadImgUrl,
+                    city: contact.city,
+                    contactFlag: 0,
+                    contactType: 0,
+                    country: contact.country,
+                    labelLists: contact.labelLists,
+                    nickName: member.NickName,
+                    province: contact.province,
+                    remark: member.DisplayName,
+                    sex: ContactGender.Unknown,
+                    signature: contact.signature,
+                    smallHeadUrl: member.HeadImgUrl,
+                    stranger: contact.stranger,
+                    ticket: contact.ticket,
+                    userName: member.UserName,
+                    verifyFlag: 0,
+                  }
+                  await this.cacheManager.setContact(newContact.userName, newContact)
                 }
+                CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
               }))
             } else {
               throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
@@ -918,16 +948,6 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplusContact`)
     }
     await this.padplusContact.getContactInfo(roomId)
-    // retry
-    // const retryCount = 10
-    // const interval = 500
-    // for (let i = 0; i < retryCount; i++) {
-    //   const room = await this.cacheManager.getRoom(roomId)
-    //   if (room) {
-    //     return room
-    //   }
-    //   await new Promise(resolve => setTimeout(resolve, interval))
-    // }
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('get room timeout')), 5000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
@@ -954,6 +974,17 @@ export class PadplusManager extends EventEmitter {
         throw new Error(`no padplus Room.`)
       }
       await this.padplusRoom.getRoomMembers(uin, roomId)
+
+      const memberMap = await new Promise<{ [contactId: string]: PadplusRoomMemberPayload }>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('get room member failed since timeout'))
+        }, 5000)
+        CallbackPool.Instance.pushRoomMemberCallback(roomId, (data: { [contactId: string]: PadplusRoomMemberPayload }) => {
+          clearTimeout(timeout)
+          resolve(data)
+        })
+      })
+      return memberMap
     }
     return memberMap
   }

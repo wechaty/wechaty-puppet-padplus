@@ -66,6 +66,13 @@ export class GrpcGateway extends EventEmitter {
     return this._instance.addNewInstance(name)
   }
 
+  public static async release () {
+    if (this._instance) {
+      await this._instance.stop()
+      this._instance = undefined
+    }
+  }
+
   private client: PadPlusServerClient
   private isAlive: boolean
   private stream?: grpc.ClientReadableStream<StreamResponse>
@@ -214,7 +221,25 @@ export class GrpcGateway extends EventEmitter {
       this.stream.destroy()
       this.stream.removeAllListeners()
     }
-    this.client.close()
+    const channel = this.client.getChannel()
+
+    let state = -1
+    try{
+      state = channel.getConnectivityState(false)
+    } catch (e) {
+      state = grpc.connectivityState.SHUTDOWN
+    }
+    if (state !== grpc.connectivityState.SHUTDOWN) {
+      await new Promise(resolve => {
+        channel.watchConnectivityState(state, Date.now() + 5000, (err) => {
+          if (err) {
+            log.error('Can not correctly close the channel.')
+          }
+          resolve()
+        })
+        channel.close()
+      })
+    }
   }
 
   public async initGrpcGateway () {

@@ -133,7 +133,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('logout', this.selfId())
     this.id = undefined
     await this.manager.logout()
-    // this.emit('reset', 'padplus reset')
+    this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {
@@ -757,13 +757,15 @@ export class PuppetPadplus extends Puppet {
         return [] as string[]
       })
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, 500)
-      })
-      const inviterIdList = await this.roomMemberSearch(roomId, inviterName)
+      let inviterIdList = await this.roomMemberSearch(roomId, inviterName)
 
       if (inviterIdList.length < 1) {
-        throw new Error('no inviterId found')
+        await this.roomMemberPayloadDirty(roomId)
+        await this.manager.getRoomMembers(roomId)
+        inviterIdList = await this.roomMemberSearch(roomId, inviterName)
+        if (inviterIdList.length < 1) {
+          throw new Error(`can not get room member`)
+        }
       } else if (inviterIdList.length > 1) {
         log.verbose(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
       }
