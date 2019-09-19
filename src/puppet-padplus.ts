@@ -353,11 +353,11 @@ export class PuppetPadplus extends Puppet {
     if (!payload || payload.type !== FriendshipType.Receive) {
       throw new Error(`friendship type error.`)
     }
-    const { stranger, ticket } = payload as FriendshipPayloadReceive
+    const { contactId, stranger, ticket } = payload as FriendshipPayloadReceive
     if (!stranger || !ticket) {
       throw new Error(`friendship data error, stranger or ticket is null.`)
     }
-    await this.manager.confirmFriendship(stranger, ticket)
+    await this.manager.confirmFriendship(contactId, stranger, ticket)
   }
 
   protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {

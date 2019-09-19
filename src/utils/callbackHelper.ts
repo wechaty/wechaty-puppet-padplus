@@ -26,6 +26,10 @@ export class CallbackPool {
     [roomId: string]: { [topic: string]: () => void },
   } = {}
 
+  private acceptFriendMap: {
+    [contactId: string]: Array<() => void>
+  } = {}
+
   public pushCallbackToPool (requestId: string, callback: (data: StreamResponse) => void) {
     this.poolMap[requestId] = callback
   }
@@ -53,6 +57,7 @@ export class CallbackPool {
     callbacks.map(callback => callback(data))
 
     this.resolveContactAliasCallback(contactId, data.remark)
+    this.resolveAcceptFriendCallback(contactId)
     delete this.contactRequestMap[contactId]
   }
 
@@ -91,6 +96,21 @@ export class CallbackPool {
     if (callback) {
       callback()
       delete this.roomTopicMap[roomId][topic]
+    }
+  }
+
+  public pushAcceptFriendCallback (contactId: string, callback: () => void) {
+    if (!this.acceptFriendMap[contactId]) {
+      this.acceptFriendMap[contactId] = []
+    }
+    this.acceptFriendMap[contactId].push(callback)
+  }
+
+  private resolveAcceptFriendCallback (contactId: string) {
+    const callbacks = this.acceptFriendMap[contactId]
+    if (callbacks) {
+      callbacks.map(cb => cb())
+      delete this.acceptFriendMap[contactId]
     }
   }
 
