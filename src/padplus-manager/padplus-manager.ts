@@ -1032,7 +1032,9 @@ export class PadplusManager extends EventEmitter {
     const friendship = await this.cacheManager.getFriendshipRawPayload(friendshipId)
     return friendship
   }
+
   public async confirmFriendship (
+    contactId: string,
     encryptUserName: string,
     ticket: string,
   ) {
@@ -1040,6 +1042,15 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplusFriendship`)
     }
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('accept friend request timeout.'))
+      }, 5000)
+      CallbackPool.Instance.pushAcceptFriendCallback(contactId, () => {
+        clearTimeout(timeout)
+        resolve()
+      })
+    })
   }
 
   public async saveFriendship (
