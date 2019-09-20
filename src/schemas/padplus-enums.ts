@@ -238,6 +238,7 @@ export enum PadplusErrorType {
   LOGIN = 'LOGIN',
   NO_ID = 'NO_ID',
   NO_CACHE = 'NO_CACHE',
+  EXIT = 'EXIT'
 }
 
 export enum PadplusAutoLoginErrorType {

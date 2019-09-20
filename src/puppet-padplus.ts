@@ -30,7 +30,7 @@ import {
 }                                   from './config'
 
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusError, PadplusErrorType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -604,10 +604,6 @@ export class PuppetPadplus extends Puppet {
       ? file.mimeType
       : path.extname(file.name)
 
-    if (!this.id) {
-      throw new PadplusError(PadplusErrorType.NO_ID, 'messageSendFile()')
-    }
-
     log.silly(PRE, `fileType ${type}`)
     switch (type) {
       case '.slk':
@@ -617,20 +613,20 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.id, contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
         }
         break
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'video')
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
         }
         break
       default:
-        const docData = await this.manager.sendFile(this.id, contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
+        const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
         }
@@ -709,7 +705,7 @@ export class PuppetPadplus extends Puppet {
     if (payload.mentionIdList && payload.mentionIdList.length === 1 && payload.mentionIdList[0] === 'announcement@all') {
       const memberIds = await this.roomMemberList(payload.roomId!)
       payload.mentionIdList = memberIds.filter(m => m !== payload.fromId)
-      payload.text = `@所有人\n${payload.text || ''}`
+      payload.text = `${payload.text || ''}`
     }
 
     return payload

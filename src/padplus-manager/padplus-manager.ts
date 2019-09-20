@@ -321,6 +321,10 @@ export class PadplusManager extends EventEmitter {
       this.resetThrottleQueue.next('reconnect')
     })
 
+    grpcGatewayEmitter.on('grpc-end', async () => {
+      this.emit('reset', 'grpc server end.')
+    })
+
     grpcGatewayEmitter.on('data', async (data: StreamResponse) => {
       const type = data.getResponsetype()
       switch (type) {
@@ -501,9 +505,10 @@ export class PadplusManager extends EventEmitter {
             const _uin = grpcGatewayEmitter.getUIN()
             if (uin === _uin) {
               this.loginStatus = false
-              const errStr = `PADPLUS_ERROR ${logoutData.mqType} ${logoutData.message}`
-              this.emit('error', new Error(errStr))
-              this.emit('logout')
+              if (logoutData.mqType === 1100) {
+                this.emit('error', new PadplusError(PadplusErrorType.EXIT, logoutData.message))
+                this.emit('logout')
+              }
             } else {
               const userName = grpcGatewayEmitter.getUserName()
               throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)

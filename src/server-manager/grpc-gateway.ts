@@ -182,11 +182,12 @@ export class GrpcGateway extends EventEmitter {
         }
       }
     } catch (err) {
-      if (err.code === 14) {
-        this.client.close()
-      } else {
-        log.error(PRE, util.inspect(err))
-      }
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      this.isAlive = false
+      this.client.close()
+      Object.values(this.eventEmitterMap).map(emitter => {
+        emitter.emit('grpc-error')
+      })
       if (err.details === 'INVALID_TOKEN') {
         padplusToken()
       }
@@ -221,6 +222,7 @@ export class GrpcGateway extends EventEmitter {
       this.stream.destroy()
       this.stream.removeAllListeners()
     }
+    this.client.close()
     const channel = this.client.getChannel()
 
     let state = -1
@@ -229,6 +231,7 @@ export class GrpcGateway extends EventEmitter {
     } catch (e) {
       state = grpc.connectivityState.SHUTDOWN
     }
+    log.silly(PRE, `state is : ${util.inspect(state)}`)
     if (state !== grpc.connectivityState.SHUTDOWN) {
       await new Promise(resolve => {
         channel.watchConnectivityState(state, Date.now() + 5000, (err) => {
@@ -252,11 +255,13 @@ export class GrpcGateway extends EventEmitter {
       await new Promise((resolve, reject) => {
         channel.getConnectivityState(true)
         const beforeState = channel.getConnectivityState(false)
-        channel.watchConnectivityState(beforeState, Date.now() + 5000, (err) => {
+        log.silly(PRE, `beforeState is : ${util.inspect(beforeState)}`)
+        channel.watchConnectivityState(beforeState, Date.now() + 500, (err) => {
           if (err) {
             reject(new Error('Try to connect to server timeout.'))
           } else {
             const state = channel.getConnectivityState(false)
+            log.silly(PRE, `init state is : ${util.inspect(state)}`)
             if (state !== grpc.connectivityState.READY) {
               reject(new Error(`Failed to connect to server, state changed to ${state}`))
             } else {
@@ -272,7 +277,13 @@ export class GrpcGateway extends EventEmitter {
     const stream = this.client.init(initConfig)
 
     stream.on('error', async (err: any) => {
+      log.error(PRE, `GRPC server error.
+      =====================================================================
+      try to reconnect grpc server, waiting...
+      =====================================================================
+      `)
       if (err.code === 14 || err.code === 13) {
+        await new Promise(resolve => setTimeout(resolve, 5000))
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {
           emitter.emit('grpc-error')
@@ -282,10 +293,15 @@ export class GrpcGateway extends EventEmitter {
       }
     })
     stream.on('end', async () => {
-      log.error(PRE, 'grpc server end.')
+      log.error(PRE, `GRPC server end.
+      =====================================================================
+      try to reconnect grpc server, waiting...
+      =====================================================================
+      `)
+      await new Promise(resolve => setTimeout(resolve, 5000))
       this.isAlive = false
       Object.values(this.eventEmitterMap).map(emitter => {
-        emitter.emit('grpc-error')
+        emitter.emit('grpc-end')
       })
     })
     stream.on('close', async () => {
@@ -325,14 +341,15 @@ export class GrpcGateway extends EventEmitter {
         } else {
           const uin = data.getUin()
           try {
-            const userName = JSON.parse(data.getData()!).userName
+            const user = JSON.parse(data.getData()!)
+            const userName = user.userName
             const emitter = Object.values(this.eventEmitterMap).find(em => em.getUIN() === uin || em.getQrcodeId() === userName)
             if (!emitter) {
               return
             }
             emitter.emit('data', data)
           } catch (error) {
-            throw new Error(error)
+            throw new Error(`can not parse json data from grpc server.`)
           }
         }
 
