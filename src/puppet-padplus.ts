@@ -121,6 +121,7 @@ export class PuppetPadplus extends Puppet {
     this.state.off('pending')
 
     await this.manager.stop()
+    await this.manager.removeAllListeners()
 
     this.state.off(true)
     log.verbose(PRE, `stop() finished`)
@@ -133,7 +134,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('logout', this.selfId())
     this.id = undefined
     await this.manager.logout()
-    // this.emit('reset', 'padplus reset')
+    this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {

@@ -156,6 +156,7 @@ export enum ApiType {
     LOGOUT = 2,
     INIT = 3,
     STOP = 4,
+    CLOSE = 5,
     GET_CONTACT = 10,
     SEARCH_CONTACT = 11,
     ADD_CONTACT = 12,

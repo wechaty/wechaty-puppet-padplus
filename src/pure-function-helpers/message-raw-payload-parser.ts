@@ -19,6 +19,7 @@ import { recalledPayloadParser } from './message-recalled-payload-parser'
 import { messageSourceParser } from './message-source-parser'
 import { messageType } from './message-type'
 import { log } from '../config'
+// import { xmlToJson } from './xml-to-json'
 
 const PRE = 'messageRawPayloadParser'
 
@@ -188,24 +189,12 @@ export async function messageRawPayloadParser (
   /**
    * 6. Set Contact for ShareCard
    */
-  // if (type === MessageType.Contact) {
-  //   interface XmlSchema {
-  //     msg: {
-  //       username: string,
-  //       bigheadimgurl: string,
-  //       nickname: string,
-  //       province: string,
-  //       city: string,
-  //       sign: string,
-  //       sex: number,
-  //       antispamticket: string,
-  //     },
-  //     t: PadchatContactPayload,
-  //   }
-  //   const jsonPayload = JSON.parse(toJson(text)) as XmlSchema
-
-  //   console.log('jsonPayload:', jsonPayload)
-  // }
+  /* if (type === MessageType.Contact) {
+    const xml = await xmlToJson(rawPayload.content.split('\n')[1])
+    log.silly(PRE, `xml : ${JSON.stringify(xml)}`)
+    const shareCardData = xml.msg.$
+    text = JSON.stringify(shareCardData)
+  } */
 
   let payload: MessagePayload
 

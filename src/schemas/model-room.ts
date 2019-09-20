@@ -117,3 +117,7 @@ export interface GrpcSetAnnouncementData {
   content: string,
   status: number,
 }
+
+export interface PadplusRoomMemberMap {
+  [contactId: string]: PadplusRoomMemberPayload
+}
