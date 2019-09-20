@@ -1,4 +1,4 @@
-import { PadplusErrorType } from ".."
+import { PadplusErrorType } from '..'
 
 export class PadplusError extends Error {
 
