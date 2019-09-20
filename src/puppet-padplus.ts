@@ -420,7 +420,11 @@ export class PuppetPadplus extends Puppet {
           throw new Error(`can not get the media data`)
         }
       case MessageType.Emoticon:
-        throw new Error(`not supported.`)
+        if (rawPayload && rawPayload.url) {
+          return FileBox.fromUrl(rawPayload.url)
+        } else {
+          throw new Error(`can not get image/audio url fot message id: ${messageId}`)
+        }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
           return FileBox.fromUrl(rawPayload.url)

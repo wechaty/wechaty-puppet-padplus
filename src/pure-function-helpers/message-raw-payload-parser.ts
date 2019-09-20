@@ -43,6 +43,7 @@ export async function messageRawPayloadParser (
     timestamp : number,
     type      : MessageType,
     filename? : string,
+    url?      : string,
   }
 
   if (type === MessageType.Image
@@ -51,6 +52,10 @@ export async function messageRawPayloadParser (
       || type === MessageType.Attachment
   ) {
     payloadBase.filename = messageFileName(rawPayload) || undefined
+  }
+
+  if (type === MessageType.Emoticon) {
+    payloadBase.url = rawPayload.url
   }
 
   let fromId: undefined | string
