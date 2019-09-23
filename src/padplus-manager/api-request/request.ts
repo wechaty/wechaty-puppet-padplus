@@ -31,14 +31,14 @@ export class RequestClient {
 
   public async uploadFile (filename: string, stream: NodeJS.ReadableStream) {
     filename = decodeURIComponent(filename)
-    let option: AWS.S3.PutObjectRequest = {
+    let params: AWS.S3.PutObjectRequest = {
       ACL: 'public-read',
       Body: stream,
       Bucket: AWS_S3.BUCKET,
       Key: AWS_S3.PATH + filename,
     }
     // TODO: 增加分块上传机制
-    /* let parts = {
+    /* let options = {
       partSize: 10 * 1024 * 1024,
       queueSize: 1,
     } */
@@ -47,7 +47,7 @@ export class RequestClient {
 
     const s3 = new AWS.S3({ region: 'cn-northwest-1', signatureVersion: 'v4' })
     const result = await new Promise<AWS.S3.ManagedUpload.SendData>((resolve, reject) => {
-      s3.upload(option, (err, data) => {
+      s3.upload(params, (err, data) => {
         if (err) {
           reject(err)
         } else {
@@ -57,7 +57,7 @@ export class RequestClient {
       })
     })
     const location = result.Location
-    const _location = location.split('image-message')[0] + option.Key
+    const _location = location.split('image-message')[0] + params.Key
     return _location
   }
 

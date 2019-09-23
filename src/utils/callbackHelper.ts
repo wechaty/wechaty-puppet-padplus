@@ -1,5 +1,5 @@
 import { StreamResponse } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusContactPayload, PadplusRoomPayload, PadplusRoomMemberPayload } from '../schemas'
+import { PadplusContactPayload, PadplusRoomPayload, PadplusRoomMemberMap } from '../schemas'
 
 export class CallbackPool {
 
@@ -31,7 +31,7 @@ export class CallbackPool {
   } = {}
 
   private roomMemberMap: {
-    [roomId: string]: Array<(memberList: { [contactId: string]: PadplusRoomMemberPayload }) => void>
+    [roomId: string]: Array<(memberList: PadplusRoomMemberMap) => void>
   } = {}
 
   public pushCallbackToPool (requestId: string, callback: (data: StreamResponse) => void) {
@@ -118,14 +118,14 @@ export class CallbackPool {
     }
   }
 
-  public pushRoomMemberCallback (roomId: string, callback: (memberList: { [contactId: string]: PadplusRoomMemberPayload }) => void) {
+  public pushRoomMemberCallback (roomId: string, callback: (memberList: PadplusRoomMemberMap) => void) {
     if (!this.roomMemberMap[roomId]) {
       this.roomMemberMap[roomId] = []
     }
     this.roomMemberMap[roomId].push(callback)
   }
 
-  public resolveRoomMemberCallback (roomId: string, memberList: { [contactId: string]: PadplusRoomMemberPayload }) {
+  public resolveRoomMemberCallback (roomId: string, memberList: PadplusRoomMemberMap) {
     const callbacks = this.roomMemberMap[roomId] && this.roomMemberMap[roomId]
     if (callbacks) {
       callbacks.map(cb => cb(memberList))

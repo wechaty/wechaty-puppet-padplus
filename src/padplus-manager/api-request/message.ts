@@ -129,7 +129,6 @@ export class PadplusMessage {
         type: 5,
         url,
       }
-      // TODO: waiting for new API for send video
       data = {
         content: JSON.stringify(content),
         fileName,

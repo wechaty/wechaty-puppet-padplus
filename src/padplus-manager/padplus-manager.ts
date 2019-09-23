@@ -37,6 +37,7 @@ import {
   GrpcSearchContact,
   GrpcDeleteContact,
   GrpcLogout,
+  PadplusRoomMemberMap,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
@@ -317,8 +318,12 @@ export class PadplusManager extends EventEmitter {
 
   public async initGrpcGatewayListener (grpcGatewayEmitter: GrpcEventEmitter) {
 
-    grpcGatewayEmitter.on('grpc-error', async () => {
+    grpcGatewayEmitter.on('reconnect', async () => {
       this.resetThrottleQueue.next('reconnect')
+    })
+
+    grpcGatewayEmitter.on('grpc-end', async () => {
+      this.emit('reset', 'grpc server end.')
     })
 
     grpcGatewayEmitter.on('data', async (data: StreamResponse) => {
@@ -501,9 +506,11 @@ export class PadplusManager extends EventEmitter {
             const _uin = grpcGatewayEmitter.getUIN()
             if (uin === _uin) {
               this.loginStatus = false
-              const errStr = `PADPLUS_ERROR ${logoutData.mqType} ${logoutData.message}`
-              this.emit('error', new Error(errStr))
-              this.emit('logout')
+              if (logoutData.mqType === 1100) {
+                this.emit('error', new PadplusError(PadplusErrorType.EXIT, logoutData.message))
+                await new Promise((resolve) => setTimeout(resolve, 10 * 1000))
+                this.emit('logout')
+              }
             } else {
               const userName = grpcGatewayEmitter.getUserName()
               throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)
@@ -975,11 +982,11 @@ export class PadplusManager extends EventEmitter {
       }
       await this.padplusRoom.getRoomMembers(uin, roomId)
 
-      const memberMap = await new Promise<{ [contactId: string]: PadplusRoomMemberPayload }>((resolve, reject) => {
+      const memberMap = await new Promise<PadplusRoomMemberMap>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error('get room member failed since timeout'))
         }, 5000)
-        CallbackPool.Instance.pushRoomMemberCallback(roomId, (data: { [contactId: string]: PadplusRoomMemberPayload }) => {
+        CallbackPool.Instance.pushRoomMemberCallback(roomId, (data: PadplusRoomMemberMap) => {
           clearTimeout(timeout)
           resolve(data)
         })

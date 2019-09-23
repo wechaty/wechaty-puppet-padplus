@@ -1,4 +1,4 @@
-import { PadplusErrorType } from './padplus-enums'
+import { PadplusErrorType } from '..'
 
 export class PadplusError extends Error {
 
@@ -14,7 +14,7 @@ export class PadplusError extends Error {
   }
 
   public toString (): string {
-    return `PADPLUS_ERROR ${this.toString()}`
+    return `PADPLUS_ERROR ${this.type} ${this.message}`
   }
 
 }
