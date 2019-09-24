@@ -152,7 +152,7 @@ export class GrpcGateway extends EventEmitter {
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
         if (apiType === ApiType.GET_MESSAGE_MEDIA) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
+            const timeout = setTimeout(() => reject(new Error('GET_MESSAGE_MEDIA request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
@@ -160,7 +160,7 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.SEARCH_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
+            const timeout = setTimeout(() => reject(new Error('SEARCH_CONTACT request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
@@ -168,7 +168,7 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.ADD_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('request timeout')), 5000)
+            const timeout = setTimeout(() => reject(new Error('ADD_CONTACT request timeout')), 5000)
             CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
@@ -177,7 +177,7 @@ export class GrpcGateway extends EventEmitter {
         } else {
           return new Promise<StreamResponse>((resolve, reject) => {
             const timeoutMs = apiType === ApiType.SEND_FILE ? 30 * 1000 : 5 * 1000
-            const timeout = setTimeout(() => reject(new Error('request timeout')), timeoutMs)
+            const timeout = setTimeout(() => reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`)), timeoutMs)
             CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
               clearTimeout(timeout)
               resolve(data)
