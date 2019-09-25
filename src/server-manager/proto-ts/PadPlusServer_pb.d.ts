@@ -157,6 +157,7 @@ export enum ApiType {
     INIT = 3,
     STOP = 4,
     CLOSE = 5,
+    HEARTBEAT = 6,
     GET_CONTACT = 10,
     SEARCH_CONTACT = 11,
     ADD_CONTACT = 12,
@@ -181,6 +182,7 @@ export enum ApiType {
 export enum ResponseType {
     REQUEST_RESPONSE = 0,
     DISCONNECT = 1,
+    INVALID_TOKEN = 2,
     LOGIN_QRCODE = 10,
     QRCODE_SCAN = 11,
     ACCOUNT_LOGIN = 12,

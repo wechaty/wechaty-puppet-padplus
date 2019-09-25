@@ -3,7 +3,7 @@ import {
   DelayQueueExecutor, ThrottleQueue,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
@@ -67,7 +67,7 @@ export interface ManagerOptions {
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset'
+export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset' | 'heartbeat' | 'EXPIRED_TOKEN' | 'INVALID_TOKEN'
 
 export class PadplusManager extends EventEmitter {
 
@@ -153,6 +153,7 @@ export class PadplusManager extends EventEmitter {
   public emit (event: 'status-notify', data: string): boolean
   public emit (event: 'ready'): boolean
   public emit (event: 'reset', reason: string): boolean
+  public emit (event: 'heartbeat', data: string): boolean
   public emit (event: 'error', error: Error): boolean
   public emit (event: never, listener: never): never
 
@@ -170,6 +171,7 @@ export class PadplusManager extends EventEmitter {
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'ready', listener: ((this: PadplusManager) => void)): this
   public on (event: 'reset', listener: ((this: PadplusManager, reason: string) => void)): this
+  public on (event: 'heartbeat', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'error', listener: ((this: PadplusManager, error: Error) => void)): this
   public on (event: never, listener: never): never
 
@@ -234,7 +236,7 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async stop (): Promise<void> {
-    log.info(PRE, `stop()`)
+    log.verbose(PRE, `stop()`)
     this.state.off('pending')
 
     if (this.grpcGatewayEmitter) {
@@ -247,11 +249,11 @@ export class PadplusManager extends EventEmitter {
     this.loginStatus = false
 
     this.state.off(true)
-    log.info(PRE, `stop() finished`)
+    log.verbose(PRE, `stop() finished`)
   }
 
   public async logout (): Promise<void> {
-    log.info(PRE, `logout()`)
+    log.verbose(PRE, `logout()`)
     this.state.off('pending')
 
     if (this.grpcGatewayEmitter) {
@@ -266,7 +268,7 @@ export class PadplusManager extends EventEmitter {
     this.loginStatus = false
 
     this.state.off(true)
-    log.info(PRE, `logout() finished`)
+    log.verbose(PRE, `logout() finished`)
   }
 
   public setMemory (memory: MemoryCard) {
@@ -292,7 +294,7 @@ export class PadplusManager extends EventEmitter {
        && this.contactAndRoomData.friendTotal  === friendTotal) {
         if (now - this.contactAndRoomData.updatedTime > WAIT_FOR_READY_TIME
           && !this.contactAndRoomData.readyEmitted) {
-          log.info(PRE, `setContactAndRoomData() more than ${WAIT_FOR_READY_TIME / 1000 / 60} minutes no change on data, emit ready event.`)
+          log.verbose(PRE, `setContactAndRoomData() more than ${WAIT_FOR_READY_TIME / 1000 / 60} minutes no change on data, emit ready event.`)
           this.contactAndRoomData.readyEmitted = true
           this.emit('ready')
         }
@@ -324,6 +326,20 @@ export class PadplusManager extends EventEmitter {
 
     grpcGatewayEmitter.on('grpc-end', async () => {
       this.emit('reset', 'grpc server end.')
+    })
+
+    grpcGatewayEmitter.on('heartbeat', async (data: any) => {
+      this.emit('heartbeat', data)
+    })
+
+    grpcGatewayEmitter.on('EXPIRED_TOKEN', async () => {
+      log.info(EXPIRED_TOKEN_MESSAGE)
+      setTimeout(() => process.exit(), 5000)
+    })
+
+    grpcGatewayEmitter.on('INVALID_TOKEN', async () => {
+      log.info(INVALID_TOKEN_MESSAGE)
+      setTimeout(() => process.exit(), 5000)
     })
 
     grpcGatewayEmitter.on('data', async (data: StreamResponse) => {

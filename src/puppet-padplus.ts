@@ -97,6 +97,12 @@ export class PuppetPadplus extends Puppet {
       this.emit('reset', reason)
     })
 
+    manager.on('heartbeat', (data: string) => {
+      this.emit('watchdog', {
+        data,
+      })
+    })
+
     manager.on('logout', () => this.logout())
 
     manager.on('error', (err: Error) => {
