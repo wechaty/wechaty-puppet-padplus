@@ -270,21 +270,25 @@ export class GrpcGateway extends EventEmitter {
 
   private async _request (request: RequestObject): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      this.client.request(
-        request,
-        (err: Error | null, response: ResponseObject) => {
-          if (err !== null) {
-            reject(err)
-          } else {
-            const flag = response.getResult()
-            if (flag) {
-              resolve(true)
-            } else {
+      try {
+        this.client.request(
+          request,
+          (err: Error | null, response: ResponseObject) => {
+            if (err !== null) {
               reject(err)
+            } else {
+              const flag = response.getResult()
+              if (flag) {
+                resolve(true)
+              } else {
+                reject(err)
+              }
             }
           }
-        }
-      )
+        )
+      } catch (error) {
+        throw new Error(`can not get response data`)
+      }
     })
   }
 
@@ -296,7 +300,11 @@ export class GrpcGateway extends EventEmitter {
     }
 
     this.stopping = true
-    await this.request(ApiType.CLOSE, '')
+    try {
+      await this.request(ApiType.CLOSE, '')
+    } catch (error) {
+      log.error(PRE, `error : ${util.inspect(error)}`)
+    }
   }
 
   public async initGrpcGateway () {
@@ -345,7 +353,6 @@ export class GrpcGateway extends EventEmitter {
       }
     })
     stream.on('end', async () => {
-      // TODO: 如果提示已经连接了，该如何操作，若不重连（虽然重连也无法解决）
       if (this.reconnectStatus) {
         log.error(PRE, `GRPC SERVER END.
         =====================================================================

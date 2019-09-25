@@ -8,7 +8,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     city             : contactPayload.City,
     contactFlag      : contactPayload.ContactFlag,
     contactType      : Number(contactPayload.ContactType),
-    country          : '', // TODO: need to CHECK
+    country          : '',
     labelLists       : contactPayload.LabelLists,
     nickName         : contactPayload.NickName,
     province         : contactPayload.Province,

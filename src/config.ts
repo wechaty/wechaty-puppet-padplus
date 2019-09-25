@@ -78,7 +78,6 @@ export const AWS_S3 = {
   SECRET_ACCESS_KEY: 'jw7Deo+W8l4FTOL2BXd/VubTJjt1mhm55sRhnsEn',
 }
 
-// TODO: maybe could change <retry> module to <axios-retry> module
 export async function retry<T> (
   retryableFn: (
     retry: (error: Error) => never,
