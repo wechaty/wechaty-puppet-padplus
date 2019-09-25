@@ -287,7 +287,7 @@ export class GrpcGateway extends EventEmitter {
           }
         )
       } catch (error) {
-        throw new Error(`can not get response data`)
+        throw new Error(`can not get response data of grpc request`)
       }
     })
   }
