@@ -427,9 +427,13 @@ export class GrpcGateway extends EventEmitter {
           await new Promise(resolve => {
             setTimeout(resolve, 500)
           })
-          callback = CallbackPool.Instance.getCallback(requestId)
-          callback(data)
-          CallbackPool.Instance.removeCallback(requestId)
+          try {
+            callback = CallbackPool.Instance.getCallback(requestId)
+            callback(data)
+            CallbackPool.Instance.removeCallback(requestId)
+          } catch (error) {
+            throw new Error(`can not find callback by requestId : ${requestId}`)
+          }
         }
       } else {
         if (responseType === ResponseType.LOGIN_QRCODE) {
@@ -453,7 +457,7 @@ export class GrpcGateway extends EventEmitter {
               return
             }
 
-            if (responseType === ResponseType.QRCODE_SCAN && user.qrcodeId !== emitter.getQrcodeId()) {
+            if (responseType === ResponseType.QRCODE_SCAN && user.status === 3 && user.qrcodeId !== emitter.getQrcodeId()) {
               return
             } else {
               emitter.emit('data', data)

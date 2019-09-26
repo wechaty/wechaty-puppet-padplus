@@ -95,7 +95,7 @@ export class PadplusManager extends EventEmitter {
     readyEmitted: boolean,
   }
   private resetThrottleQueue    : ThrottleQueue
-
+  private getContactQueue       : DelayQueueExecutor
   constructor (
     public options: ManagerOptions,
   ) {
@@ -121,7 +121,7 @@ export class PadplusManager extends EventEmitter {
     }
 
     this.syncQueueExecutor = new DelayQueueExecutor(1000)
-
+    this.getContactQueue = new DelayQueueExecutor(200)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
       log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
@@ -328,6 +328,7 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('heartbeat', async (data: any) => {
+      await this.setContactAndRoomData()
       this.emit('heartbeat', data)
     })
 
@@ -430,7 +431,6 @@ export class PadplusManager extends EventEmitter {
             log.verbose(PRE, `init cache manager`)
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
-            await this.setContactAndRoomData()
 
             const contactSelf: PadplusContactPayload = {
               alias: '',
@@ -473,7 +473,6 @@ export class PadplusManager extends EventEmitter {
                 log.verbose(PRE, `init cache manager`)
                 await CacheManager.init(wechatUser.userName)
                 this.cacheManager = CacheManager.Instance
-                await this.setContactAndRoomData()
 
                 const contactSelf: PadplusContactPayload = {
                   alias: '',
@@ -834,10 +833,13 @@ export class PadplusManager extends EventEmitter {
     if (contact) {
       return contact
     }
-    if (!this.padplusContact) {
-      throw new Error(`no padplusContact`)
-    }
-    await this.padplusContact.getContactInfo(contactId)
+
+    await this.getContactQueue.execute(async () => {
+      if (!this.padplusContact) {
+        throw new Error(`no padplusContact`)
+      }
+      await this.padplusContact.getContactInfo(contactId)
+    })
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('get contact timeout')), 5000)
@@ -968,10 +970,12 @@ export class PadplusManager extends EventEmitter {
     if (room) {
       return room
     }
-    if (!this.padplusContact) {
-      throw new Error(`no padplusContact`)
-    }
-    await this.padplusContact.getContactInfo(roomId)
+    await this.getContactQueue.execute(async () => {
+      if (!this.padplusContact) {
+        throw new Error(`no padplusContact`)
+      }
+      await this.padplusContact.getContactInfo(roomId)
+    })
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('get room timeout')), 5000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
