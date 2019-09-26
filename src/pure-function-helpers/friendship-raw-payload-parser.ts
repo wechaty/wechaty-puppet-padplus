@@ -86,14 +86,14 @@ async function friendshipRawPayloadParserReceive (
   if (!jsonPayload.msg) {
     throw new Error('no msg found')
   }
-  const padchatFriendshipPayload: PadplusFriendshipPayload = jsonPayload.msg.$
+  const padplusFriendshipPayload: PadplusFriendshipPayload = jsonPayload.msg.$
 
   const friendshipPayload: FriendshipPayloadReceive = {
-    contactId : padchatFriendshipPayload.fromusername,
-    hello     : padchatFriendshipPayload.content,
+    contactId : padplusFriendshipPayload.fromusername,
+    hello     : padplusFriendshipPayload.content,
     id        : rawPayload.msgId,
-    stranger  : padchatFriendshipPayload.encryptusername,
-    ticket    : padchatFriendshipPayload.ticket,
+    stranger  : padplusFriendshipPayload.encryptusername,
+    ticket    : padplusFriendshipPayload.ticket,
     timestamp : rawPayload.createTime,
     type      : FriendshipType.Receive,
   }

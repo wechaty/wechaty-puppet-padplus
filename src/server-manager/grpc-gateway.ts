@@ -245,7 +245,7 @@ export class GrpcGateway extends EventEmitter {
           })
         } else {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeoutMs = apiType === ApiType.SEND_MESSAGE ? 30 * 1000 : 5 * 1000
+            const timeoutMs = apiType === (ApiType.SEND_MESSAGE || ApiType.SEND_FILE) ? 3 * 60 * 1000 : 5 * 1000
             const timeout = setTimeout(() => reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`)), timeoutMs)
             CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
               clearTimeout(timeout)

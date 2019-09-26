@@ -19,7 +19,7 @@ test('messageRawPayloadParser', async t => {
 
   t.skip('tbw')
   // t.test('text', async t => {
-  //   const PADCHAT_MESSAGE_PAYLOAD_TEXT: PadplusMessagePayload = {
+  //   const PADPLUS_MESSAGE_PAYLOAD_TEXT: PadplusMessagePayload = {
   //     content     : '1111',
   //     continue    : 1,
   //     description : 'c7259a70-212f-11e8-b67d-57995e2021bf : 1111',
@@ -39,7 +39,7 @@ test('messageRawPayloadParser', async t => {
   // })
 
   // t.test('voice', async t => {
-  //   const PADCHAT_MESSAGE_PAYLOAD_VOICE: PadplusMessagePayload = {
+  //   const PADPLUS_MESSAGE_PAYLOAD_VOICE: PadplusMessagePayload = {
   //     // tslint:disable-next-line:max-line-length
   //     content     : '<msg><voicemsg endflag="1" length="5095" voicelength="2700" clientmsgid="49c81578fd517c7679f143e8cf0be116wxid_zj2cahpwzgie12104_1526984920" fromusername="qq512436430" downcount="0" cancelflag="0" voiceformat="4" forwardflag="0" bufid="434549088970015139" /></msg>',
   //     continue    : 1,
@@ -64,7 +64,7 @@ test('messageRawPayloadParser', async t => {
 })
 
 test('sys', async t => {
-  const PADCHAT_MESSAGE_PAYLOAD_SYS: PadplusMessagePayload = {
+  const PADPLUS_MESSAGE_PAYLOAD_SYS: PadplusMessagePayload = {
     content: '23238546298@chatroom:\n<sysmsg type="delchatroommember">\n\t<delchatroommember>\n\t\t<plain><![CDATA[你邀请"佳芮"加入了群聊  ]]></plain>\n\t\t<text><![CDATA[你邀请"佳芮"加入了群聊  ]]></text>\n\t\t<link>\n\t\t\t<scene>invite</scene>\n\t\t\t<text><![CDATA[  撤销]]></text>\n\t\t\t<memberlist>\n\t\t\t\t<username><![CDATA[wxid_rdwh63c150bm12]]></username>\n\t\t\t</memberlist>\n\t\t</link>\n\t</delchatroommember>\n</sysmsg>\n',
     createTime: 1568205434181,
     fromMemberUserName: '23238546298@chatroom',
@@ -94,7 +94,7 @@ test('sys', async t => {
     type: 0,
   }
 
-  const payload = await messageRawPayloadParser(PADCHAT_MESSAGE_PAYLOAD_SYS)
+  const payload = await messageRawPayloadParser(PADPLUS_MESSAGE_PAYLOAD_SYS)
   // console.log('payload:', payload)
   t.deepEqual(payload, EXPECTED_MESSAGE_PAYLOAD_SYS, 'should parse sys message payload')
 })

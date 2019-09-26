@@ -39,7 +39,7 @@ import { contactRawPayloadParser } from './contact-raw-payload-parser'
  */
 
 test('contactRawPayloadParser', async t => {
-  const PADCHAT_CONTACT_PAYLOAD_PERSONAL: PadplusContactPayload = {
+  const PADPLUS_CONTACT_PAYLOAD_PERSONAL: PadplusContactPayload = {
     alias              : '',
     bigHeadUrl         : 'http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/132',
     city               : 'Haidian',
@@ -59,7 +59,7 @@ test('contactRawPayloadParser', async t => {
     verifyFlag         : 0,
   }
 
-  const PADCHAT_CONTACT_PAYLOAD_OFFICIAL: PadplusContactPayload = {
+  const PADPLUS_CONTACT_PAYLOAD_OFFICIAL: PadplusContactPayload = {
     alias                : '',
     bigHeadUrl           : 'http://wx.qlogo.cn/mmhead/ver_1/icxUZE0qz1c1HubRfXHscMA1PialA7q3OEIWiaRtUjYmpj2EDFhTNGwlicUFe1NQR67gVGgjhILV1ZTsZ1qO3XTMehhH1k6icF1adbaibUMJXbMWk/132',
     city                 : 'Fengtai',
@@ -107,10 +107,10 @@ test('contactRawPayloadParser', async t => {
     weixin    : 'wxid_v7j3e9kna9l912',
   }
 
-  const resultPersonal = contactRawPayloadParser(PADCHAT_CONTACT_PAYLOAD_PERSONAL)
+  const resultPersonal = contactRawPayloadParser(PADPLUS_CONTACT_PAYLOAD_PERSONAL)
   t.deepEqual(resultPersonal, EXPECTED_CONTACT_PAYLOAD_PERSONAL, 'should parse ContactPayload for male account payload')
 
-  const resultOfficial = contactRawPayloadParser(PADCHAT_CONTACT_PAYLOAD_OFFICIAL)
+  const resultOfficial = contactRawPayloadParser(PADPLUS_CONTACT_PAYLOAD_OFFICIAL)
   t.deepEqual(resultOfficial, EXPECTED_CONTACT_PAYLOAD_OFFICIAL, 'should parse ContactPayload for female account payload')
 
   t.throws(() => contactRawPayloadParser({} as any), 'should throw exception for invalid object')
