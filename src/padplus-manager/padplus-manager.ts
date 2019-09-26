@@ -213,7 +213,6 @@ export class PadplusManager extends EventEmitter {
     this.padplusRoom = new PadplusRoom(this.requestClient)
     this.padplusFriendship = new PadplusFriendship(this.requestClient)
 
-    await this.setContactAndRoomData()
     await this.initGrpcGatewayListener(emitter)
     this.grpcGatewayEmitter = emitter
 
@@ -431,6 +430,7 @@ export class PadplusManager extends EventEmitter {
             log.verbose(PRE, `init cache manager`)
             await CacheManager.init(loginData.userName)
             this.cacheManager = CacheManager.Instance
+            await this.setContactAndRoomData()
 
             const contactSelf: PadplusContactPayload = {
               alias: '',
@@ -473,6 +473,7 @@ export class PadplusManager extends EventEmitter {
                 log.verbose(PRE, `init cache manager`)
                 await CacheManager.init(wechatUser.userName)
                 this.cacheManager = CacheManager.Instance
+                await this.setContactAndRoomData()
 
                 const contactSelf: PadplusContactPayload = {
                   alias: '',

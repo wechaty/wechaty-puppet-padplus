@@ -391,8 +391,9 @@ export class GrpcGateway extends EventEmitter {
         log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
       }
-      if (GrpcGateway._instance && GrpcGateway._instance.debounceQueue) {
+      if (GrpcGateway._instance && GrpcGateway._instance.debounceQueue && GrpcGateway._instance.throttleQueue) {
         GrpcGateway._instance.debounceQueue.next(data)
+        GrpcGateway._instance.throttleQueue.next(data)
       }
       let message = ''
       const _data = data.getData()
