@@ -328,7 +328,14 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('heartbeat', async (data: any) => {
-      await this.setContactAndRoomData()
+      // TODO 数据同步后，需要停止该函数的执行
+      if (!this.contactAndRoomData) {
+        await this.setContactAndRoomData()
+      } else {
+        if (!this.contactAndRoomData.readyEmitted) {
+          await this.setContactAndRoomData()
+        }
+      }
       this.emit('heartbeat', data)
     })
 
@@ -518,19 +525,31 @@ export class PadplusManager extends EventEmitter {
           const logoutRawData = data.getData()
           if (logoutRawData) {
             const logoutData: GrpcLogout = JSON.parse(logoutRawData)
-            const uin = logoutData.uin
+            const uin = data.getUin()
             const _uin = grpcGatewayEmitter.getUIN()
             if (uin === _uin) {
               this.loginStatus = false
               if (logoutData.mqType === 1100) {
                 this.emit('error', new PadplusError(PadplusErrorType.EXIT, logoutData.message))
-                await new Promise((resolve) => setTimeout(resolve, 10 * 1000))
+                if (!this.padplusUser) {
+                  throw new Error(`no padplusUser`)
+                }
+                await this.padplusUser.reconnect()
+                await new Promise((resolve) => setTimeout(resolve, 20 * 1000))
                 this.emit('logout')
               }
             } else {
               const userName = grpcGatewayEmitter.getUserName()
               throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)
             }
+          } else {
+            log.info(`can not get data from Event LOGOUT, ready to restart...`)
+            if (!this.padplusUser) {
+              throw new Error(`no padplusUser`)
+            }
+            await this.padplusUser.reconnect()
+            await new Promise((resolve) => setTimeout(resolve, 30 * 1000))
+            this.emit('reset', 'logout with some unknow reasons')
           }
           break
 

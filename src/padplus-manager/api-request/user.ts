@@ -18,6 +18,13 @@ export class PadplusUser {
     })
   }
 
+  // grpc server重连
+  public async reconnect () {
+    await this.requestClient.request({
+      apiType: ApiType.RECONNECT,
+    })
+  }
+
   // 获取微信登录二维码
   public getWeChatQRCode = async (data?: {uin: string, wxid: string}) => {
     if (data) {
