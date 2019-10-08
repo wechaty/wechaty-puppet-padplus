@@ -465,11 +465,12 @@ export class PuppetPadplus extends Puppet {
       }
       const contact: PadplusContactPayload = {
         alias: '',
-        contactType: ContactType.Unknown,
-        labelLists: '',
         bigHeadUrl: contactPayload.bigheadimgurl,
         city: '',
+        contactFlag: 0,
+        contactType: ContactType.Unknown,
         country: '',
+        labelLists: '',
         nickName: contactPayload.nickname,
         province: '',
         remark: '',
@@ -480,13 +481,12 @@ export class PuppetPadplus extends Puppet {
         ticket: '',
         userName: contactPayload.username,
         verifyFlag: 0,
-        contactFlag: 0,
       }
 
       if (!this.manager.cacheManager) {
         throw new Error(`no cacheManager`)
       }
-      this.manager.cacheManager.setContact(contact.userName, contact)
+      await this.manager.cacheManager.setContact(contact.userName, contact)
       return contact.userName
     }
   }
