@@ -592,7 +592,6 @@ export class PadplusManager extends EventEmitter {
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
                 const room = await this.cacheManager.getRoom(deleteUserName)
-                let roomMember = await this.cacheManager.getRoomMember(deleteUserName)
                 if (!room) {
                   const roomPayload: PadplusRoomPayload = {
                     alias          : '',
@@ -611,14 +610,11 @@ export class PadplusManager extends EventEmitter {
                     ticket         : '',
                   }
                   await this.cacheManager.setRoom(deleteUserName, roomPayload)
-                } else if (!roomMember) {
-                  await this.cacheManager.setRoomMember(deleteUserName, {} as { [contactId: string]: PadplusRoomMemberPayload })
                 } else {
                   room.isDelete = true
-                  roomMember = {} as { [contactId: string]: PadplusRoomMemberPayload }
                   await this.cacheManager.setRoom(deleteUserName, room)
-                  await this.cacheManager.setRoomMember(deleteUserName, roomMember)
                 }
+                await this.cacheManager.setRoomMember(deleteUserName, {} as { [contactId: string]: PadplusRoomMemberPayload })
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
