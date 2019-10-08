@@ -242,8 +242,8 @@ export class GrpcGateway extends EventEmitter {
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
         if (apiType === ApiType.GET_MESSAGE_MEDIA) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.checkTimeout(uin)
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
               reject(new Error('GET_MESSAGE_MEDIA request timeout'))
             }, 5 * 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
@@ -254,8 +254,8 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.SEARCH_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.checkTimeout(uin)
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
               reject(new Error('SEARCH_CONTACT request timeout'))
             }, 5000)
             CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
@@ -266,8 +266,8 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.ADD_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.checkTimeout(uin)
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
               reject(new Error('ADD_CONTACT request timeout'))
             }, 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
@@ -291,9 +291,9 @@ export class GrpcGateway extends EventEmitter {
                 timeoutMs = 5 * 1000
                 break
             }
-            const timeout = setTimeout(() => {
+            const timeout = setTimeout(async () => {
               if (apiType !== ApiType.HEARTBEAT) {
-                this.checkTimeout(uin)
+                await this.checkTimeout(uin)
               }
               reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
             }, timeoutMs)

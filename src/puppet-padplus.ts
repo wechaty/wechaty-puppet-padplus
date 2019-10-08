@@ -1002,7 +1002,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error('can not find members. may be you are removed.')
     }
     const member = memberMap[contactId]
-    return member
+    return member as PadplusRoomMemberPayload
   }
 
   protected async roomMemberRawPayloadParser (rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
