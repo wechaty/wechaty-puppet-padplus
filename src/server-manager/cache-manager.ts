@@ -59,7 +59,7 @@ export class CacheManager {
   private cacheWXID?    : FlashStore<string, string>
   private cacheContactRawPayload?    : FlashStore<string, PadplusContactPayload>
   private cacheRoomMemberRawPayload? : FlashStore<string, {
-    [contactId: string]: PadplusRoomMemberPayload,
+    [contactId: string]: PadplusRoomMemberPayload | boolean,
   }>
   private cacheRoomRawPayload?       : FlashStore<string, PadplusRoomPayload>
   private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
@@ -223,7 +223,7 @@ export class CacheManager {
    */
   public async getRoomMember (
     roomId: string,
-  ): Promise<{ [contactId: string]: PadplusRoomMemberPayload } | undefined> {
+  ): Promise<{ [contactId: string]: PadplusRoomMemberPayload | boolean } | undefined> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} getRoomMember() has no cache.`)
     }
@@ -232,7 +232,7 @@ export class CacheManager {
 
   public async setRoomMember (
     roomId: string,
-    payload: { [contactId: string]: PadplusRoomMemberPayload }
+    payload: { [contactId: string]: PadplusRoomMemberPayload | boolean }
   ): Promise<void> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)

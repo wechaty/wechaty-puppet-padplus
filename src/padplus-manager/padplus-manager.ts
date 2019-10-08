@@ -591,10 +591,15 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
-                setTimeout(async () => {
-                  await this.cacheManager!.deleteRoomMember(deleteUserName)
-                  await this.cacheManager!.deleteRoom(deleteUserName)
-                }, 5 * 1000)
+                const room = await this.cacheManager.getRoom(deleteUserName)
+                const roomMember = await this.cacheManager.getRoomMember(deleteUserName)
+                if (!room || !roomMember) {
+                  throw new Error(`can not get room or room member by room Id : ${deleteUserName}`)
+                }
+                room.isDelete = true
+                roomMember.isDelete = true
+                await this.cacheManager.setRoom(deleteUserName, room)
+                await this.cacheManager.setRoomMember(deleteUserName, roomMember)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
