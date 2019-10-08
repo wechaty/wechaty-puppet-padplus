@@ -19,6 +19,8 @@ import {
   FriendshipType,
   FriendshipPayloadReceive,
   MessageType,
+  ContactGender,
+  ContactType,
 }                           from 'wechaty-puppet'
 
 import {
@@ -39,6 +41,7 @@ import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
+import { contactMessageParser } from './pure-function-helpers/message-contact-payload-parser'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -448,8 +451,33 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async messageContact (messageId: string): Promise<ContactPayload> {
+    log.silly(PRE, `messageContact() messageId : ${messageId}`)
+    const rawPayload = await this.messageRawPayload(messageId)
+    const payload = await this.messagePayload(messageId)
+
+    if (payload.type !== MessageType.Contact) {
+      throw new Error('Can not get url from non url payload')
+    } else {
+      log.silly(`raw payload data : ${JSON.stringify(rawPayload)}`)
+      const contactPayload = await contactMessageParser(rawPayload)
+      if (!contactPayload) {
+        throw new Error(`can not parse contact payload`)
+      }
+      const contact = {
+        avatar : contactPayload.smallheadimgurl,
+        gender : ContactGender.Unknown,
+        id     : contactPayload.username,
+        name   : contactPayload.nickname,
+        type   : ContactType.Unknown,
+      }
+      log.silly(`contact raw payload data : ${JSON.stringify(contact)}`)
+      return contact
+    }
+  }
+
   public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
-    log.silly(PRE, `messageUrl() messageId : ${util.inspect(messageId)}`)
+    log.silly(PRE, `messageUrl() messageId : ${messageId}`)
     const rawPayload = await this.messageRawPayload(messageId)
     const payload = await this.messagePayload(messageId)
 

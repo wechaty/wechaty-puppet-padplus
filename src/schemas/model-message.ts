@@ -67,6 +67,13 @@ export interface PadplusAppMessagePayload {
   recorditem?   : string,
 }
 
+export interface PadplusContactMessagePayload {
+  bigheadimgurl: string,
+  smallheadimgurl: string,
+  username: string,
+  nickname: string,
+}
+
 export interface PadplusAppAttachPayload {
   totallen?      : number,
   attachid?      : string,
