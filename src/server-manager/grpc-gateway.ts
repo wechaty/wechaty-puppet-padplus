@@ -209,7 +209,6 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private async checkTimeout (uin: string) {
-    this.timeoutNumber++
     if (this.timeoutNumber > 10 && Date.now() - this.startTime <= 3 * 60 * 1000) {
       await this.request(
         ApiType.RECONNECT,
@@ -223,6 +222,7 @@ export class GrpcGateway extends EventEmitter {
       this.startTime = Date.now()
       this.timeoutNumber = 0
     }
+    this.timeoutNumber++
   }
 
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {

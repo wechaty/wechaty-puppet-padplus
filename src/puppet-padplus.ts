@@ -470,7 +470,7 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  public async messageContact (messageId: string): Promise<ContactPayload> {
+  public async messageContact (messageId: string): Promise<string> {
     throw new Error(`not implement`)
   }
 
@@ -1002,7 +1002,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error('can not find members. may be you are removed.')
     }
     const member = memberMap[contactId]
-    return member as PadplusRoomMemberPayload
+    return member
   }
 
   protected async roomMemberRawPayloadParser (rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {

@@ -592,14 +592,33 @@ export class PadplusManager extends EventEmitter {
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
                 const room = await this.cacheManager.getRoom(deleteUserName)
-                const roomMember = await this.cacheManager.getRoomMember(deleteUserName)
-                if (!room || !roomMember) {
-                  throw new Error(`can not get room or room member by room Id : ${deleteUserName}`)
+                let roomMember = await this.cacheManager.getRoomMember(deleteUserName)
+                if (!room) {
+                  const roomPayload: PadplusRoomPayload = {
+                    alias          : '',
+                    bigHeadUrl     : '',
+                    chatRoomOwner  : '',
+                    chatroomId     : deleteUserName,
+                    chatroomVersion: 0,
+                    contactType    : 0,
+                    isDelete       : true,
+                    labelLists     : '',
+                    memberCount    : 0,
+                    members        : [],
+                    nickName       : '',
+                    smallHeadUrl   : '',
+                    stranger       : '',
+                    ticket         : '',
+                  }
+                  await this.cacheManager.setRoom(deleteUserName, roomPayload)
+                } else if (!roomMember) {
+                  await this.cacheManager.setRoomMember(deleteUserName, {} as { [contactId: string]: PadplusRoomMemberPayload })
+                } else {
+                  room.isDelete = true
+                  roomMember = {} as { [contactId: string]: PadplusRoomMemberPayload }
+                  await this.cacheManager.setRoom(deleteUserName, room)
+                  await this.cacheManager.setRoomMember(deleteUserName, roomMember)
                 }
-                room.isDelete = true
-                roomMember.isDelete = true
-                await this.cacheManager.setRoom(deleteUserName, room)
-                await this.cacheManager.setRoomMember(deleteUserName, roomMember)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
