@@ -591,8 +591,10 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
-                await this.cacheManager.deleteRoomMember(deleteUserName)
-                await this.cacheManager.deleteRoom(deleteUserName)
+                setTimeout(async () => {
+                  await this.cacheManager!.deleteRoomMember(deleteUserName)
+                  await this.cacheManager!.deleteRoom(deleteUserName)
+                }, 5 * 1000)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
