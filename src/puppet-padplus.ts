@@ -470,6 +470,10 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async messageContact (messageId: string): Promise<string> {
+    throw new Error(`not implement`)
+  }
+
   messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
     log.silly(PRE, `messageMiniProgram() messageId : ${util.inspect(messageId)}`)
     throw new Error('Method not implemented.')

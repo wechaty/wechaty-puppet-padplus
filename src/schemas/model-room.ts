@@ -40,6 +40,7 @@ export interface PadplusRoomPayload {
   ticket         : string,
   chatroomId     : string,
   memberCount    : number,
+  isDelete?      : boolean,
 }
 
 export interface GrpcRoomPayload {
