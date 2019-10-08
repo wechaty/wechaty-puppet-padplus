@@ -451,28 +451,43 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  public async messageContact (messageId: string): Promise<ContactPayload> {
+  public async messageContact (messageId: string): Promise<string> {
     log.silly(PRE, `messageContact() messageId : ${messageId}`)
     const rawPayload = await this.messageRawPayload(messageId)
     const payload = await this.messagePayload(messageId)
 
     if (payload.type !== MessageType.Contact) {
-      throw new Error('Can not get url from non url payload')
+      throw new Error('Can not get contact info from non ShareCard payload')
     } else {
-      log.silly(`raw payload data : ${JSON.stringify(rawPayload)}`)
       const contactPayload = await contactMessageParser(rawPayload)
       if (!contactPayload) {
         throw new Error(`can not parse contact payload`)
       }
-      const contact = {
-        avatar : contactPayload.smallheadimgurl,
-        gender : ContactGender.Unknown,
-        id     : contactPayload.username,
-        name   : contactPayload.nickname,
-        type   : ContactType.Unknown,
+      const contact: PadplusContactPayload = {
+        alias: '',
+        contactType: ContactType.Unknown,
+        labelLists: '',
+        bigHeadUrl: contactPayload.bigheadimgurl,
+        city: '',
+        country: '',
+        nickName: contactPayload.nickname,
+        province: '',
+        remark: '',
+        sex: ContactGender.Unknown,
+        signature: '',
+        smallHeadUrl: contactPayload.smallheadimgurl,
+        stranger: '',
+        ticket: '',
+        userName: contactPayload.username,
+        verifyFlag: 0,
+        contactFlag: 0,
       }
-      log.silly(`contact raw payload data : ${JSON.stringify(contact)}`)
-      return contact
+
+      if (!this.manager.cacheManager) {
+        throw new Error(`no cacheManager`)
+      }
+      this.manager.cacheManager.setContact(contact.userName, contact)
+      return contact.userName
     }
   }
 
