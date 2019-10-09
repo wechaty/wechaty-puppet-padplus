@@ -531,10 +531,6 @@ export class PadplusManager extends EventEmitter {
               this.loginStatus = false
               if (logoutData.mqType === 1100) {
                 this.emit('error', new PadplusError(PadplusErrorType.EXIT, logoutData.message))
-                if (!this.padplusUser) {
-                  throw new Error(`no padplusUser`)
-                }
-                await this.padplusUser.reconnect()
                 await new Promise((resolve) => setTimeout(resolve, 20 * 1000))
                 this.emit('logout')
               }

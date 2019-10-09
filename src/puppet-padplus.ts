@@ -673,7 +673,7 @@ export class PuppetPadplus extends Puppet {
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
     const payload = {
-      des: description,
+      description,
       thumburl: thumbnailUrl,
       title,
       type: 5,
