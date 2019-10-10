@@ -262,8 +262,9 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.ADD_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
+            const timeout = setTimeout(async () => {
               this.timeoutNumber++
+              await this.request(ApiType.RECONNECT, uin)
               reject(new Error('ADD_CONTACT request timeout'))
             }, 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
@@ -287,10 +288,11 @@ export class GrpcGateway extends EventEmitter {
                 timeoutMs = 5 * 1000
                 break
             }
-            const timeout = setTimeout(() => {
+            const timeout = setTimeout(async () => {
               if (apiType !== ApiType.HEARTBEAT) {
                 this.timeoutNumber++
               }
+              await this.request(ApiType.RECONNECT, uin)
               reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
             }, timeoutMs)
             CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
