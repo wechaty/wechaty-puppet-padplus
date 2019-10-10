@@ -295,7 +295,9 @@ export class GrpcGateway extends EventEmitter {
             const timeout = setTimeout(async () => {
               if (apiType !== ApiType.HEARTBEAT) {
                 await this.checkTimeout(uin)
-                await this.request(ApiType.RECONNECT, uin)
+                if (apiType === ApiType.CREATE_ROOM) {
+                  await this.request(ApiType.RECONNECT, uin)
+                }
               }
               reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
             }, timeoutMs)
