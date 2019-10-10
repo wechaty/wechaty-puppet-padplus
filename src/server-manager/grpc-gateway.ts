@@ -35,6 +35,8 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.GET_ROOM_ANNOUNCEMENT,
   ApiType.SET_ROOM_ANNOUNCEMENT,
   ApiType.HEARTBEAT,
+  ApiType.ADD_LABEL,
+  ApiType.GET_ALL_LABEL,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
@@ -271,6 +273,30 @@ export class GrpcGateway extends EventEmitter {
               reject(new Error('ADD_CONTACT request timeout'))
             }, 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              this.timeoutNumber = 0
+              resolve(data)
+            })
+          })
+        } else if (apiType === ApiType.ADD_LABEL) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
+              reject(new Error('ADD_LABEL request timeout'))
+            }, 60 * 1000)
+            CallbackPool.Instance.pushCallbackToPool(data.tag, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              this.timeoutNumber = 0
+              resolve(data)
+            })
+          })
+        }  else if (apiType === ApiType.GET_ALL_LABEL) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
+              reject(new Error('GET_ALL_LABEL request timeout'))
+            }, 60 * 1000)
+            CallbackPool.Instance.pushCallbackToPool(uin, (data: StreamResponse) => {
               clearTimeout(timeout)
               this.timeoutNumber = 0
               resolve(data)

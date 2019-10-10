@@ -11,6 +11,73 @@ export class PadplusContact {
   constructor (requestClient: RequestClient) {
     this.requestClient = requestClient
   }
+
+  public async newTag (tag: string): Promise<string> {
+    log.verbose(PRE, `newTag(${tag})`)
+
+    const data = {
+      tag,
+    }
+    const result = await this.requestClient.request({
+      apiType: ApiType.ADD_LABEL,
+      data,
+    })
+    if (result) {
+      const labelStr = result.getData()
+      if (labelStr) {
+        const label = JSON.parse(labelStr)
+        const labelID = label.labelList && label.labelList[0].LabelID
+        return labelID
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
+  }
+
+  public async addTag (contactId: string, tag: string): Promise<void> {
+    log.verbose(PRE, `addTag(${tag})`)
+
+    const data = {
+      labelIds: tag,
+      userName: contactId,
+    }
+    await this.requestClient.request({
+      apiType: ApiType.MODIFY_LABEL,
+      data,
+    })
+  }
+
+  public async tagList (): Promise<string> {
+    log.verbose(PRE, `tagList()`)
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.GET_ALL_LABEL,
+    })
+    if (result) {
+      const labelStr = result.getData()
+      if (labelStr) {
+        const label = JSON.parse(labelStr)
+        let labelIds = ''
+        if (label.labelList && label.labelList.length > 0) {
+          label.labelList.map((labelItem: any, index: number) => {
+            if (index === label.labelList.length - 1) {
+              labelIds += labelItem.LabelID
+            } else {
+              labelIds += labelItem.LabelID + ','
+            }
+          })
+        }
+        return labelIds
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
+  }
+
   // Query contact list info
   public getContactInfo = async (userName: string): Promise<boolean> => {
     log.verbose(PRE, `getContactInfo(${userName})`)

@@ -193,6 +193,36 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
 
+  public async addTag (contactId: string, tag: string): Promise<void> {
+    log.verbose(PRE, `contactId: ${contactId}, tag: ${tag}`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    await this.manager.addTag(contactId, tag)
+  }
+
+  public async tags (contactId: string): Promise<string> {
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.tags(contactId)
+  }
+
+  public async newTag (tag: string): Promise<string> {
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.newTag(tag)
+  }
+
+  public async tagList (): Promise<string> {
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.tagList()
+  }
+
   contactSelfQrcode (): Promise<string> {
     throw new Error('Method not implemented.')
   }

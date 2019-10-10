@@ -715,6 +715,28 @@ export class PadplusManager extends EventEmitter {
         case ResponseType.STATUS_NOTIFY :
           // TODO: not support now
           break
+        case ResponseType.LABEL_ADD :
+          const newLabelStr = data.getData()
+          log.silly(`newLabelStr, ${newLabelStr}`)
+          if (newLabelStr) {
+            const data = JSON.parse(newLabelStr)
+            const key = data.labelList[0].LabelName
+            const callback = await CallbackPool.Instance.getCallback(key)
+            callback && callback(data)
+            CallbackPool.Instance.removeCallback(key)
+          }
+          break
+        case ResponseType.LABEL_LIST :
+          // TODO: need to set tag list info to cacheManager, so we have to create a new cache named cacheTagRawPayload
+          const labelListStr = data.getData()
+          log.silly(`labelListStr, ${labelListStr}`)
+          if (labelListStr) {
+            const data = JSON.parse(labelListStr)
+            const callback = await CallbackPool.Instance.getCallback(data.getUIN())
+            callback && callback(data)
+            CallbackPool.Instance.removeCallback(data.getUIN())
+          }
+          break
         case ResponseType.MESSAGE_MEDIA_SRC :
           const mediaDataStr = data.getData()
           if (mediaDataStr) {
@@ -828,6 +850,44 @@ export class PadplusManager extends EventEmitter {
   /**
    * Contact Section
    */
+
+  public async newTag (tag: string): Promise<string> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    return this.padplusContact.newTag(tag)
+  }
+
+  public async addTag (contactId: string, tag: string): Promise<void> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.addTag(contactId, tag)
+  }
+
+  public async tags (contactId: string): Promise<string> {
+    if (!this.cacheManager) {
+      throw new Error(`no cacheManager`)
+    }
+
+    const contact = await this.cacheManager.getContact(contactId)
+    if (!contact) {
+      throw new Error(`can not get contact by this contactId: ${contactId}`)
+    }
+    const labelsId = contact.labelLists
+    return labelsId
+  }
+
+  public async tagList (): Promise<string> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    return this.padplusContact.tagList()
+  }
+
   public async setContactAlias (
     contactId: string,
     alias: string,
