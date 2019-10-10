@@ -208,6 +208,23 @@ export class GrpcGateway extends EventEmitter {
     return this
   }
 
+  private async checkTimeout (uin: string) {
+    if (this.timeoutNumber > 10 && Date.now() - this.startTime <= 3 * 60 * 1000) {
+      await this.request(
+        ApiType.RECONNECT,
+        uin,
+      )
+      this.startTime = Date.now()
+      this.timeoutNumber = 0
+    } else if (this.timeoutNumber === 0) {
+      this.startTime = Date.now()
+    } else if (Date.now() - this.startTime > 3 * 60 * 1000) {
+      this.startTime = Date.now()
+      this.timeoutNumber = 0
+    }
+    this.timeoutNumber++
+  }
+
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {
     const request = new RequestObject()
     const requestId = uuid()
@@ -221,25 +238,12 @@ export class GrpcGateway extends EventEmitter {
     request.setRequestid(requestId)
 
     try {
-      if (this.timeoutNumber > 10 && Date.now() - this.startTime <= 3 * 60 * 1000) {
-        await this.request(
-          ApiType.RECONNECT,
-          uin,
-        )
-        this.startTime = Date.now()
-        this.timeoutNumber = 0
-      } else if (this.timeoutNumber === 0) {
-        this.startTime = Date.now()
-      } else if (Date.now() - this.startTime > 3 * 60 * 1000) {
-        this.startTime = Date.now()
-        this.timeoutNumber = 0
-      }
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
         if (apiType === ApiType.GET_MESSAGE_MEDIA) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.timeoutNumber++
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
               reject(new Error('GET_MESSAGE_MEDIA request timeout'))
             }, 5 * 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
@@ -250,8 +254,8 @@ export class GrpcGateway extends EventEmitter {
           })
         } else if (apiType === ApiType.SEARCH_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.timeoutNumber++
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
               reject(new Error('SEARCH_CONTACT request timeout'))
             }, 5000)
             CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
@@ -263,7 +267,7 @@ export class GrpcGateway extends EventEmitter {
         } else if (apiType === ApiType.ADD_CONTACT) {
           return new Promise<StreamResponse>((resolve, reject) => {
             const timeout = setTimeout(async () => {
-              this.timeoutNumber++
+              await this.checkTimeout(uin)
               await this.request(ApiType.RECONNECT, uin)
               reject(new Error('ADD_CONTACT request timeout'))
             }, 60 * 1000)
@@ -290,9 +294,9 @@ export class GrpcGateway extends EventEmitter {
             }
             const timeout = setTimeout(async () => {
               if (apiType !== ApiType.HEARTBEAT) {
-                this.timeoutNumber++
+                await this.checkTimeout(uin)
+                await this.request(ApiType.RECONNECT, uin)
               }
-              await this.request(ApiType.RECONNECT, uin)
               reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
             }, timeoutMs)
             CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
