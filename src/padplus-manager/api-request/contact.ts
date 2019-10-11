@@ -30,7 +30,7 @@ export class PadplusContact {
         let labelIDs = ''
         if (label.labelList && label.labelList[0] > 0) {
           label.labelList.map((labelItem: LabelRawPayload, index: number) => {
-            if (index === label.labelList.length -1) {
+            if (index === label.labelList.length - 1) {
               labelIDs += labelItem.LabelName
             } else {
               labelIDs += labelItem.LabelName + ','
