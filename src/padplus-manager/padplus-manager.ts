@@ -865,7 +865,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-
+    // TODO: tag here is tagName, it need to be turned to tagId
     await this.padplusContact.addTag(contactId, tag)
   }
 
@@ -882,14 +882,15 @@ export class PadplusManager extends EventEmitter {
     const labelIdsList = labelsId.split(',')
 
     const allLabel: TagPayload[] = await this.tagList()
+
     const tags: TagPayload[] = []
-    labelIdsList.map(id => {
+    await Promise.all(labelIdsList.map((id: string) => {
       allLabel.map(label => {
-        if (id === label.tagId) {
+        if (id === label.tagId.toString()) {
           tags.push(label)
         }
       })
-    })
+    }))
     return tags
   }
 
