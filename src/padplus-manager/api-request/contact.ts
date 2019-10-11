@@ -2,6 +2,7 @@ import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { GrpcSearchContact } from '../../schemas'
+import { LabelRawPayload } from '../../schemas/model-tag'
 
 const PRE = 'PadplusContact'
 
@@ -26,8 +27,17 @@ export class PadplusContact {
       const labelStr = result.getData()
       if (labelStr) {
         const label = JSON.parse(labelStr)
-        const labelID = label.labelList && label.labelList[0].LabelID
-        return labelID
+        let labelIDs = ''
+        if (label.labelList && label.labelList[0] > 0) {
+          label.labelList.map((labelItem: LabelRawPayload, index: number) => {
+            if (index === label.labelList.length -1) {
+              labelIDs += labelItem.LabelName
+            } else {
+              labelIDs += labelItem.LabelName + ','
+            }
+          })
+        }
+        return labelIDs
       } else {
         throw new Error(`can not parse data`)
       }
@@ -49,7 +59,7 @@ export class PadplusContact {
     })
   }
 
-  public async tagList (): Promise<string> {
+  public async tagList (): Promise<LabelRawPayload []> {
     log.verbose(PRE, `tagList()`)
 
     const result = await this.requestClient.request({
@@ -59,17 +69,8 @@ export class PadplusContact {
       const labelStr = result.getData()
       if (labelStr) {
         const label = JSON.parse(labelStr)
-        let labelIds = ''
-        if (label.labelList && label.labelList.length > 0) {
-          label.labelList.map((labelItem: any, index: number) => {
-            if (index === label.labelList.length - 1) {
-              labelIds += labelItem.LabelID
-            } else {
-              labelIds += labelItem.LabelID + ','
-            }
-          })
-        }
-        return labelIds
+
+        return label.labelList
       } else {
         throw new Error(`can not parse data`)
       }

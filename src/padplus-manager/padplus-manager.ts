@@ -50,6 +50,8 @@ import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
 import { isRoomId, isStrangerV1, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
+import { TagPayload } from 'wechaty-puppet/dist/src/schemas/tag'
+import { LabelRawPayload } from '../schemas/model-tag'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -867,7 +869,7 @@ export class PadplusManager extends EventEmitter {
     await this.padplusContact.addTag(contactId, tag)
   }
 
-  public async tags (contactId: string): Promise<string> {
+  public async tags (contactId: string): Promise<TagPayload []> {
     if (!this.cacheManager) {
       throw new Error(`no cacheManager`)
     }
@@ -877,15 +879,40 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`can not get contact by this contactId: ${contactId}`)
     }
     const labelsId = contact.labelLists
-    return labelsId
+    const labelIdsList = labelsId.split(',')
+
+    const allLabel: TagPayload[] = await this.tagList()
+    const tags: TagPayload[] = []
+    labelIdsList.map(id => {
+      allLabel.map(label => {
+        if (id === label.tagId) {
+          tags.push(label)
+        }
+      })
+    })
+    return tags
   }
 
-  public async tagList (): Promise<string> {
+  public async tagList (): Promise<TagPayload []> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
 
-    return this.padplusContact.tagList()
+    const labelList: LabelRawPayload[] = await this.padplusContact.tagList()
+    let tagList: TagPayload[] = []
+
+    if (labelList && labelList.length === 0) {
+      return []
+    }
+
+    labelList.map(label => {
+      const tag: TagPayload = {
+        tagId: label.LabelID,
+        tagName: label.LabelName,
+      }
+      tagList.push(tag)
+    })
+    return tagList
   }
 
   public async setContactAlias (

@@ -39,6 +39,7 @@ import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
+import { TagPayload } from 'wechaty-puppet/dist/src/schemas/tag'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -189,12 +190,42 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
+   *     TAG SECTION
+   * ========================
+   */
+  public async newTag (tag: string): Promise<string> {
+    log.verbose(PRE, `newTag(), tag: ${tag}`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.newTag(tag)
+  }
+
+  public async tagList (): Promise<TagPayload []> {
+    log.verbose(PRE, `tagList()`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.tagList()
+  }
+
+  public async searchTag (tag: string): Promise<TagPayload> {
+    return {} as any
+  }
+
+  public async allTags (): Promise<TagPayload []> {
+    return {} as any
+  }
+
+  /**
+   * ========================
    *     CONTACT SECTION
    * ========================
    */
-
-  public async addTag (contactId: string, tag: string): Promise<void> {
-    log.verbose(PRE, `contactId: ${contactId}, tag: ${tag}`)
+  public async contactAddTag (contactId: string, tag: string): Promise<void> {
+    log.verbose(PRE, `contactAddTag(), contactId: ${contactId}, tag: ${tag}`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
@@ -202,25 +233,13 @@ export class PuppetPadplus extends Puppet {
     await this.manager.addTag(contactId, tag)
   }
 
-  public async tags (contactId: string): Promise<string> {
+  public async contactTags (contactId: string): Promise<TagPayload []> {
+    log.verbose(PRE, `contactTags(), contactId: ${contactId}`)
+
     if (!this.manager) {
       throw new Error(`no manager`)
     }
     return this.manager.tags(contactId)
-  }
-
-  public async newTag (tag: string): Promise<string> {
-    if (!this.manager) {
-      throw new Error(`no manager`)
-    }
-    return this.manager.newTag(tag)
-  }
-
-  public async tagList (): Promise<string> {
-    if (!this.manager) {
-      throw new Error(`no manager`)
-    }
-    return this.manager.tagList()
   }
 
   contactSelfQrcode (): Promise<string> {
