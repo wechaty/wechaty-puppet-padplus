@@ -62,30 +62,9 @@ export class GrpcGateway extends EventEmitter {
     if (!this._instance) {
       this._instance = new GrpcGateway(token, endpoint)
       await this._instance.initSelf()
-
-      this._instance.debounceQueue = new DebounceQueue(30 * 1000)
-      this._instance.debounceQueueSubscription = this._instance.debounceQueue.subscribe(async () => {
-        try {
-          await this._instance!.keepHeartbeat()
-        } catch (e) {
-          log.silly(PRE, `debounce error : ${util.inspect(e)}`)
-        }
-
-      })
-
-      this._instance.throttleQueue = new ThrottleQueue(30 * 1000)
-      this._instance.throttleQueueSubscription = this._instance.throttleQueue.subscribe((data) => {
-        log.silly(PRE, `throttleQueue emit heartbeat.`)
-        Object.values(this._instance!.eventEmitterMap).map(emitter => {
-          emitter.emit('heartbeat', data.getRequestid())
-        })
-      })
     }
     if (!this._instance.isAlive) {
-      if (this._instance.stream) {
-        this._instance.stream.removeAllListeners()
-      }
-      this._instance.client.close()
+      await this._instance.stop()
       this._instance = new GrpcGateway(token, endpoint)
       await this._instance.initSelf()
     }
@@ -101,9 +80,6 @@ export class GrpcGateway extends EventEmitter {
       if (!res) {
         throw new Error(`no heartbeat response from grpc server`)
       }
-      Object.values(this.eventEmitterMap).map(emitter => {
-        emitter.emit('heartbeat', res.getRequestid())
-      })
     } catch (error) {
       log.error(`can not get heartbeat from grpc server`, error)
       Object.values(this.eventEmitterMap).map(emitter => {
@@ -115,27 +91,6 @@ export class GrpcGateway extends EventEmitter {
   public static async release () {
     if (this._instance) {
       await this._instance.stop()
-      if (!this._instance.throttleQueueSubscription
-        || !this._instance.debounceQueueSubscription
-      ) {
-        log.verbose(PRE, `releaseQueue() subscriptions have been released.`)
-      } else {
-        this._instance.throttleQueueSubscription.unsubscribe()
-        this._instance.debounceQueueSubscription.unsubscribe()
-
-        this._instance.throttleQueueSubscription = undefined
-        this._instance.debounceQueueSubscription = undefined
-      }
-
-      if (!this._instance.debounceQueue || !this._instance.throttleQueue) {
-        log.verbose(PRE, `releaseQueue() queues have been released.`)
-      } else {
-        this._instance.debounceQueue.unsubscribe()
-        this._instance.throttleQueue.unsubscribe()
-
-        this._instance.debounceQueue = undefined
-        this._instance.throttleQueue = undefined
-      }
       this._instance = undefined
     }
   }
@@ -162,6 +117,22 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private async initSelf () {
+    this.debounceQueue = new DebounceQueue(30 * 1000)
+    this.debounceQueueSubscription = this.debounceQueue.subscribe(async () => {
+      try {
+        await this.keepHeartbeat()
+      } catch (e) {
+        log.silly(PRE, `debounce error : ${util.inspect(e)}`)
+      }
+    })
+
+    this.throttleQueue = new ThrottleQueue(30 * 1000)
+    this.throttleQueueSubscription = this.throttleQueue.subscribe((data) => {
+      log.silly(PRE, `throttleQueue emit heartbeat.`)
+      Object.values(this.eventEmitterMap).map(emitter => {
+        emitter.emit('heartbeat', data.getRequestid())
+      })
+    })
     await this.initGrpcGateway()
     this.isAlive = true
   }
@@ -351,12 +322,33 @@ export class GrpcGateway extends EventEmitter {
       this.stream.destroy()
       this.stream.removeAllListeners()
     }
+    this.client.close()
 
     this.stopping = true
     try {
       await this.request(ApiType.CLOSE, '')
     } catch (error) {
       log.error(PRE, `error : ${util.inspect(error)}`)
+    }
+
+    if (!this.throttleQueueSubscription || !this.debounceQueueSubscription) {
+      log.verbose(PRE, `releaseQueue() subscriptions have been released.`)
+    } else {
+      this.throttleQueueSubscription.unsubscribe()
+      this.debounceQueueSubscription.unsubscribe()
+
+      this.throttleQueueSubscription = undefined
+      this.debounceQueueSubscription = undefined
+    }
+
+    if (!this.debounceQueue || !this.throttleQueue) {
+      log.verbose(PRE, `releaseQueue() queues have been released.`)
+    } else {
+      this.debounceQueue.unsubscribe()
+      this.throttleQueue.unsubscribe()
+
+      this.debounceQueue = undefined
+      this.throttleQueue = undefined
     }
   }
 
