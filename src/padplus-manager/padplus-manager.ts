@@ -1144,7 +1144,7 @@ export class PadplusManager extends EventEmitter {
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('accept friend request timeout.'))
-      }, 5000)
+      }, 60 * 1000)
       CallbackPool.Instance.pushAcceptFriendCallback(contactId, () => {
         clearTimeout(timeout)
         resolve()
