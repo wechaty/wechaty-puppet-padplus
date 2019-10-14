@@ -470,6 +470,10 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async messageContact (messageId: string): Promise<string> {
+    throw new Error(`not implement`)
+  }
+
   messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
     log.silly(PRE, `messageMiniProgram() messageId : ${util.inspect(messageId)}`)
     throw new Error('Method not implemented.')
@@ -669,7 +673,7 @@ export class PuppetPadplus extends Puppet {
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
     const payload = {
-      des: description,
+      description,
       thumburl: thumbnailUrl,
       title,
       type: 5,
