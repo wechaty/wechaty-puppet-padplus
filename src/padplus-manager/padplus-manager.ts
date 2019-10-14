@@ -400,6 +400,8 @@ export class PadplusManager extends EventEmitter {
                   uin,
                   wxid,
                 }
+                this.emit('scan', '', scanData.status)
+
                 if (this.padplusUser) {
                   await this.padplusUser.getWeChatQRCode(data)
                 }
