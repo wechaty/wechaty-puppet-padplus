@@ -30,10 +30,10 @@ npm install wechaty
 
 ### 3. Install wechaty-puppet-padplus
 
-> Notice: wechaty-puppet-padplus still in alpha test period, so we keep updating the package, you should install the next packge by using `@next` until we release the stable package.
+> Notice: wechaty-puppet-padplus still in alpha test period, so we keep updating the package, you should install the latest packge by using `@latest` until we release the stable package.
 
 ```js
-npm install wechaty-puppet-padplus@next
+npm install wechaty-puppet-padplus@latest
 ```
 
 ### 4. Install other dependency
