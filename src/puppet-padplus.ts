@@ -39,6 +39,7 @@ import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
+import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -434,7 +435,13 @@ export class PuppetPadplus extends Puppet {
         }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
-          return FileBox.fromUrl(rawPayload.url)
+          const fileBox = FileBox.fromUrl(rawPayload.url)
+          const contentXML = rawPayload.content
+          const content = await xmlToJson(contentXML)
+          fileBox.metadata = {
+            voiceLength: content.msg.voicemsg.$.voicelength / 1000,
+          }
+          return fileBox
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
