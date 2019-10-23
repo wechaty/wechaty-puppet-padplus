@@ -643,6 +643,15 @@ export class PadplusManager extends EventEmitter {
             CallbackPool.Instance.removeCallback(contact.wxid)
           }
           break
+        case ResponseType.ROOM_QRCODE:
+          const roomQrcodeStr = data.getData()
+          if (roomQrcodeStr) {
+            const qrcodeData = JSON.parse(roomQrcodeStr)
+            const callback = CallbackPool.Instance.getCallback(qrcodeData.chatRoomName)
+            callback && callback(data)
+            CallbackPool.Instance.removeCallback(qrcodeData.chatRoomName)
+          }
+          break
         case ResponseType.ROOM_MEMBER_LIST :
           const roomMembersStr = data.getData()
           if (roomMembersStr) {
@@ -721,7 +730,7 @@ export class PadplusManager extends EventEmitter {
           const mediaDataStr = data.getData()
           if (mediaDataStr) {
             const mediaData = JSON.parse(mediaDataStr)
-            const callback = await CallbackPool.Instance.getCallback(mediaData.msgId)
+            const callback = CallbackPool.Instance.getCallback(mediaData.msgId)
             callback && callback(data)
             CallbackPool.Instance.removeCallback(mediaData.msgId)
           }
@@ -730,7 +739,7 @@ export class PadplusManager extends EventEmitter {
           const requestId = data.getRequestid()
           const responseData = data.getData()
           if (responseData) {
-            const callback = await CallbackPool.Instance.getCallback(requestId!)
+            const callback = CallbackPool.Instance.getCallback(requestId!)
             callback && callback(data)
           }
           break
@@ -946,6 +955,14 @@ export class PadplusManager extends EventEmitter {
         resolve()
       })
     })
+  }
+
+  public async getRoomQrcode (roomId: string): Promise<string> {
+    if (!this.padplusRoom) {
+      throw new Error(`no padplusRoom`)
+    }
+    const qrcodeBuf = this.padplusRoom.getRoomQrcode(roomId)
+    return qrcodeBuf
   }
 
   public async getRoomIdList ():Promise<string[]> {
