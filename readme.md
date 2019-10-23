@@ -45,25 +45,28 @@ npm install qrcode-terminal
 ## Example
 
 ```js
-import { Wechaty       } from 'wechaty';
-import { PuppetPadplus } from 'wechaty-puppet-padplus';
-import { generate      } from 'qrcode-terminal';
+import { Wechaty       } from 'wechaty'
+import { PuppetPadplus } from 'wechaty-puppet-padplus'
+import { generate      } from 'qrcode-terminal'
 
-const token = 'your-token';
+const token = 'your-token'
 
 const puppet = new PuppetPadplus({
   token,
 })
 
+const name  = 'your-bot-name'
+
 const bot = new Wechaty({
   puppet,
-});
+  name, // generate xxxx.memory-card.json and save login data for the next login
+})
 
 bot
   .on('scan', (qrcode) => {
     generate(qrcode, {
       small: true
-    });
+    })
   })
   .on('message', msg => {
     console.log(`msg : ${msg}`)
