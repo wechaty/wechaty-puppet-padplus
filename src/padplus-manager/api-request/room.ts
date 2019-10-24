@@ -81,6 +81,31 @@ export class PadplusRoom {
     })
   }
 
+  public getRoomQrcode = async (roomId: string): Promise<string> => {
+    log.verbose(PRE, `getRoomQrcode(${roomId})`)
+
+    const data = {
+      roomId,
+    }
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.GET_ROOM_QRCODE,
+      data,
+    })
+
+    if (res) {
+      const roomQrcodeDataStr = res.getData()
+      if (roomQrcodeDataStr) {
+        const roomQrcodeData = JSON.parse(roomQrcodeDataStr)
+        return roomQrcodeData.qrcodeBuf
+      } else {
+        throw new Error(`can not parse room qrcode data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get room qrcode response from grpc server`)
+    }
+  }
+
   public setAnnouncement = async (roomId: string, announcement: string): Promise<void> => {
     log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 

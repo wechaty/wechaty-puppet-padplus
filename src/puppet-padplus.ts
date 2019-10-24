@@ -964,9 +964,13 @@ export class PuppetPadplus extends Puppet {
     await this.roomTopic(roomId)
   }
 
-  roomQrcode (roomId: string): Promise<string> {
+  async roomQrcode (roomId: string): Promise<string> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error('Method not implemented.')
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const roomQrcode = await this.manager.getRoomQrcode(roomId)
+    return roomQrcode
   }
 
   async roomList (): Promise<string[]> {

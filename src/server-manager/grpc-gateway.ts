@@ -35,6 +35,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.GET_ROOM_ANNOUNCEMENT,
   ApiType.SET_ROOM_ANNOUNCEMENT,
   ApiType.HEARTBEAT,
+  ApiType.GET_ROOM_QRCODE,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
@@ -218,6 +219,18 @@ export class GrpcGateway extends EventEmitter {
               reject(new Error('GET_MESSAGE_MEDIA request timeout'))
             }, 5 * 60 * 1000)
             CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
+              clearTimeout(timeout)
+              this.timeoutNumber = 0
+              resolve(data)
+            })
+          })
+        } else if (apiType === ApiType.GET_ROOM_QRCODE) {
+          return new Promise<StreamResponse>((resolve, reject) => {
+            const timeout = setTimeout(async () => {
+              await this.checkTimeout(uin)
+              reject(new Error('GET_ROOM_QRCODE request timeout'))
+            }, 5000)
+            CallbackPool.Instance.pushCallbackToPool(data.roomId, (data: StreamResponse) => {
               clearTimeout(timeout)
               this.timeoutNumber = 0
               resolve(data)
