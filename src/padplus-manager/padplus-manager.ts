@@ -484,7 +484,7 @@ export class PadplusManager extends EventEmitter {
                 this.cacheManager = CacheManager.Instance
 
                 const contactSelf: PadplusContactPayload = {
-                  alias: '',
+                  alias: wechatUser.alias,
                   bigHeadUrl: wechatUser.headImgUrl,
                   city: '',
                   contactFlag: 3,
