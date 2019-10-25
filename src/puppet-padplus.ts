@@ -37,7 +37,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
@@ -436,7 +436,12 @@ export class PuppetPadplus extends Puppet {
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
           const fileBox = FileBox.fromUrl(rawPayload.url)
-          const contentXML = rawPayload.content
+          let contentXML
+          if (isRoomId(rawPayload.fromUserName)) {
+            contentXML = rawPayload.content.split(':\n')[1]
+          } else {
+            contentXML = rawPayload.content
+          }
           const content = await xmlToJson(contentXML)
           fileBox.metadata = {
             voiceLength: content.msg.voicemsg.$.voicelength / 1000,
