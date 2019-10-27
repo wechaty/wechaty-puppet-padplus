@@ -61,13 +61,14 @@ export class GrpcGateway extends EventEmitter {
     name: string,
   ): Promise<GrpcEventEmitter> {
     if (!this._instance) {
-      this._instance = new GrpcGateway(token, endpoint)
-      await this._instance.initSelf()
-    }
-    if (!this._instance.isAlive) {
+      const instance = new GrpcGateway(token, endpoint)
+      await instance.initSelf()
+      this._instance = instance
+    } else if (!this._instance.isAlive) {
       await this._instance.stop()
-      this._instance = new GrpcGateway(token, endpoint)
-      await this._instance.initSelf()
+      const instance = new GrpcGateway(token, endpoint)
+      await instance.initSelf()
+      this._instance = instance
     }
 
     return this._instance.addNewInstance(name)
@@ -127,7 +128,7 @@ export class GrpcGateway extends EventEmitter {
       }
     })
 
-    this.throttleQueue = new ThrottleQueue(30 * 1000)
+    this.throttleQueue = new ThrottleQueue(3 * 1000)
     this.throttleQueueSubscription = this.throttleQueue.subscribe((data) => {
       log.silly(PRE, `throttleQueue emit heartbeat.`)
       Object.values(this.eventEmitterMap).map(emitter => {
@@ -449,9 +450,9 @@ export class GrpcGateway extends EventEmitter {
         log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
       }
-      if (GrpcGateway._instance && GrpcGateway._instance.debounceQueue && GrpcGateway._instance.throttleQueue) {
-        GrpcGateway._instance.debounceQueue.next(data)
-        GrpcGateway._instance.throttleQueue.next(data)
+      if (this.debounceQueue && this.throttleQueue) {
+        this.debounceQueue.next(data)
+        this.throttleQueue.next(data)
       }
       let message = ''
       const _data = data.getData()
