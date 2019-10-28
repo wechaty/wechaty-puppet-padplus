@@ -557,6 +557,9 @@ export class PadplusManager extends EventEmitter {
           if (roomRawData) {
             const _data = JSON.parse(roomRawData)
             if (!isRoomId(_data.UserName)) {
+              if (_data.Type7) {
+                log.warn(`This id is not the wxid, please use the wxid to load Contact, otherwise it will make some mistake that unknow.`)
+              }
               const contactData: GrpcContactPayload = _data
               const contact = convertFromGrpcContact(contactData, true)
               if (this.cacheManager) {
