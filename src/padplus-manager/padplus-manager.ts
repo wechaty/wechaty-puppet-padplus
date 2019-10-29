@@ -638,21 +638,19 @@ export class PadplusManager extends EventEmitter {
           CallbackPool.Instance.removeCallback(data.getRequestid()!)
           break
         case ResponseType.CONTACT_SEARCH :
-          const contactStr = data.getData()
-          if (contactStr) {
-            const contact: GrpcSearchContact = JSON.parse(contactStr)
-            const searchContactCallback = CallbackPool.Instance.getCallback(contact.wxid)
+          const searchContactTraceId = data.getTraceid()
+          if (searchContactTraceId) {
+            const searchContactCallback = CallbackPool.Instance.getCallback(searchContactTraceId)
             searchContactCallback && searchContactCallback(data)
-            CallbackPool.Instance.removeCallback(contact.wxid)
+            CallbackPool.Instance.removeCallback(searchContactTraceId)
           }
           break
         case ResponseType.ROOM_QRCODE:
-          const roomQrcodeStr = data.getData()
-          if (roomQrcodeStr) {
-            const qrcodeData = JSON.parse(roomQrcodeStr)
-            const callback = CallbackPool.Instance.getCallback(qrcodeData.chatRoomName)
+          const roomQrcodeTraceId = data.getTraceid()
+          if (roomQrcodeTraceId) {
+            const callback = CallbackPool.Instance.getCallback(roomQrcodeTraceId)
             callback && callback(data)
-            CallbackPool.Instance.removeCallback(qrcodeData.chatRoomName)
+            CallbackPool.Instance.removeCallback(roomQrcodeTraceId)
           }
           break
         case ResponseType.ROOM_MEMBER_LIST :
@@ -730,12 +728,13 @@ export class PadplusManager extends EventEmitter {
           // TODO: not support now
           break
         case ResponseType.MESSAGE_MEDIA_SRC :
-          const mediaDataStr = data.getData()
-          if (mediaDataStr) {
-            const mediaData = JSON.parse(mediaDataStr)
-            const callback = CallbackPool.Instance.getCallback(mediaData.msgId)
+          const traceId = data.getTraceid()
+          if (traceId) {
+            const callback = CallbackPool.Instance.getCallback(traceId)
             callback && callback(data)
-            CallbackPool.Instance.removeCallback(mediaData.msgId)
+            CallbackPool.Instance.removeCallback(traceId)
+          } else {
+            log.silly(PRE, `can not get trace id`)
           }
           break
         case ResponseType.REQUEST_RESPONSE :
@@ -1091,7 +1090,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
-    await this.padplusRoom.setAnnouncement(roomId, announcement)
+    return this.padplusRoom.setAnnouncement(roomId, announcement)
   }
 
   public async getAnnouncement (

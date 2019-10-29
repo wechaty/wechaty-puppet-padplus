@@ -209,88 +209,47 @@ export class GrpcGateway extends EventEmitter {
     request.setApitype(apiType)
     request.setParams(JSON.stringify(data))
     request.setRequestid(requestId)
+    const traceId = uuid()
+    request.setTraceid(traceId)
 
     try {
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        if (apiType === ApiType.GET_MESSAGE_MEDIA) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(async () => {
+        // TODO: add timeout for differ ApiType
+        return new Promise<StreamResponse>((resolve, reject) => {
+          let timeoutMs = 5 * 1000
+          switch (apiType) {
+            case ApiType.SEND_MESSAGE:
+            case ApiType.SEND_FILE:
+              timeoutMs = 3 * 60 * 1000
+              break
+            case ApiType.CREATE_ROOM:
+              timeoutMs = 1 * 60 * 1000
+              break
+            default:
+              timeoutMs = 5 * 1000
+              break
+          }
+          const timeout = setTimeout(async () => {
+            if (apiType !== ApiType.HEARTBEAT) {
               await this.checkTimeout(uin)
-              reject(new Error('GET_MESSAGE_MEDIA request timeout'))
-            }, 5 * 60 * 1000)
-            CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else if (apiType === ApiType.GET_ROOM_QRCODE) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(async () => {
-              await this.checkTimeout(uin)
-              reject(new Error('GET_ROOM_QRCODE request timeout'))
-            }, 5000)
-            CallbackPool.Instance.pushCallbackToPool(data.roomId, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else if (apiType === ApiType.SEARCH_CONTACT) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(async () => {
-              await this.checkTimeout(uin)
-              reject(new Error('SEARCH_CONTACT request timeout'))
-            }, 5000)
-            CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else if (apiType === ApiType.ADD_CONTACT) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(async () => {
-              await this.checkTimeout(uin)
-              reject(new Error('ADD_CONTACT request timeout'))
-            }, 60 * 1000)
-            CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            let timeoutMs = 5 * 1000
-            switch (apiType) {
-              case ApiType.SEND_MESSAGE:
-              case ApiType.SEND_FILE:
-                timeoutMs = 3 * 60 * 1000
-                break
-              case ApiType.CREATE_ROOM:
-                timeoutMs = 1 * 60 * 1000
-                break
-              default:
-                timeoutMs = 5 * 1000
-                break
             }
-            const timeout = setTimeout(async () => {
-              if (apiType !== ApiType.HEARTBEAT) {
-                await this.checkTimeout(uin)
-              }
-              reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
-            }, timeoutMs)
-            CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            reject(new Error(`ApiType: ${apiType} request timeout, traceId: ${traceId}`))
+          }, timeoutMs)
+          CallbackPool.Instance.pushCallbackToPool(traceId, (data: StreamResponse) => {
+            const _traceId = data.getTraceid()
+            if (!_traceId) {
+              log.error(PRE, `Can not get trace id by type: ${apiType}`)
+            }
+            if (traceId === _traceId) {
               clearTimeout(timeout)
               if (apiType !== ApiType.HEARTBEAT) {
                 this.timeoutNumber = 0
               }
               resolve(data)
-            })
+            }
           })
-        }
+        })
       }
     } catch (err) {
       await new Promise(resolve => setTimeout(resolve, 5000))
@@ -443,7 +402,7 @@ export class GrpcGateway extends EventEmitter {
       })
     })
     stream.on('data', async (data: StreamResponse) => {
-      const requestId = data.getRequestid()
+      const traceId = data.getTraceid()
       const responseType = data.getResponsetype()
       if (responseType !== ResponseType.LOGIN_QRCODE) {
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
@@ -476,22 +435,22 @@ export class GrpcGateway extends EventEmitter {
           emitter.emit('INVALID_TOKEN')
         })
       }
-      if (requestId) {
-        let callback = CallbackPool.Instance.getCallback(requestId)
+      if (traceId) {
+        let callback = CallbackPool.Instance.getCallback(traceId)
 
         if (callback) {
           callback(data)
-          CallbackPool.Instance.removeCallback(requestId)
+          CallbackPool.Instance.removeCallback(traceId)
         } else {
           await new Promise(resolve => {
             setTimeout(resolve, 500)
           })
           try {
-            callback = CallbackPool.Instance.getCallback(requestId)
+            callback = CallbackPool.Instance.getCallback(traceId)
             callback(data)
-            CallbackPool.Instance.removeCallback(requestId)
+            CallbackPool.Instance.removeCallback(traceId)
           } catch (error) {
-            throw new Error(`can not find callback by requestId : ${requestId}`)
+            throw new Error(`can not find callback by traceId : ${traceId}`)
           }
         }
       } else {

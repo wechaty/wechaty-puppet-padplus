@@ -106,7 +106,7 @@ export class PadplusRoom {
     }
   }
 
-  public setAnnouncement = async (roomId: string, announcement: string): Promise<void> => {
+  public setAnnouncement = async (roomId: string, announcement: string): Promise<string> => {
     log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 
     const data = {
@@ -125,6 +125,7 @@ export class PadplusRoom {
         if (announcementData.status !== 0) { // status: -2025 '仅群主可编辑群公告。'
           throw new Error(`set announcement failed.`)
         }
+        return announcementData.content
       } else {
         throw new Error(`can not parse announcement data from grpc`)
       }

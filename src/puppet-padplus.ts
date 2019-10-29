@@ -1035,7 +1035,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     if (text) {
-      await this.manager.setAnnouncement(roomId, text)
+      return this.manager.setAnnouncement(roomId, text)
     } else {
       return this.manager.getAnnouncement(roomId)
     }
