@@ -223,7 +223,13 @@ export class GrpcGateway extends EventEmitter {
             case ApiType.SEND_FILE:
               timeoutMs = 3 * 60 * 1000
               break
+            case ApiType.GET_MESSAGE_MEDIA:
+              timeoutMs = 5 * 60 * 1000
+              break
+            case ApiType.SEARCH_CONTACT:
+            case ApiType.ADD_CONTACT:
             case ApiType.CREATE_ROOM:
+            case ApiType.GET_ROOM_QRCODE:
               timeoutMs = 1 * 60 * 1000
               break
             default:
