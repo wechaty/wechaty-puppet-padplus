@@ -442,7 +442,7 @@ export class PadplusManager extends EventEmitter {
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
-              alias: '',
+              alias: loginData.alias,
               bigHeadUrl: loginData.headImgUrl,
               city: '',
               contactFlag: 3,
