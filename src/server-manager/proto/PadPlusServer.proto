@@ -42,6 +42,7 @@ message RequestObject {
     required string token = 20;
     required ApiType apiType = 30;
     optional string params = 40;
+    optional string traceId = 50;
 }
 
 message ResponseObject {
@@ -83,6 +84,7 @@ message StreamResponse {
     optional string requestId = 10;
     required string data = 20;
     required ResponseType responseType = 30;
+    optional string traceId = 40;
 }
 
 service PadPlusServer {
