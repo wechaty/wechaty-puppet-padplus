@@ -350,7 +350,7 @@ proto.PadPlusServer.RequestObject.prototype.hasParams = function() {
 
 
 /**
- * required string traceId = 50;
+ * optional string traceId = 50;
  * @return {string}
  */
 proto.PadPlusServer.RequestObject.prototype.getTraceid = function() {
@@ -982,7 +982,7 @@ proto.PadPlusServer.StreamResponse.prototype.hasResponsetype = function() {
 
 
 /**
- * required string traceId = 40;
+ * optional string traceId = 40;
  * @return {string}
  */
 proto.PadPlusServer.StreamResponse.prototype.getTraceid = function() {
