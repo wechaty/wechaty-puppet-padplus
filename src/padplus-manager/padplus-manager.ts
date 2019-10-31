@@ -48,7 +48,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId, isStrangerV1, isContactId } from '../pure-function-helpers'
+import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
@@ -283,7 +283,7 @@ export class PadplusManager extends EventEmitter {
     const contactTotal = await this.cacheManager.getContactCount()
     const roomTotal = await this.cacheManager.getRoomCount()
     const friendTotal = (await this.cacheManager.getAllContacts()).filter(contact => {
-      isStrangerV1(contact.stranger)
+      return contact.contactFlag !== 0
     }).length
     const now = new Date().getTime()
     if (this.contactAndRoomData) {
@@ -328,15 +328,11 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('heartbeat', async (data: any) => {
-      // TODO 数据同步后，需要停止该函数的执行
-      if (!this.contactAndRoomData) {
-        await this.setContactAndRoomData()
-      } else {
-        if (!this.contactAndRoomData.readyEmitted) {
-          await this.setContactAndRoomData()
-        }
-      }
       this.emit('heartbeat', data)
+      // TODO: 数据同步后，需要停止该函数的执行
+      if (!this.contactAndRoomData || !this.contactAndRoomData.readyEmitted) {
+        await this.setContactAndRoomData()
+      }
     })
 
     grpcGatewayEmitter.on('EXPIRED_TOKEN', async () => {
@@ -359,7 +355,7 @@ export class PadplusManager extends EventEmitter {
             const qrcodeData = JSON.parse(qrcodeRawData)
             grpcGatewayEmitter.setQrcodeId(qrcodeData.qrcodeId)
 
-            const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
             this.qrcodeStatus = ScanStatus.Cancel
@@ -442,7 +438,7 @@ export class PadplusManager extends EventEmitter {
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
-              alias: '',
+              alias: loginData.alias,
               bigHeadUrl: loginData.headImgUrl,
               city: '',
               contactFlag: 3,
@@ -484,7 +480,7 @@ export class PadplusManager extends EventEmitter {
                 this.cacheManager = CacheManager.Instance
 
                 const contactSelf: PadplusContactPayload = {
-                  alias: '',
+                  alias: wechatUser.alias,
                   bigHeadUrl: wechatUser.headImgUrl,
                   city: '',
                   contactFlag: 3,
@@ -558,6 +554,9 @@ export class PadplusManager extends EventEmitter {
             const _data = JSON.parse(roomRawData)
             if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
+              if (contactData.Type7) {
+                log.warn(`This id: ${contactData.UserName} is not wxid, using weixin instead of wxid will potentially cause system failure. To make sure everything works as excepted, please use the wxid to load Contact.`)
+              }
               const contact = convertFromGrpcContact(contactData, true)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
@@ -635,12 +634,19 @@ export class PadplusManager extends EventEmitter {
           CallbackPool.Instance.removeCallback(data.getRequestid()!)
           break
         case ResponseType.CONTACT_SEARCH :
-          const contactStr = data.getData()
-          if (contactStr) {
-            const contact: GrpcSearchContact = JSON.parse(contactStr)
-            const searchContactCallback = CallbackPool.Instance.getCallback(contact.wxid)
+          const searchContactTraceId = data.getTraceid()
+          if (searchContactTraceId) {
+            const searchContactCallback = CallbackPool.Instance.getCallback(searchContactTraceId)
             searchContactCallback && searchContactCallback(data)
-            CallbackPool.Instance.removeCallback(contact.wxid)
+            CallbackPool.Instance.removeCallback(searchContactTraceId)
+          }
+          break
+        case ResponseType.ROOM_QRCODE:
+          const roomQrcodeTraceId = data.getTraceid()
+          if (roomQrcodeTraceId) {
+            const callback = CallbackPool.Instance.getCallback(roomQrcodeTraceId)
+            callback && callback(data)
+            CallbackPool.Instance.removeCallback(roomQrcodeTraceId)
           }
           break
         case ResponseType.ROOM_MEMBER_LIST :
@@ -718,19 +724,20 @@ export class PadplusManager extends EventEmitter {
           // TODO: not support now
           break
         case ResponseType.MESSAGE_MEDIA_SRC :
-          const mediaDataStr = data.getData()
-          if (mediaDataStr) {
-            const mediaData = JSON.parse(mediaDataStr)
-            const callback = await CallbackPool.Instance.getCallback(mediaData.msgId)
+          const traceId = data.getTraceid()
+          if (traceId) {
+            const callback = CallbackPool.Instance.getCallback(traceId)
             callback && callback(data)
-            CallbackPool.Instance.removeCallback(mediaData.msgId)
+            CallbackPool.Instance.removeCallback(traceId)
+          } else {
+            log.silly(PRE, `can not get trace id`)
           }
           break
         case ResponseType.REQUEST_RESPONSE :
           const requestId = data.getRequestid()
           const responseData = data.getData()
           if (responseData) {
-            const callback = await CallbackPool.Instance.getCallback(requestId!)
+            const callback = CallbackPool.Instance.getCallback(requestId!)
             callback && callback(data)
           }
           break
@@ -948,6 +955,14 @@ export class PadplusManager extends EventEmitter {
     })
   }
 
+  public async getRoomQrcode (roomId: string): Promise<string> {
+    if (!this.padplusRoom) {
+      throw new Error(`no padplusRoom`)
+    }
+    const qrcodeBuf = this.padplusRoom.getRoomQrcode(roomId)
+    return qrcodeBuf
+  }
+
   public async getRoomIdList ():Promise<string[]> {
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
@@ -1071,7 +1086,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
-    await this.padplusRoom.setAnnouncement(roomId, announcement)
+    return this.padplusRoom.setAnnouncement(roomId, announcement)
   }
 
   public async getAnnouncement (

@@ -37,8 +37,9 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
+import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -434,7 +435,18 @@ export class PuppetPadplus extends Puppet {
         }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
-          return FileBox.fromUrl(rawPayload.url)
+          const fileBox = FileBox.fromUrl(rawPayload.url)
+          let contentXML
+          if (isRoomId(rawPayload.fromUserName)) {
+            contentXML = rawPayload.content.split(':\n')[1]
+          } else {
+            contentXML = rawPayload.content
+          }
+          const content = await xmlToJson(contentXML)
+          fileBox.metadata = {
+            voiceLength: content.msg.voicemsg.$.voicelength / 1000,
+          }
+          return fileBox
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
@@ -1081,9 +1093,13 @@ export class PuppetPadplus extends Puppet {
     await this.roomTopic(roomId)
   }
 
-  roomQrcode (roomId: string): Promise<string> {
+  async roomQrcode (roomId: string): Promise<string> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error('Method not implemented.')
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const roomQrcode = await this.manager.getRoomQrcode(roomId)
+    return roomQrcode
   }
 
   async roomList (): Promise<string[]> {
@@ -1143,7 +1159,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     if (text) {
-      await this.manager.setAnnouncement(roomId, text)
+      return this.manager.setAnnouncement(roomId, text)
     } else {
       return this.manager.getAnnouncement(roomId)
     }
