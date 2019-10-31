@@ -66,7 +66,6 @@ export async function contactMessageParser (rawPayload: PadplusMessagePayload): 
       username,
       nickname,
     } = jsonPayload.msg.$
-    log.silly(`jsonPayload : ${JSON.stringify(jsonPayload.msg)}`)
 
     return {
       bigheadimgurl,
