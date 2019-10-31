@@ -44,7 +44,6 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { contactMessageParser } from './pure-function-helpers/message-contact-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
-
 const PRE = 'PUPPET_PADPLUS'
 
 export class PuppetPadplus extends Puppet {
@@ -524,10 +523,6 @@ export class PuppetPadplus extends Puppet {
         throw new Error('Can not parse url message payload')
       }
     }
-  }
-
-  public async messageContact (messageId: string): Promise<string> {
-    throw new Error(`not implement`)
   }
 
   messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
