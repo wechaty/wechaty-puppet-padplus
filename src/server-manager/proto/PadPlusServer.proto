@@ -24,6 +24,7 @@ enum ApiType {
     CREATE_ROOM = 32;
     SET_ROOM_ANNOUNCEMENT = 33;
     GET_ROOM_ANNOUNCEMENT = 34;
+    GET_ROOM_QRCODE = 35;
 
     SEND_MESSAGE = 50;
     SEND_FILE = 51;
@@ -41,6 +42,7 @@ message RequestObject {
     required string token = 20;
     required ApiType apiType = 30;
     optional string params = 40;
+    optional string traceId = 50;
 }
 
 message ResponseObject {
@@ -70,6 +72,7 @@ enum ResponseType {
     ROOM_MEMBER_MODIFY = 24;
     CONTACT_SEARCH = 25;
     CONTACT_ADD = 26;
+    ROOM_QRCODE = 27;
 
     MESSAGE_RECEIVE = 30;
     STATUS_NOTIFY = 31;
@@ -81,6 +84,7 @@ message StreamResponse {
     optional string requestId = 10;
     required string data = 20;
     required ResponseType responseType = 30;
+    optional string traceId = 40;
 }
 
 service PadPlusServer {

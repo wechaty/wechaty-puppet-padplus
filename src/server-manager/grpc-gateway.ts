@@ -35,6 +35,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.GET_ROOM_ANNOUNCEMENT,
   ApiType.SET_ROOM_ANNOUNCEMENT,
   ApiType.HEARTBEAT,
+  ApiType.GET_ROOM_QRCODE,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
@@ -60,34 +61,14 @@ export class GrpcGateway extends EventEmitter {
     name: string,
   ): Promise<GrpcEventEmitter> {
     if (!this._instance) {
-      this._instance = new GrpcGateway(token, endpoint)
-      await this._instance.initSelf()
-
-      this._instance.debounceQueue = new DebounceQueue(30 * 1000)
-      this._instance.debounceQueueSubscription = this._instance.debounceQueue.subscribe(async () => {
-        try {
-          await this._instance!.keepHeartbeat()
-        } catch (e) {
-          log.silly(PRE, `debounce error : ${util.inspect(e)}`)
-        }
-
-      })
-
-      this._instance.throttleQueue = new ThrottleQueue(30 * 1000)
-      this._instance.throttleQueueSubscription = this._instance.throttleQueue.subscribe((data) => {
-        log.silly(PRE, `throttleQueue emit heartbeat.`)
-        Object.values(this._instance!.eventEmitterMap).map(emitter => {
-          emitter.emit('heartbeat', data.getRequestid())
-        })
-      })
-    }
-    if (!this._instance.isAlive) {
-      if (this._instance.stream) {
-        this._instance.stream.removeAllListeners()
-      }
-      this._instance.client.close()
-      this._instance = new GrpcGateway(token, endpoint)
-      await this._instance.initSelf()
+      const instance = new GrpcGateway(token, endpoint)
+      await instance.initSelf()
+      this._instance = instance
+    } else if (!this._instance.isAlive) {
+      await this._instance.stop()
+      const instance = new GrpcGateway(token, endpoint)
+      await instance.initSelf()
+      this._instance = instance
     }
 
     return this._instance.addNewInstance(name)
@@ -101,9 +82,6 @@ export class GrpcGateway extends EventEmitter {
       if (!res) {
         throw new Error(`no heartbeat response from grpc server`)
       }
-      Object.values(this.eventEmitterMap).map(emitter => {
-        emitter.emit('heartbeat', res.getRequestid())
-      })
     } catch (error) {
       log.error(`can not get heartbeat from grpc server`, error)
       Object.values(this.eventEmitterMap).map(emitter => {
@@ -115,27 +93,6 @@ export class GrpcGateway extends EventEmitter {
   public static async release () {
     if (this._instance) {
       await this._instance.stop()
-      if (!this._instance.throttleQueueSubscription
-        || !this._instance.debounceQueueSubscription
-      ) {
-        log.verbose(PRE, `releaseQueue() subscriptions have been released.`)
-      } else {
-        this._instance.throttleQueueSubscription.unsubscribe()
-        this._instance.debounceQueueSubscription.unsubscribe()
-
-        this._instance.throttleQueueSubscription = undefined
-        this._instance.debounceQueueSubscription = undefined
-      }
-
-      if (!this._instance.debounceQueue || !this._instance.throttleQueue) {
-        log.verbose(PRE, `releaseQueue() queues have been released.`)
-      } else {
-        this._instance.debounceQueue.unsubscribe()
-        this._instance.throttleQueue.unsubscribe()
-
-        this._instance.debounceQueue = undefined
-        this._instance.throttleQueue = undefined
-      }
       this._instance = undefined
     }
   }
@@ -162,6 +119,22 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private async initSelf () {
+    this.debounceQueue = new DebounceQueue(30 * 1000)
+    this.debounceQueueSubscription = this.debounceQueue.subscribe(async () => {
+      try {
+        await this.keepHeartbeat()
+      } catch (e) {
+        log.silly(PRE, `debounce error : ${util.inspect(e)}`)
+      }
+    })
+
+    this.throttleQueue = new ThrottleQueue(15 * 1000)
+    this.throttleQueueSubscription = this.throttleQueue.subscribe((data) => {
+      log.silly(PRE, `throttleQueue emit heartbeat.`)
+      Object.values(this.eventEmitterMap).map(emitter => {
+        emitter.emit('heartbeat', data.getRequestid())
+      })
+    })
     await this.initGrpcGateway()
     this.isAlive = true
   }
@@ -208,6 +181,23 @@ export class GrpcGateway extends EventEmitter {
     return this
   }
 
+  private async checkTimeout (uin: string) {
+    if (this.timeoutNumber > 10 && Date.now() - this.startTime <= 3 * 60 * 1000) {
+      await this.request(
+        ApiType.RECONNECT,
+        uin,
+      )
+      this.startTime = Date.now()
+      this.timeoutNumber = 0
+    } else if (this.timeoutNumber === 0) {
+      this.startTime = Date.now()
+    } else if (Date.now() - this.startTime > 3 * 60 * 1000) {
+      this.startTime = Date.now()
+      this.timeoutNumber = 0
+    }
+    this.timeoutNumber++
+  }
+
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {
     const request = new RequestObject()
     const requestId = uuid()
@@ -219,89 +209,53 @@ export class GrpcGateway extends EventEmitter {
     request.setApitype(apiType)
     request.setParams(JSON.stringify(data))
     request.setRequestid(requestId)
+    const traceId = uuid()
+    request.setTraceid(traceId)
 
     try {
-      if (this.timeoutNumber > 10 && Date.now() - this.startTime <= 3 * 60 * 1000) {
-        await this.request(
-          ApiType.RECONNECT,
-          uin,
-        )
-        this.startTime = Date.now()
-        this.timeoutNumber = 0
-      } else if (this.timeoutNumber === 0) {
-        this.startTime = Date.now()
-      } else if (Date.now() - this.startTime > 3 * 60 * 1000) {
-        this.startTime = Date.now()
-        this.timeoutNumber = 0
-      }
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        if (apiType === ApiType.GET_MESSAGE_MEDIA) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.timeoutNumber++
-              reject(new Error('GET_MESSAGE_MEDIA request timeout'))
-            }, 5 * 60 * 1000)
-            CallbackPool.Instance.pushCallbackToPool(data.msgId, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else if (apiType === ApiType.SEARCH_CONTACT) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.timeoutNumber++
-              reject(new Error('SEARCH_CONTACT request timeout'))
-            }, 5000)
-            CallbackPool.Instance.pushCallbackToPool(data.wxid, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else if (apiType === ApiType.ADD_CONTACT) {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              this.timeoutNumber++
-              reject(new Error('ADD_CONTACT request timeout'))
-            }, 60 * 1000)
-            CallbackPool.Instance.pushCallbackToPool(data.userName, (data: StreamResponse) => {
-              clearTimeout(timeout)
-              this.timeoutNumber = 0
-              resolve(data)
-            })
-          })
-        } else {
-          return new Promise<StreamResponse>((resolve, reject) => {
-            let timeoutMs = 5 * 1000
-            switch (apiType) {
-              case ApiType.SEND_MESSAGE:
-              case ApiType.SEND_FILE:
-                timeoutMs = 3 * 60 * 1000
-                break
-              case ApiType.CREATE_ROOM:
-                timeoutMs = 1 * 60 * 1000
-                break
-              default:
-                timeoutMs = 5 * 1000
-                break
+        // TODO: add timeout for differ ApiType
+        return new Promise<StreamResponse>((resolve, reject) => {
+          let timeoutMs = 5 * 1000
+          switch (apiType) {
+            case ApiType.SEND_MESSAGE:
+            case ApiType.SEND_FILE:
+              timeoutMs = 3 * 60 * 1000
+              break
+            case ApiType.GET_MESSAGE_MEDIA:
+              timeoutMs = 5 * 60 * 1000
+              break
+            case ApiType.SEARCH_CONTACT:
+            case ApiType.ADD_CONTACT:
+            case ApiType.CREATE_ROOM:
+            case ApiType.GET_ROOM_QRCODE:
+              timeoutMs = 1 * 60 * 1000
+              break
+            default:
+              timeoutMs = 5 * 1000
+              break
+          }
+          const timeout = setTimeout(async () => {
+            if (apiType !== ApiType.HEARTBEAT) {
+              await this.checkTimeout(uin)
             }
-            const timeout = setTimeout(() => {
-              if (apiType !== ApiType.HEARTBEAT) {
-                this.timeoutNumber++
-              }
-              reject(new Error(`ApiType: ${apiType} request timeout, requestId: ${requestId}`))
-            }, timeoutMs)
-            CallbackPool.Instance.pushCallbackToPool(requestId, (data: StreamResponse) => {
+            reject(new Error(`ApiType: ${apiType} request timeout, traceId: ${traceId}`))
+          }, timeoutMs)
+          CallbackPool.Instance.pushCallbackToPool(traceId, (data: StreamResponse) => {
+            const _traceId = data.getTraceid()
+            if (!_traceId) {
+              log.error(PRE, `Can not get trace id by type: ${apiType}`)
+            }
+            if (traceId === _traceId) {
               clearTimeout(timeout)
               if (apiType !== ApiType.HEARTBEAT) {
                 this.timeoutNumber = 0
               }
               resolve(data)
-            })
+            }
           })
-        }
+        })
       }
     } catch (err) {
       await new Promise(resolve => setTimeout(resolve, 5000))
@@ -347,12 +301,33 @@ export class GrpcGateway extends EventEmitter {
       this.stream.destroy()
       this.stream.removeAllListeners()
     }
+    this.client.close()
 
     this.stopping = true
     try {
       await this.request(ApiType.CLOSE, '')
     } catch (error) {
       log.error(PRE, `error : ${util.inspect(error)}`)
+    }
+
+    if (!this.throttleQueueSubscription || !this.debounceQueueSubscription) {
+      log.verbose(PRE, `releaseQueue() subscriptions have been released.`)
+    } else {
+      this.throttleQueueSubscription.unsubscribe()
+      this.debounceQueueSubscription.unsubscribe()
+
+      this.throttleQueueSubscription = undefined
+      this.debounceQueueSubscription = undefined
+    }
+
+    if (!this.debounceQueue || !this.throttleQueue) {
+      log.verbose(PRE, `releaseQueue() queues have been released.`)
+    } else {
+      this.debounceQueue.unsubscribe()
+      this.throttleQueue.unsubscribe()
+
+      this.debounceQueue = undefined
+      this.throttleQueue = undefined
     }
   }
 
@@ -433,16 +408,16 @@ export class GrpcGateway extends EventEmitter {
       })
     })
     stream.on('data', async (data: StreamResponse) => {
-      const requestId = data.getRequestid()
+      const traceId = data.getTraceid()
       const responseType = data.getResponsetype()
-      if (responseType !== ResponseType.LOGIN_QRCODE) {
+      if (responseType !== ResponseType.LOGIN_QRCODE && responseType !== ResponseType.ROOM_QRCODE) {
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
       }
-      if (GrpcGateway._instance && GrpcGateway._instance.debounceQueue && GrpcGateway._instance.throttleQueue) {
-        GrpcGateway._instance.debounceQueue.next(data)
-        GrpcGateway._instance.throttleQueue.next(data)
+      if (this.debounceQueue && this.throttleQueue) {
+        this.debounceQueue.next(data)
+        this.throttleQueue.next(data)
       }
       let message = ''
       const _data = data.getData()
@@ -466,22 +441,22 @@ export class GrpcGateway extends EventEmitter {
           emitter.emit('INVALID_TOKEN')
         })
       }
-      if (requestId) {
-        let callback = CallbackPool.Instance.getCallback(requestId)
+      if (traceId) {
+        let callback = CallbackPool.Instance.getCallback(traceId)
 
         if (callback) {
           callback(data)
-          CallbackPool.Instance.removeCallback(requestId)
+          CallbackPool.Instance.removeCallback(traceId)
         } else {
           await new Promise(resolve => {
             setTimeout(resolve, 500)
           })
           try {
-            callback = CallbackPool.Instance.getCallback(requestId)
+            callback = CallbackPool.Instance.getCallback(traceId)
             callback(data)
-            CallbackPool.Instance.removeCallback(requestId)
+            CallbackPool.Instance.removeCallback(traceId)
           } catch (error) {
-            throw new Error(`can not find callback by requestId : ${requestId}`)
+            throw new Error(`can not find callback by traceId : ${traceId}`)
           }
         }
       } else {
