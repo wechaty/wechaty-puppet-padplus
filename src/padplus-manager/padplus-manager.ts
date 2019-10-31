@@ -48,7 +48,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId, isStrangerV1, isContactId } from '../pure-function-helpers'
+import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
@@ -283,7 +283,7 @@ export class PadplusManager extends EventEmitter {
     const contactTotal = await this.cacheManager.getContactCount()
     const roomTotal = await this.cacheManager.getRoomCount()
     const friendTotal = (await this.cacheManager.getAllContacts()).filter(contact => {
-      isStrangerV1(contact.stranger)
+      return contact.contactFlag !== 0
     }).length
     const now = new Date().getTime()
     if (this.contactAndRoomData) {
@@ -328,15 +328,11 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('heartbeat', async (data: any) => {
-      // TODO 数据同步后，需要停止该函数的执行
-      if (!this.contactAndRoomData) {
-        await this.setContactAndRoomData()
-      } else {
-        if (!this.contactAndRoomData.readyEmitted) {
-          await this.setContactAndRoomData()
-        }
-      }
       this.emit('heartbeat', data)
+      // TODO: 数据同步后，需要停止该函数的执行
+      if (!this.contactAndRoomData || !this.contactAndRoomData.readyEmitted) {
+        await this.setContactAndRoomData()
+      }
     })
 
     grpcGatewayEmitter.on('EXPIRED_TOKEN', async () => {
@@ -359,7 +355,7 @@ export class PadplusManager extends EventEmitter {
             const qrcodeData = JSON.parse(qrcodeRawData)
             grpcGatewayEmitter.setQrcodeId(qrcodeData.qrcodeId)
 
-            const fileBox = await FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
+            const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBoxToQrcode(fileBox)
             this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
             this.qrcodeStatus = ScanStatus.Cancel
