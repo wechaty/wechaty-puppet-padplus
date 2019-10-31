@@ -68,6 +68,7 @@ export interface PadplusAppMessagePayload {
 }
 
 export interface PadplusContactMessagePayload {
+  antispamticket: string,
   bigheadimgurl: string,
   smallheadimgurl: string,
   username: string,

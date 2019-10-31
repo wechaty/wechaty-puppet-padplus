@@ -32,6 +32,7 @@ test('receive contact message in room message', async t => {
     wechatUserName: 'wxid_e2lc33auu61g22',
   }
   const EXPECTED_MESSAGE_CONTACT_PAYLOAD_SYS: PadplusContactMessagePayload = {
+    antispamticket: 'v2_a5116bee322c36fb208926ef865919c3c7e4adaf0189886e18e1c87cb718e9a43c63b7af34d47cd313aec1860802b218f1fc3e4555dc4695c32e5c70aacfe854980da2b0e71e8d168c372caa6a387b5847f1db4ac1323acaf6b5bf29a3c3c3e0beeaad57f429061b6f0bf1140a598b36db9c845f62fec6ae0f5b2b0603cadd7970b6fa52af5fe0b43f73ee5be1e0d96802a0e6942445f400f2dc47c6cb439079317b1fc43afc0cd8ca05e789362e0156ec1ed4af498684c7e24e93c7510559a0@stranger',
     bigheadimgurl: 'http://wx.qlogo.cn/mmhead/ver_1/zCfGeL3u8WU2k0SFoibXfwV7XmGTJhjdR58FoF2icgkd9icRcCicSpmbibzVMbmMzfM8niaot7jGoFbuicGgQlodxQmrWgsV0ianN7VZibRjAyFKBlQs/0',
     nickname: '百年-句子技术支持',
     smallheadimgurl: 'http://wx.qlogo.cn/mmhead/ver_1/zCfGeL3u8WU2k0SFoibXfwV7XmGTJhjdR58FoF2icgkd9icRcCicSpmbibzVMbmMzfM8niaot7jGoFbuicGgQlodxQmrWgsV0ianN7VZibRjAyFKBlQs/132',
@@ -67,6 +68,7 @@ test('receive contact message in private message', async t => {
     wechatUserName: 'wxid_e2lc33auu61g22',
   }
   const EXPECTED_MESSAGE_CONTACT_PAYLOAD_SYS: PadplusContactMessagePayload = {
+    antispamticket: 'v2_a5116bee322c36fb208926ef865919c392983de77f98a768e0ba45d9fc0fe5b64d764d4dd84af6d80fc5548b05ee7621c136544c2e0da1f0174e9cd7eda9568607de85ff36823aa4faf5d638e25a8ed3f4877407dd447571bf7287d156926e9043dc3df2d896cf5558ed8fd3c85674f18dbf8fdddc17c8366346e44a8165e2e76282bb1f00f8afb70b8e164b2bca65a4e24eb2fafa88a0b90988445625692360ec970d5cfdd67603276affb04d7805ab27530f787b62912be6f80abf2f3c0192@stranger',
     bigheadimgurl: 'http://wx.qlogo.cn/mmhead/ver_1/zCfGeL3u8WU2k0SFoibXfwV7XmGTJhjdR58FoF2icgkd9icRcCicSpmbibzVMbmMzfM8niaot7jGoFbuicGgQlodxQmrWgsV0ianN7VZibRjAyFKBlQs/0',
     nickname: '百年-句子技术支持',
     smallheadimgurl: 'http://wx.qlogo.cn/mmhead/ver_1/zCfGeL3u8WU2k0SFoibXfwV7XmGTJhjdR58FoF2icgkd9icRcCicSpmbibzVMbmMzfM8niaot7jGoFbuicGgQlodxQmrWgsV0ianN7VZibRjAyFKBlQs/132',

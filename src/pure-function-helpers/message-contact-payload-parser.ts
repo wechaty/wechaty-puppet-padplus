@@ -19,6 +19,7 @@ export async function contactMessageParser (rawPayload: PadplusMessagePayload): 
   interface XmlSchema {
     msg: {
       $: {
+        antispamticket: string,
         bigheadimgurl: string,
         smallheadimgurl: string,
         username: string,
@@ -61,6 +62,7 @@ export async function contactMessageParser (rawPayload: PadplusMessagePayload): 
     const jsonPayload: XmlSchema = await xmlToJson(tryXmlText)
 
     const {
+      antispamticket,
       bigheadimgurl,
       smallheadimgurl,
       username,
@@ -68,6 +70,7 @@ export async function contactMessageParser (rawPayload: PadplusMessagePayload): 
     } = jsonPayload.msg.$
 
     return {
+      antispamticket,
       bigheadimgurl,
       nickname,
       smallheadimgurl,
