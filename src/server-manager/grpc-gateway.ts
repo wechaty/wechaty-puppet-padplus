@@ -128,7 +128,7 @@ export class GrpcGateway extends EventEmitter {
       }
     })
 
-    this.throttleQueue = new ThrottleQueue(3 * 1000)
+    this.throttleQueue = new ThrottleQueue(15 * 1000)
     this.throttleQueueSubscription = this.throttleQueue.subscribe((data) => {
       log.silly(PRE, `throttleQueue emit heartbeat.`)
       Object.values(this.eventEmitterMap).map(emitter => {
