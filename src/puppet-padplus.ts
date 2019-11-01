@@ -573,7 +573,7 @@ export class PuppetPadplus extends Puppet {
     }
     if (msgData.success) {
       const msgPayload: PadplusMessagePayload = {
-        content: text + (mentionIdList && mentionIdList.length > 0) ? mentionIdList!.toString() : '',
+        content: text + ((mentionIdList && mentionIdList.length > 0) ? mentionIdList!.toString() : ''),
         createTime: msgData.timestamp,
         fromUserName: this.selfId(),
         imgStatus: 0,
