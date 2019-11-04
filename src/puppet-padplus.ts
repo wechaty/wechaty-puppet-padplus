@@ -420,12 +420,14 @@ export class PuppetPadplus extends Puppet {
           src: rawPayload.url,
           toUserName: rawPayload.toUserName,
         }
-        const data = await this.manager.loadRichMediaData(mediaData)
-        if (data.src) {
-          const name = path.parse(data.src).base
-          return FileBox.fromUrl(encodeURI(data.src), name)
+        const loadDataFunc = () => {
+          return this.manager.loadRichMediaData(mediaData)
+        }
+        const data = await Queue.exec(loadDataFunc)
+        if (data && data.src) {
+          return FileBox.fromUrl(data.src)
         } else {
-          throw new Error(`can not get the media data`)
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
       case MessageType.Emoticon:
         if (rawPayload && rawPayload.url) {
