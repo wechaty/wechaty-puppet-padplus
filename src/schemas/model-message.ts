@@ -161,6 +161,9 @@ export interface PadplusUrlLink {
 }
 
 export interface PadplusMediaData {
+  content: string,
   msgId: string,
   src: string,
+  status: string,
+  thumb: string,
 }

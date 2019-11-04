@@ -29,6 +29,7 @@ import {
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
+import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
@@ -420,12 +421,12 @@ export class PuppetPadplus extends Puppet {
           src: rawPayload.url,
           toUserName: rawPayload.toUserName,
         }
-        const data = await this.manager.loadRichMediaData(mediaData)
-        if (data.src) {
-          const name = path.parse(data.src).base
-          return FileBox.fromUrl(encodeURI(data.src), name)
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
+
+        if (data && data.src) {
+          return FileBox.fromUrl(data.src)
         } else {
-          throw new Error(`can not get the media data`)
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
       case MessageType.Emoticon:
         if (rawPayload && rawPayload.url) {
