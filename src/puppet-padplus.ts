@@ -29,6 +29,7 @@ import {
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
+import { Queue } from './padplus-manager/api-request/media-data-request'
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
