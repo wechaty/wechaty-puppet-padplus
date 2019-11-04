@@ -29,7 +29,7 @@ import {
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
-import { Queue } from './padplus-manager/api-request/request-queue'
+import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
@@ -421,7 +421,7 @@ export class PuppetPadplus extends Puppet {
           src: rawPayload.url,
           toUserName: rawPayload.toUserName,
         }
-        const data = await Queue.exec(() => this.manager.loadRichMediaData(mediaData))
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
 
         if (data && data.src) {
           return FileBox.fromUrl(data.src)

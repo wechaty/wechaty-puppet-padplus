@@ -4,7 +4,7 @@ interface FuncObj {
   reject: (e: any) => void,
 }
 
-export class Queue {
+export class RequestQueue {
 
   private static funcQueue: FuncObj[] = []
   private static running: boolean = false
