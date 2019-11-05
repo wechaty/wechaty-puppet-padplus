@@ -1048,8 +1048,13 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const avatarUrl = await this.manager.roomAvatar(roomId)
-    return FileBox.fromUrl(avatarUrl, `${roomId}_avatar.png`)
+    const room = await this.roomRawPayload(roomId)
+    if (room) {
+      const avatarUrl = room.bigHeadUrl || room.smallHeadUrl
+      return FileBox.fromUrl(avatarUrl, `${roomId}_avatar_${Date.now()}.png`)
+    } else {
+      throw new Error(`Can not load room info by roomId : ${roomId}`)
+    }
   }
 
   public async roomCreate (contactIdList: string[], topic?: string | undefined): Promise<string> {
