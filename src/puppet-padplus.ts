@@ -1043,9 +1043,13 @@ export class PuppetPadplus extends Puppet {
     await this.manager.roomAddMember(roomId, contactId)
   }
 
-  roomAvatar (roomId: string): Promise<FileBox> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error('Method not implemented.')
+  public async roomAvatar (roomId: string): Promise<FileBox> {
+    log.silly(PRE, `roomAvatar(roomId : ${util.inspect(roomId)})`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const avatarUrl = await this.manager.roomAvatar(roomId)
+    return FileBox.fromUrl(avatarUrl, `${roomId}_avatar.png`)
   }
 
   public async roomCreate (contactIdList: string[], topic?: string | undefined): Promise<string> {

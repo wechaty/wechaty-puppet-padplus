@@ -1102,11 +1102,24 @@ export class PadplusManager extends EventEmitter {
     roomId: string,
     memberId: string,
   ) {
-    log.silly(PRE, `roomAddMember : ${util.inspect(roomId)};${memberId}`)
+    log.silly(PRE, `roomAddMember: ${roomId}, ${memberId}`)
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
     await this.padplusRoom.addMember(roomId, memberId)
+  }
+
+  public async roomAvatar (roomId: string) {
+    log.silly(PRE, `roomAvatar : ${roomId}`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache manager`)
+    }
+    const room = await this.cacheManager.getRoom(roomId)
+    if (room) {
+      return room.bigHeadUrl || room.smallHeadUrl
+    } else {
+      throw new Error(`Can not load room info by roomId : ${roomId}`)
+    }
   }
 
   public async createRoom (
