@@ -1102,7 +1102,7 @@ export class PadplusManager extends EventEmitter {
     roomId: string,
     memberId: string,
   ) {
-    log.silly(PRE, `roomAddMember : ${util.inspect(roomId)};${memberId}`)
+    log.silly(PRE, `roomAddMember: ${roomId}, ${memberId}`)
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)
     }
