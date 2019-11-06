@@ -506,7 +506,7 @@ export class PuppetPadplus extends Puppet {
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
-      throw new Error('Method Audio not supported.')
+      throw new Error('Message type Audio not supported.')
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
         receiver,
@@ -517,13 +517,8 @@ export class PuppetPadplus extends Puppet {
         receiver,
         await this.messageMiniProgram(messageId)
       )
-    } else if (payload.type === MessageType.Video) {
-      throw new Error('Method Video not supported.')
-    } else if (
-      payload.type === MessageType.Attachment
-      || payload.type === MessageType.ChatHistory
-    ) {
-      throw new Error('Method Video not supported.')
+    } else if (payload.type === MessageType.ChatHistory) {
+      throw new Error('Message type ChatHistory not supported.')
     } else {
       await this.messageSendFile(
         receiver,
