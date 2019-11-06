@@ -53,7 +53,7 @@ export function contactRawPayloadParser (
     contactType = ContactType.Personal
   }
   let friend = false
-  if (rawPayload.stranger && rawPayload.stranger !== '0' && rawPayload.verifyFlag === 0) {
+  if (rawPayload.contactFlag && rawPayload.contactFlag !== 0 && rawPayload.verifyFlag === 0) {
     friend = true
   }
   const payload: ContactPayload = {

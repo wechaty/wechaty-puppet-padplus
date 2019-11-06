@@ -665,7 +665,7 @@ export class PadplusManager extends EventEmitter {
                   throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
                 }
                 const contact = await this.cacheManager.getContact(member.UserName)
-                if (!contact || contact.stranger !== '3') {
+                if (!contact) {
                   const newContact: PadplusContactPayload = {
                     alias: '',
                     bigHeadUrl: member.HeadImgUrl,
@@ -676,7 +676,7 @@ export class PadplusManager extends EventEmitter {
                     labelLists: '',
                     nickName: member.NickName,
                     province: '',
-                    remark: member.DisplayName,
+                    remark: '',
                     sex: ContactGender.Unknown,
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
@@ -687,25 +687,12 @@ export class PadplusManager extends EventEmitter {
                   }
                   await this.cacheManager.setContact(newContact.userName, newContact)
                 } else {
-                  const newContact: PadplusContactPayload = {
-                    alias: contact.alias,
+                  const newContact: PadplusContactPayload = Object.assign({}, contact, {
                     bigHeadUrl: member.HeadImgUrl,
-                    city: contact.city,
-                    contactFlag: 0,
-                    contactType: 0,
-                    country: contact.country,
-                    labelLists: contact.labelLists,
                     nickName: member.NickName,
-                    province: contact.province,
-                    remark: member.DisplayName,
-                    sex: ContactGender.Unknown,
-                    signature: contact.signature,
                     smallHeadUrl: member.HeadImgUrl,
-                    stranger: contact.stranger,
-                    ticket: contact.ticket,
                     userName: member.UserName,
-                    verifyFlag: 0,
-                  }
+                  })
                   await this.cacheManager.setContact(newContact.userName, newContact)
                 }
                 CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
