@@ -697,7 +697,7 @@ export class PadplusManager extends EventEmitter {
                     labelLists: contact.labelLists,
                     nickName: member.NickName,
                     province: contact.province,
-                    remark: member.DisplayName,
+                    remark: contact.remark,
                     sex: ContactGender.Unknown,
                     signature: contact.signature,
                     smallHeadUrl: member.HeadImgUrl,
