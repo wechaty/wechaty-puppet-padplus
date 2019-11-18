@@ -15,17 +15,22 @@
 ## Install
 
 ### 1. Init
+> check your `Node` version first
 
 ```js
-mkdir padplus
+node --version // v10.16.0 (BTW v10.0.0 < version < v11.0.0 is better)
+```
 
-npm init
+```js
+mkdir my-padplus-bot && cd my-padplus-bot
+
+npm init -y
 ```
 
 ### 2. Install the latest wechaty
 
 ```js
-npm install wechaty
+npm install wechaty@next
 ```
 
 ### 3. Install wechaty-puppet-padplus
@@ -38,8 +43,19 @@ npm install wechaty-puppet-padplus@latest
 
 ### 4. Install other dependency
 
+> There's no need to install `wechaty-puppet` in my-padplus-bot
+
 ```js
 npm install qrcode-terminal
+```
+
+### 5. Re-Install all related package
+
+> If step 1~4 can not help you install successfully, please try this suggestion, otherwise just skip it please.
+
+```js
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ## Example

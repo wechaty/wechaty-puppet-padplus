@@ -386,7 +386,6 @@ export class GrpcGateway extends EventEmitter {
         await new Promise(resolve => setTimeout(resolve, 5000))
         this.isAlive = false
         if (!this.stopping) {
-          log.silly(PRE, `run here`)
           Object.values(this.eventEmitterMap).map(emitter => {
             emitter.emit('reconnect')
           })
