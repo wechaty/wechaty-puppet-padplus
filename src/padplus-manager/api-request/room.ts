@@ -209,6 +209,7 @@ export class PadplusRoom {
     const data = {
       OpType: 'UPDATE',
       roomId,
+      type: 'DEL_CHAT_ROOM',
     }
 
     await this.requestClient.request({
