@@ -10,6 +10,7 @@ import {
   PadplusRoomPayload,
   PadplusRoomInvitationPayload,
   PadplusRoomMemberPayload,
+  PadplusRoomMemberMap,
 } from '../schemas'
 import { FriendshipPayload } from 'wechaty-puppet'
 
@@ -223,7 +224,7 @@ export class CacheManager {
    */
   public async getRoomMember (
     roomId: string,
-  ): Promise<{ [contactId: string]: PadplusRoomMemberPayload } | undefined> {
+  ): Promise<PadplusRoomMemberMap | undefined> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} getRoomMember() has no cache.`)
     }
@@ -232,7 +233,7 @@ export class CacheManager {
 
   public async setRoomMember (
     roomId: string,
-    payload: { [contactId: string]: PadplusRoomMemberPayload }
+    payload: PadplusRoomMemberMap,
   ): Promise<void> {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
