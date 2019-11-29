@@ -81,7 +81,32 @@ export class PadplusRoom {
     })
   }
 
-  public setAnnouncement = async (roomId: string, announcement: string): Promise<void> => {
+  public getRoomQrcode = async (roomId: string): Promise<string> => {
+    log.verbose(PRE, `getRoomQrcode(${roomId})`)
+
+    const data = {
+      roomId,
+    }
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.GET_ROOM_QRCODE,
+      data,
+    })
+
+    if (res) {
+      const roomQrcodeDataStr = res.getData()
+      if (roomQrcodeDataStr) {
+        const roomQrcodeData = JSON.parse(roomQrcodeDataStr)
+        return roomQrcodeData.qrcodeBuf
+      } else {
+        throw new Error(`can not parse room qrcode data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get room qrcode response from grpc server`)
+    }
+  }
+
+  public setAnnouncement = async (roomId: string, announcement: string): Promise<string> => {
     log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 
     const data = {
@@ -100,6 +125,7 @@ export class PadplusRoom {
         if (announcementData.status !== 0) { // status: -2025 '仅群主可编辑群公告。'
           throw new Error(`set announcement failed.`)
         }
+        return announcementData.content
       } else {
         throw new Error(`can not parse announcement data from grpc`)
       }
@@ -183,6 +209,7 @@ export class PadplusRoom {
     const data = {
       OpType: 'UPDATE',
       roomId,
+      type: 'DEL_CHAT_ROOM',
     }
 
     await this.requestClient.request({

@@ -29,17 +29,19 @@ import {
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
+import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
 import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
-import { PadplusMessagePayload, PadplusRichMediaData } from './schemas/model-message'
+import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1 } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { TagPayload } from 'wechaty-puppet/dist/src/schemas/tag'
+import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -193,16 +195,30 @@ export class PuppetPadplus extends Puppet {
    *     TAG SECTION
    * ========================
    */
-  public async newTag (tag: string): Promise<string> {
-    log.verbose(PRE, `newTag(), tag: ${tag}`)
+  public async createTag (tag: string): Promise<TagPayload> {
+    log.verbose(PRE, `createTag(), tag: ${tag}`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
     }
-    return this.manager.newTag(tag)
+    const tagId = await this.manager.newTag(tag)
+    const tagPayload: TagPayload = {
+      id: tagId,
+      name: tag,
+    }
+    return tagPayload
   }
 
-  public async tagList (): Promise<TagPayload []> {
+  public async addTag (tagId: string, contactId: string): Promise<void> {
+    log.verbose(PRE, `addTag(${tagId}, ${contactId})`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.addTag(tagId, contactId)
+  }
+
+  public async allTags (): Promise<TagPayload []> {
     log.verbose(PRE, `tagList()`)
 
     if (!this.manager) {
@@ -211,11 +227,11 @@ export class PuppetPadplus extends Puppet {
     return this.manager.tagList()
   }
 
-  public async searchTag (tag: string): Promise<TagPayload> {
+  public async modifyTag (tagId: string, name: string): Promise<void> {
     return {} as any
   }
 
-  public async allTags (): Promise<TagPayload []> {
+  public async deleteTag (tag: string): Promise<void> {
     return {} as any
   }
 
@@ -224,22 +240,15 @@ export class PuppetPadplus extends Puppet {
    *     CONTACT SECTION
    * ========================
    */
-  public async contactAddTag (contactId: string, tag: string): Promise<void> {
-    log.verbose(PRE, `contactAddTag(), contactId: ${contactId}, tag: ${tag}`)
 
-    if (!this.manager) {
-      throw new Error(`no manager`)
-    }
-    await this.manager.addTag(contactId, tag)
-  }
-
-  public async contactTags (contactId: string): Promise<TagPayload []> {
+  public async contactTagIdList (contactId: string): Promise<string []> {
     log.verbose(PRE, `contactTags(), contactId: ${contactId}`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
     }
-    return this.manager.tags(contactId)
+    const tags = await this.manager.tags(contactId)
+    return tags.map(tag => tag.id)
   }
 
   contactSelfQrcode (): Promise<string> {
@@ -468,12 +477,13 @@ export class PuppetPadplus extends Puppet {
           src: rawPayload.url,
           toUserName: rawPayload.toUserName,
         }
-        const data = await this.manager.loadRichMediaData(mediaData)
-        if (data.src) {
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
+
+        if (data && data.src) {
           const name = path.parse(data.src).base
           return FileBox.fromUrl(encodeURI(data.src), name)
         } else {
-          throw new Error(`can not get the media data`)
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
       case MessageType.Emoticon:
         if (rawPayload && rawPayload.url) {
@@ -483,7 +493,18 @@ export class PuppetPadplus extends Puppet {
         }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
-          return FileBox.fromUrl(rawPayload.url)
+          const fileBox = FileBox.fromUrl(rawPayload.url)
+          let contentXML
+          if (isRoomId(rawPayload.fromUserName)) {
+            contentXML = rawPayload.content.split(':\n')[1]
+          } else {
+            contentXML = rawPayload.content
+          }
+          const content = await xmlToJson(contentXML)
+          fileBox.metadata = {
+            voiceLength: content.msg.voicemsg.$.voicelength / 1000,
+          }
+          return fileBox
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
@@ -542,7 +563,7 @@ export class PuppetPadplus extends Puppet {
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
-      throw new Error('Method Audio not supported.')
+      throw new Error('Message type Audio not supported.')
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
         receiver,
@@ -553,13 +574,8 @@ export class PuppetPadplus extends Puppet {
         receiver,
         await this.messageMiniProgram(messageId)
       )
-    } else if (payload.type === MessageType.Video) {
-      throw new Error('Method Video not supported.')
-    } else if (
-      payload.type === MessageType.Attachment
-      || payload.type === MessageType.ChatHistory
-    ) {
-      throw new Error('Method Video not supported.')
+    } else if (payload.type === MessageType.ChatHistory) {
+      throw new Error('Message type ChatHistory not supported.')
     } else {
       await this.messageSendFile(
         receiver,
@@ -591,23 +607,44 @@ export class PuppetPadplus extends Puppet {
     return msg
   }
 
-  public async messageSendText (receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void> {
+  public async messageSendText (receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void | string> {
     log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
+    let msgData: GrpcResponseMessageData
     if (mentionIdList && mentionIdList.length > 0) {
-      const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
+      msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
       }
     } else {
-      const msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
+      msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text)
       }
     }
-
+    if (msgData.success) {
+      const msgPayload: PadplusMessagePayload = {
+        content: text + ((mentionIdList && mentionIdList.length > 0) ? mentionIdList!.toString() : ''),
+        createTime: msgData.timestamp,
+        fromUserName: this.selfId(),
+        imgStatus: 0,
+        l1MsgType: 0,
+        msgId: msgData.msgId,
+        msgSource: 'self',
+        msgSourceCd: 0,
+        msgType: PadplusMessageType.Text,
+        newMsgId: Number(msgData.msgId),
+        pushContent: text,
+        status: 1,
+        toUserName: contactIdOrRoomId!,
+        uin: '',
+        wechatUserName: '',
+      }
+      this.manager.cachePadplusMessagePayload.set(msgData.msgId, msgPayload)
+    }
+    return msgData.msgId
   }
 
   private replayTextMsg (msgId: string, to: string, text: string, atUserList?: string[]): void {
@@ -621,7 +658,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendContact (receiver: Receiver, contactId: string): Promise<void> {
+  public async messageSendContact (receiver: Receiver, contactId: string): Promise<void | string> {
     log.verbose(PRE, `messageSend('%s', %s)`, receiver, contactId)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
@@ -632,10 +669,31 @@ export class PuppetPadplus extends Puppet {
         nickName: contact.nickName,
         userName: contact.userName,
       }
-      const contactData = await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, JSON.stringify(content))
+      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, JSON.stringify(content))
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayContactMsg(contactData.msgId, contactIdOrRoomId!, JSON.stringify(content))
       }
+      if (contactData.success) {
+        const msgPayload: PadplusMessagePayload = {
+          content: JSON.stringify(content),
+          createTime: contactData.timestamp,
+          fromUserName: this.selfId(),
+          imgStatus: 0,
+          l1MsgType: 0,
+          msgId: contactData.msgId,
+          msgSource: 'self',
+          msgSourceCd: 0,
+          msgType: PadplusMessageType.Text,
+          newMsgId: Number(contactData.msgId),
+          pushContent: JSON.stringify(content),
+          status: 1,
+          toUserName: contactIdOrRoomId!,
+          uin: '',
+          wechatUserName: '',
+        }
+        this.manager.cachePadplusMessagePayload.set(contactData.msgId, msgPayload)
+      }
+      return contactData.msgId
     } else {
       throw new Error('not able to send contact')
     }
@@ -649,7 +707,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendFile (receiver: Receiver, file: FileBox): Promise<void> {
+  public async messageSendFile (receiver: Receiver, file: FileBox): Promise<void | string> {
     log.verbose(PRE, 'messageSendFile(%s, %s)', receiver, file)
 
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
@@ -677,20 +735,80 @@ export class PuppetPadplus extends Puppet {
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
         }
-        break
+        if (picData.success) {
+          const msgPayload: PadplusMessagePayload = {
+            content: `<msg>${fileUrl}</msg>`,
+            createTime: picData.timestamp,
+            fromUserName: this.selfId(),
+            imgStatus: 0,
+            l1MsgType: 0,
+            msgId: picData.msgId,
+            msgSource: 'self',
+            msgSourceCd: 0,
+            msgType: PadplusMessageType.Text,
+            newMsgId: Number(picData.msgId),
+            pushContent: `<msg>${fileUrl}</msg>`,
+            status: 1,
+            toUserName: contactIdOrRoomId!,
+            uin: '',
+            wechatUserName: '',
+          }
+          this.manager.cachePadplusMessagePayload.set(picData.msgId, msgPayload)
+        }
+        return picData.msgId
       case 'video/mp4':
       case '.mp4':
         const videoData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'video')
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
         }
-        break
+        if (videoData.success) {
+          const msgPayload: PadplusMessagePayload = {
+            content: `<msg>${fileUrl}</msg>`,
+            createTime: videoData.timestamp,
+            fromUserName: this.selfId(),
+            imgStatus: 0,
+            l1MsgType: 0,
+            msgId: videoData.msgId,
+            msgSource: 'self',
+            msgSourceCd: 0,
+            msgType: PadplusMessageType.Text,
+            newMsgId: Number(videoData.msgId),
+            pushContent: `<msg>${fileUrl}</msg>`,
+            status: 1,
+            toUserName: contactIdOrRoomId!,
+            uin: '',
+            wechatUserName: '',
+          }
+          this.manager.cachePadplusMessagePayload.set(videoData.msgId, msgPayload)
+        }
+        return videoData.msgId
       default:
         const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
         }
-        break
+        if (docData.success) {
+          const msgPayload: PadplusMessagePayload = {
+            content: `<msg>${fileUrl}</msg>`,
+            createTime: docData.timestamp,
+            fromUserName: this.selfId(),
+            imgStatus: 0,
+            l1MsgType: 0,
+            msgId: docData.msgId,
+            msgSource: 'self',
+            msgSourceCd: 0,
+            msgType: PadplusMessageType.Text,
+            newMsgId: Number(docData.msgId),
+            pushContent: `<msg>${fileUrl}</msg>`,
+            status: 1,
+            toUserName: contactIdOrRoomId!,
+            uin: '',
+            wechatUserName: '',
+          }
+          this.manager.cachePadplusMessagePayload.set(docData.msgId, msgPayload)
+        }
+        return docData.msgId
     }
   }
 
@@ -711,7 +829,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendUrl (receiver: Receiver, urlLinkPayload: UrlLinkPayload): Promise<void> {
+  public async messageSendUrl (receiver: Receiver, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
     log.verbose(PRE, `messageSendUrl(${receiver})`,
       JSON.stringify(receiver),
       JSON.stringify(urlLinkPayload),
@@ -732,6 +850,28 @@ export class PuppetPadplus extends Puppet {
     if (PADPLUS_REPLAY_MESSAGE) {
       this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
     }
+    if (urlLinkData.success) {
+      const msgPayload: PadplusMessagePayload = {
+        content: JSON.stringify(payload),
+        createTime: urlLinkData.timestamp,
+        fromUserName: this.selfId(),
+        imgStatus: 0,
+        l1MsgType: 0,
+        msgId: urlLinkData.msgId,
+        msgSource: 'self',
+        msgSourceCd: 0,
+        msgType: PadplusMessageType.Text,
+        newMsgId: Number(urlLinkData.msgId),
+        pushContent: JSON.stringify(payload),
+        status: 1,
+        toUserName: contactIdOrRoomId!,
+        uin: '',
+        wechatUserName: '',
+      }
+      this.manager.cachePadplusMessagePayload.set(urlLinkData.msgId, msgPayload)
+    }
+    log.silly(PRE, `urlLinkData : ${util.inspect(urlLinkData)}`)
+    return urlLinkData.msgId
   }
 
   private replayUrlLinkMsg (msgId: string, to: string, content: string): void {
@@ -742,7 +882,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  messageSendMiniProgram (receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void> {
+  messageSendMiniProgram (receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void | string> {
     log.silly(PRE, `messageSendMiniProgram() receiver : ${util.inspect(receiver)}, miniProgramPayload: ${miniProgramPayload}`)
     throw new Error('Method not implemented.')
   }
@@ -955,9 +1095,18 @@ export class PuppetPadplus extends Puppet {
     await this.manager.roomAddMember(roomId, contactId)
   }
 
-  roomAvatar (roomId: string): Promise<FileBox> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error('Method not implemented.')
+  public async roomAvatar (roomId: string): Promise<FileBox> {
+    log.silly(PRE, `roomAvatar(roomId : ${util.inspect(roomId)})`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const room = await this.roomRawPayload(roomId)
+    if (room) {
+      const avatarUrl = room.bigHeadUrl || room.smallHeadUrl
+      return FileBox.fromUrl(avatarUrl, `${roomId}_avatar_${Date.now()}.png`)
+    } else {
+      throw new Error(`Can not load room info by roomId : ${roomId}`)
+    }
   }
 
   public async roomCreate (contactIdList: string[], topic?: string | undefined): Promise<string> {
@@ -1006,9 +1155,13 @@ export class PuppetPadplus extends Puppet {
     await this.roomTopic(roomId)
   }
 
-  roomQrcode (roomId: string): Promise<string> {
+  async roomQrcode (roomId: string): Promise<string> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
-    throw new Error('Method not implemented.')
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    const roomQrcode = await this.manager.getRoomQrcode(roomId)
+    return roomQrcode
   }
 
   async roomList (): Promise<string[]> {
@@ -1068,7 +1221,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     if (text) {
-      await this.manager.setAnnouncement(roomId, text)
+      return this.manager.setAnnouncement(roomId, text)
     } else {
       return this.manager.getAnnouncement(roomId)
     }

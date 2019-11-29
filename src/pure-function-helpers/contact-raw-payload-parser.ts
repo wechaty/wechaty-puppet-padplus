@@ -53,10 +53,9 @@ export function contactRawPayloadParser (
     contactType = ContactType.Personal
   }
   let friend = false
-  if (rawPayload.stranger && rawPayload.stranger !== '0' && rawPayload.verifyFlag === 0) {
+  if (rawPayload.contactFlag && rawPayload.contactFlag !== 0 && rawPayload.verifyFlag === 0) {
     friend = true
   }
-
   const payload: ContactPayload = {
     alias     : rawPayload.remark,
     avatar    : rawPayload.bigHeadUrl,
@@ -68,7 +67,7 @@ export function contactRawPayloadParser (
     province  : rawPayload.province,
     signature : (rawPayload.signature).replace('+', ' '),          // Stay+Foolish
     type      : contactType,
-    weixin    : rawPayload.userName,
+    weixin    : rawPayload.alias,
   }
 
   return payload

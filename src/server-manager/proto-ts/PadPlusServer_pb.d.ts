@@ -37,6 +37,12 @@ export class RequestObject extends jspb.Message {
     setParams(value: string): void;
 
 
+    hasTraceid(): boolean;
+    clearTraceid(): void;
+    getTraceid(): string | undefined;
+    setTraceid(value: string): void;
+
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RequestObject.AsObject;
     static toObject(includeInstance: boolean, msg: RequestObject): RequestObject.AsObject;
@@ -54,6 +60,7 @@ export namespace RequestObject {
         token?: string,
         apitype?: ApiType,
         params?: string,
+        traceid?: string,
     }
 }
 
@@ -131,6 +138,12 @@ export class StreamResponse extends jspb.Message {
     setResponsetype(value: ResponseType): void;
 
 
+    hasTraceid(): boolean;
+    clearTraceid(): void;
+    getTraceid(): string | undefined;
+    setTraceid(value: string): void;
+
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StreamResponse.AsObject;
     static toObject(includeInstance: boolean, msg: StreamResponse): StreamResponse.AsObject;
@@ -147,6 +160,7 @@ export namespace StreamResponse {
         requestid?: string,
         data?: string,
         responsetype?: ResponseType,
+        traceid?: string,
     }
 }
 
@@ -170,6 +184,7 @@ export enum ApiType {
     CREATE_ROOM = 32,
     SET_ROOM_ANNOUNCEMENT = 33,
     GET_ROOM_ANNOUNCEMENT = 34,
+    GET_ROOM_QRCODE = 35,
     SEND_MESSAGE = 50,
     SEND_FILE = 51,
     REVOKE_MESSAGE = 52,
@@ -196,10 +211,11 @@ export enum ResponseType {
     ROOM_MEMBER_MODIFY = 24,
     CONTACT_SEARCH = 25,
     CONTACT_ADD = 26,
-    LABEL_LIST = 27,
-    LABEL_ADD = 28,
-    LABEL_UPDATE = 29,
+    ROOM_QRCODE = 27,
     MESSAGE_RECEIVE = 30,
     STATUS_NOTIFY = 31,
     MESSAGE_MEDIA_SRC = 32,
+    LABEL_LIST = 40,
+    LABEL_ADD = 41,
+    LABEL_UPDATE = 42,
 }

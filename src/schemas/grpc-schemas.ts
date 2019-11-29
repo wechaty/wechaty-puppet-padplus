@@ -22,6 +22,7 @@ export interface GrpcQrCodeStatus {
 }
 
 export interface GrpcQrCodeLogin {
+  alias: string,
   headImgUrl: string,
   nickName: string,
   status: number,

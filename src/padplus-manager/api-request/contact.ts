@@ -28,14 +28,14 @@ export class PadplusContact {
       if (labelStr) {
         const label = JSON.parse(labelStr)
         let labelIDs = ''
-        if (label.labelList && label.labelList[0] > 0) {
-          label.labelList.map((labelItem: LabelRawPayload, index: number) => {
+        if (label.labelList && label.labelList.length > 0) {
+          await Promise.all(label.labelList.map((labelItem: LabelRawPayload, index: number) => {
             if (index === label.labelList.length - 1) {
-              labelIDs += labelItem.LabelName
+              labelIDs += labelItem.LabelID
             } else {
-              labelIDs += labelItem.LabelName + ','
+              labelIDs += labelItem.LabelID + ','
             }
-          })
+          }))
         }
         return labelIDs
       } else {
@@ -46,11 +46,11 @@ export class PadplusContact {
     }
   }
 
-  public async addTag (contactId: string, tag: string): Promise<void> {
-    log.verbose(PRE, `addTag(${tag})`)
+  public async addTag (tagId: string, contactId: string): Promise<void> {
+    log.verbose(PRE, `addTag(${tagId})`)
 
     const data = {
-      labelIds: tag,
+      labelIds: tagId,
       userName: contactId,
     }
     await this.requestClient.request({
