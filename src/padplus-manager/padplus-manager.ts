@@ -72,9 +72,7 @@ export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'conta
 export class PadplusManager extends EventEmitter {
 
   private grpcGatewayEmitter?: GrpcEventEmitter
-  // private grpcGateway        : GrpcGateway
   private readonly state     : StateSwitch
-  private syncQueueExecutor  : DelayQueueExecutor
   private requestClient?     : RequestClient
   private padplusUser?       : PadplusUser
   private padplusMesasge?    : PadplusMessage
@@ -96,6 +94,7 @@ export class PadplusManager extends EventEmitter {
   }
   private resetThrottleQueue    : ThrottleQueue
   private getContactQueue       : DelayQueueExecutor
+  private getRoomMemberQueue    : DelayQueueExecutor
   constructor (
     public options: ManagerOptions,
   ) {
@@ -120,8 +119,8 @@ export class PadplusManager extends EventEmitter {
       userName: '',
     }
 
-    this.syncQueueExecutor = new DelayQueueExecutor(1000)
     this.getContactQueue = new DelayQueueExecutor(200)
+    this.getRoomMemberQueue = new DelayQueueExecutor(500)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
       log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
@@ -138,7 +137,7 @@ export class PadplusManager extends EventEmitter {
 
       await this.start()
     })
-    log.silly(PRE, ` : ${util.inspect(this.state)}, ${this.syncQueueExecutor}`)
+    log.silly(PRE, ` : ${util.inspect(this.state)}`)
   }
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
@@ -960,29 +959,8 @@ export class PadplusManager extends EventEmitter {
   public async getRoomMemberIdList (
     roomId: string,
   ) {
-    if (!this.cacheManager) {
-      throw new Error(`no cache.`)
-    }
-    let memberMap = await this.cacheManager.getRoomMember(roomId)
-    if (!memberMap) {
-      const room = await this.getRoomInfo(roomId)
-      await Promise.all(
-        room.members.map(m => {
-          const _member: PadplusRoomMemberPayload = {
-            bigHeadUrl: '',
-            contactId: m.UserName,
-            displayName: '',
-            inviterId: '',
-            nickName: m.NickName || '',
-            smallHeadUrl: '',
-          }
-          if (!memberMap) {
-            memberMap = {}
-          }
-          memberMap[m.UserName] = _member
-        })
-      )
-    }
+    const memberMap = await this.getRoomMembers(roomId)
+
     if (memberMap) {
       return Object.keys(memberMap)
     } else {
@@ -1024,12 +1002,11 @@ export class PadplusManager extends EventEmitter {
         resolve(data as PadplusRoomPayload)
       })
     })
-    // return null
   }
 
   public async getRoomMembers (
     roomId: string,
-  ) {
+  ): Promise<PadplusRoomMemberMap> {
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
     }
@@ -1039,12 +1016,13 @@ export class PadplusManager extends EventEmitter {
         throw new Error(`no grpcGatewayEmitter.`)
       }
       const uin = this.grpcGatewayEmitter.getUIN()
-      if (!this.padplusRoom) {
-        throw new Error(`no padplus Room.`)
-      }
-      await this.padplusRoom.getRoomMembers(uin, roomId)
-
-      const memberMap = await new Promise<PadplusRoomMemberMap>((resolve, reject) => {
+      await this.getRoomMemberQueue.execute(async () => {
+        if (!this.padplusRoom) {
+          throw new Error(`no padplus Room.`)
+        }
+        await this.padplusRoom.getRoomMembers(uin, roomId)
+      })
+      return new Promise<PadplusRoomMemberMap>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error('get room member failed since timeout'))
         }, 5000)
@@ -1053,9 +1031,9 @@ export class PadplusManager extends EventEmitter {
           resolve(data)
         })
       })
+    } else {
       return memberMap
     }
-    return memberMap
   }
 
   public async deleteRoomMember (roomId: string, contactId: string): Promise<void> {
