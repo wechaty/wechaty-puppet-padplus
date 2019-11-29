@@ -959,9 +959,6 @@ export class PadplusManager extends EventEmitter {
   public async getRoomMemberIdList (
     roomId: string,
   ) {
-    if (!this.cacheManager) {
-      throw new Error(`no cache.`)
-    }
     const memberMap = await this.getRoomMembers(roomId)
 
     if (memberMap) {
