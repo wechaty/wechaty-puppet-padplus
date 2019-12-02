@@ -861,16 +861,7 @@ export class PadplusManager extends EventEmitter {
     }
     const tags = await this.tags(contactId)
     const tagsId = tags.map(tag => tag.id)
-    let allTagsId = ''
-    if (tagsId.length === 0) {
-      allTagsId = tagId
-    } else if (tagsId.length === 1) {
-      allTagsId = tagId + ',' + tagsId[0]
-    } else if (tagsId.length > 1) {
-      allTagsId = tagsId.join(',') + ',' + tagId
-    } else {
-      throw new Error(`Can not get right tag list.`)
-    }
+    const allTagsId = tagsId.length === 0 ? tagId : tagsId.join(',') + ',' + tagId
     await this.padplusContact.addTag(allTagsId, contactId)
   }
 
@@ -919,6 +910,24 @@ export class PadplusManager extends EventEmitter {
       tagList.push(tag)
     })
     return tagList
+  }
+
+  public async modifyTag (tagId: string, name: string): Promise<void> {
+    log.silly(PRE, `modifyTag()`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.modifyTag(tagId, name)
+  }
+
+  public async deleteTag (tagId: string): Promise<void> {
+    log.silly(PRE, `deleteTag()`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.deleteTag(tagId)
   }
 
   public async setContactAlias (

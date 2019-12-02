@@ -20,7 +20,7 @@ export class PadplusContact {
       tag,
     }
     const result = await this.requestClient.request({
-      apiType: ApiType.ADD_LABEL,
+      apiType: ApiType.CREATE_LABEL,
       data,
     })
     if (result) {
@@ -54,7 +54,7 @@ export class PadplusContact {
       userName: contactId,
     }
     await this.requestClient.request({
-      apiType: ApiType.MODIFY_LABEL,
+      apiType: ApiType.ADD_LABEL,
       data,
     })
   }
@@ -77,6 +77,31 @@ export class PadplusContact {
     } else {
       throw new Error(`can not get callback result`)
     }
+  }
+
+  public async modifyTag (tagId: string, contactId: string): Promise<void> {
+    log.verbose(PRE, `addTag(${tagId})`)
+
+    const data = {
+      labelIds: tagId,
+      userName: contactId,
+    }
+    await this.requestClient.request({
+      apiType: ApiType.MODIFY_LABEL,
+      data,
+    })
+  }
+
+  public async deleteTag (tagId: string): Promise<void> {
+    log.verbose(PRE, `addTag(${tagId})`)
+
+    const data = {
+      labelIds: tagId,
+    }
+    await this.requestClient.request({
+      apiType: ApiType.DELETE_LABEL,
+      data,
+    })
   }
 
   // Query contact list info

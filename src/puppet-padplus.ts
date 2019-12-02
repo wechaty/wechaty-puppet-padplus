@@ -228,11 +228,21 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async modifyTag (tagId: string, name: string): Promise<void> {
-    return {} as any
+    log.verbose(PRE, `modifyTag(${tagId}, ${name})`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.modifyTag(tagId, name)
   }
 
-  public async deleteTag (tag: string): Promise<void> {
-    return {} as any
+  public async deleteTag (tagId: string): Promise<void> {
+    log.verbose(PRE, `deleteTag(${tagId}`)
+
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    return this.manager.deleteTag(tagId)
   }
 
   /**
