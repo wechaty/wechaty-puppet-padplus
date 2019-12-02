@@ -195,8 +195,8 @@ export class PuppetPadplus extends Puppet {
    *     TAG SECTION
    * ========================
    */
-  public async createTag (tag: string): Promise<TagPayload> {
-    log.verbose(PRE, `createTag(), tag: ${tag}`)
+  public async getOrCreateTag (tag: string): Promise<TagPayload> {
+    log.verbose(PRE, `getOrCreateTag(), tag: ${tag}`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
@@ -233,16 +233,16 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager`)
     }
-    return this.manager.modifyTag(tagId, name)
+    await this.manager.modifyTag(tagId, name)
   }
 
   public async deleteTag (tagId: string): Promise<void> {
-    log.verbose(PRE, `deleteTag(${tagId}`)
+    log.verbose(PRE, `deleteTag(${tagId})`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
     }
-    return this.manager.deleteTag(tagId)
+    await this.manager.deleteTag(tagId)
   }
 
   /**

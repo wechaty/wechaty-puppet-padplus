@@ -913,7 +913,7 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async modifyTag (tagId: string, name: string): Promise<void> {
-    log.silly(PRE, `modifyTag()`)
+    log.silly(PRE, `modifyTag(${tagId}, ${name})`)
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
@@ -922,7 +922,7 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async deleteTag (tagId: string): Promise<void> {
-    log.silly(PRE, `deleteTag()`)
+    log.silly(PRE, `deleteTag(${tagId})`)
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }

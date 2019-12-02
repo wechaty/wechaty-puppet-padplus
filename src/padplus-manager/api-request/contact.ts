@@ -79,29 +79,55 @@ export class PadplusContact {
     }
   }
 
-  public async modifyTag (tagId: string, contactId: string): Promise<void> {
-    log.verbose(PRE, `addTag(${tagId})`)
+  public async modifyTag (tagId: string, name: string): Promise<void> {
+    log.verbose(PRE, `modifyTag(${tagId}, ${name})`)
 
     const data = {
-      labelIds: tagId,
-      userName: contactId,
+      labelId: tagId,
+      labelName: name,
     }
-    await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.MODIFY_LABEL,
       data,
     })
+    if (result) {
+      const labelStr = result.getData()
+      if (labelStr) {
+        const labelResponse = JSON.parse(labelStr)
+        if (labelResponse.status !== 0) {
+          throw new Error(`Modify operation failed!`)
+        }
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
   }
 
   public async deleteTag (tagId: string): Promise<void> {
-    log.verbose(PRE, `addTag(${tagId})`)
+    log.verbose(PRE, `deleteTag(${tagId})`)
 
     const data = {
       labelIds: tagId,
     }
-    await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.DELETE_LABEL,
       data,
     })
+    if (result) {
+      const labelStr = result.getData()
+      if (labelStr) {
+        const labelResponse = JSON.parse(labelStr)
+        if (labelResponse.status !== 0) {
+          throw new Error(`Delete operation failed!`)
+        }
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
   }
 
   // Query contact list info
