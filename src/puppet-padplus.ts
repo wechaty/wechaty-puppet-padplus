@@ -153,6 +153,7 @@ export class PuppetPadplus extends Puppet {
           this.onRoomJoinEvent(message),
           this.onRoomLeaveEvent(message),
           this.onRoomTopicEvent(message),
+          this.onFriendshipEvent(message),
         ])
         break
       case PadplusMessageType.VerifyMsg:
@@ -163,6 +164,9 @@ export class PuppetPadplus extends Puppet {
         await this.onRoomJoinEvent(message)
         break
       case PadplusMessageType.Text:
+        await this.onFriendshipEvent(message)
+        this.emit('message', message.msgId)
+        break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
