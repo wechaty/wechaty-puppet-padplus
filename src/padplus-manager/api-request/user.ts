@@ -28,6 +28,18 @@ export class PadplusUser {
     })
   }
 
+  // logout WeChat
+  public async logout (wxid: string): Promise<void> {
+    log.silly(PRE, `logout()`)
+    const data = {
+      wxid,
+    }
+    await this.requestClient.request({
+      apiType: ApiType.LOGOUT,
+      data,
+    })
+  }
+
   // 获取微信登录二维码
   public getWeChatQRCode = async (data?: {uin: string, wxid: string}) => {
     if (data) {

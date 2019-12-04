@@ -250,9 +250,15 @@ export class PadplusManager extends EventEmitter {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (): Promise<void> {
+  public async logout (selfId: string): Promise<void> {
     log.verbose(PRE, `logout()`)
     this.state.off('pending')
+
+    if (this.padplusUser) {
+      await this.padplusUser.logout(selfId)
+    } else {
+      throw new Error(`no padplus user.`)
+    }
 
     if (this.grpcGatewayEmitter) {
       this.grpcGatewayEmitter.removeAllListeners()
