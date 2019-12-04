@@ -163,6 +163,9 @@ export class PuppetPadplus extends Puppet {
         await this.onRoomJoinEvent(message)
         break
       case PadplusMessageType.Text:
+        this.onFriendshipEvent(message)
+        this.emit('message', message.msgId)
+        break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
