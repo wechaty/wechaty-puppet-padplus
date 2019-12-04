@@ -153,6 +153,7 @@ export class PuppetPadplus extends Puppet {
           this.onRoomJoinEvent(message),
           this.onRoomLeaveEvent(message),
           this.onRoomTopicEvent(message),
+          this.onFriendshipEvent(message),
         ])
         break
       case PadplusMessageType.VerifyMsg:
