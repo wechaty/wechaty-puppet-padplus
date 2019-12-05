@@ -1,6 +1,7 @@
 import { RequestClient } from './request'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { LogoutGrpcResponse } from '../../schemas'
 
 const PRE = 'USER'
 export class PadplusUser {
@@ -12,7 +13,7 @@ export class PadplusUser {
     this.requestClient = requestClient
   }
 
-  // 初始化登录信息
+  // init
   public async initInstance () {
     log.silly(PRE, `initInstance()`)
     await this.requestClient.request({
@@ -20,7 +21,7 @@ export class PadplusUser {
     })
   }
 
-  // grpc server重连
+  // grpc server reconnect
   public async reconnect () {
     log.silly(PRE, `reconnect()`)
     await this.requestClient.request({
@@ -29,18 +30,34 @@ export class PadplusUser {
   }
 
   // logout WeChat
-  public async logout (wxid: string): Promise<void> {
+  public async logout (wxid: string): Promise<boolean> {
     log.silly(PRE, `logout()`)
     const data = {
       wxid,
     }
-    await this.requestClient.request({
+    const res = await this.requestClient.request({
       apiType: ApiType.LOGOUT,
       data,
     })
+    if (!res) {
+      log.error(`can not get result for logout`)
+      return false
+    } else {
+      const resultStr = res.getData()
+      if (resultStr) {
+        const result: LogoutGrpcResponse = JSON.parse(resultStr)
+        if (result && result.code === 200 && result.mqType === 1100) {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+    }
   }
 
-  // 获取微信登录二维码
+  // get qrcode for login WeChat
   public getWeChatQRCode = async (data?: {uin: string, wxid: string}) => {
     if (data) {
       const res = await this.requestClient.request({

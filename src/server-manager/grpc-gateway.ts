@@ -36,6 +36,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SET_ROOM_ANNOUNCEMENT,
   ApiType.HEARTBEAT,
   ApiType.GET_ROOM_QRCODE,
+  ApiType.LOGOUT,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'

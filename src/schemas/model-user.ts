@@ -43,7 +43,7 @@ export interface ScanData {
   user_name: string,
 }
 
-export interface GrpcLogout {
+export interface LogoutGrpcResponse {
   code: number,
   uin: string,
   message: string,

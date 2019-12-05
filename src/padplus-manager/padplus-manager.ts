@@ -36,7 +36,7 @@ import {
   PadplusRoomMemberPayload,
   GrpcSearchContact,
   GrpcDeleteContact,
-  GrpcLogout,
+  LogoutGrpcResponse,
   PadplusRoomMemberMap,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
@@ -255,7 +255,12 @@ export class PadplusManager extends EventEmitter {
     this.state.off('pending')
 
     if (this.padplusUser) {
-      await this.padplusUser.logout(selfId)
+      const logoutResult: boolean = await this.padplusUser.logout(selfId)
+      if (!logoutResult) {
+        log.error(`Logout WeChat failed!`)
+      } else {
+        log.silly(PRE, `Logout WeChat success!`)
+      }
     } else {
       throw new Error(`no padplus user.`)
     }
@@ -532,7 +537,7 @@ export class PadplusManager extends EventEmitter {
         case ResponseType.ACCOUNT_LOGOUT :
           const logoutRawData = data.getData()
           if (logoutRawData) {
-            const logoutData: GrpcLogout = JSON.parse(logoutRawData)
+            const logoutData: LogoutGrpcResponse = JSON.parse(logoutRawData)
             const uin = data.getUin()
             const _uin = grpcGatewayEmitter.getUIN()
             if (uin === _uin) {
