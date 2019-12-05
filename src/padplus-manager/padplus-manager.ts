@@ -738,6 +738,19 @@ export class PadplusManager extends EventEmitter {
   }
 
   /**
+   * Contact Self Section
+   */
+  public async contactSelfQrcode (): Promise<string> {
+    log.silly(PRE, `contactSelfQrcode()`)
+
+    if (this.padplusContact) {
+      return this.padplusContact.contactSelfQrcode()
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
+  /**
    * Message Section
    */
 

@@ -74,3 +74,14 @@ export interface GrpcDeleteContact {
   uin: string,
   userName: string,
 }
+
+export interface ContactQrcodeGrpcResponse {
+  status: number,
+  message: string,
+  loginer: string,
+  uin: string,
+  userName: string,
+  queueName: string,
+  qrcodeBuf: string,
+  style: number,
+}

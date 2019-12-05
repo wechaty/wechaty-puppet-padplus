@@ -200,7 +200,8 @@ export class PuppetPadplus extends Puppet {
    */
 
   contactSelfQrcode (): Promise<string> {
-    throw new Error('Method not implemented.')
+    log.silly(PRE, `contactSelfQrcode()`)
+    return this.manager.contactSelfQrcode()
   }
 
   contactSelfName (name: string): Promise<void> {

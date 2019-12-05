@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcSearchContact } from '../../schemas'
+import { GrpcSearchContact, ContactQrcodeGrpcResponse } from '../../schemas'
 
 const PRE = 'PadplusContact'
 
@@ -70,6 +70,36 @@ export class PadplusContact {
     await this.requestClient.request({
       apiType: ApiType.SYNC_CONTACT,
     })
+  }
+
+  public contactSelfQrcode = async (): Promise<string> => {
+    log.verbose(PRE, `contactSelfQrcode()`)
+
+    const data = {
+      style: 0, // set what style you want to get, you can get this value from the former result
+      type: 1, // operation type, 0: change style, 1: get qrcode, 2: reset qrcode
+    }
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.GET_CONTACT_SELF_QRCODE,
+      data,
+    })
+
+    if (result) {
+      const contactQrcodeStr = result.getData()
+      if (contactQrcodeStr) {
+        const contactQrcode: ContactQrcodeGrpcResponse = JSON.parse(contactQrcodeStr)
+        if (contactQrcode.status === 0) {
+          return contactQrcode.qrcodeBuf
+        } else {
+          throw new Error(`Can not get contact self qrcode buffer.`)
+        }
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
   }
 
 }
