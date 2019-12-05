@@ -750,6 +750,32 @@ export class PadplusManager extends EventEmitter {
     }
   }
 
+  public async contactSelfName (name: string): Promise<void> {
+    log.silly(PRE, `contactSelfName(${name})`)
+
+    if (this.padplusContact) {
+      const data = {
+        nickName: name,
+      }
+      await this.padplusContact.setContactSelfInfo(data)
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
+  public async contactSelfSignature (signature: string): Promise<void> {
+    log.silly(PRE, `contactSelfSignature(${signature})`)
+
+    if (this.padplusContact) {
+      const data = {
+        signature,
+      }
+      await this.padplusContact.setContactSelfInfo(data)
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
   /**
    * Message Section
    */

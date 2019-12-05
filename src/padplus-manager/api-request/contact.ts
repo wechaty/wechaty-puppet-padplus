@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcSearchContact, ContactQrcodeGrpcResponse } from '../../schemas'
+import { GrpcSearchContact, ContactQrcodeGrpcResponse, SetContactSelfInfoGrpcResponse } from '../../schemas'
 
 const PRE = 'PadplusContact'
 
@@ -93,6 +93,31 @@ export class PadplusContact {
           return contactQrcode.qrcodeBuf
         } else {
           throw new Error(`Can not get contact self qrcode buffer.`)
+        }
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
+  }
+
+  public setContactSelfInfo = async (data: Object): Promise<void> => {
+    log.verbose(PRE, `setContactSelfInfo()`)
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.SET_CONTACT_SELF_INFO,
+      data,
+    })
+
+    if (result) {
+      const setContactSelfInfoStr = result.getData()
+      if (setContactSelfInfoStr) {
+        const setContactSelfInfoGrpcResponse: SetContactSelfInfoGrpcResponse = JSON.parse(setContactSelfInfoStr)
+        if (setContactSelfInfoGrpcResponse.status !== 0) {
+          throw new Error(`Can not set contact self ${Object.keys(data).join(',')}.`)
+        } else {
+          log.silly(`update info : ${JSON.stringify(setContactSelfInfoGrpcResponse.updateData)}`)
         }
       } else {
         throw new Error(`can not parse data`)

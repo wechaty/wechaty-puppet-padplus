@@ -199,19 +199,19 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
 
-  contactSelfQrcode (): Promise<string> {
+  public async contactSelfQrcode (): Promise<string> {
     log.silly(PRE, `contactSelfQrcode()`)
     return this.manager.contactSelfQrcode()
   }
 
-  contactSelfName (name: string): Promise<void> {
-    log.silly(PRE, `name : ${util.inspect(name)}`)
-    throw new Error('Method not implemented.')
+  public async contactSelfName (name: string): Promise<void> {
+    log.silly(PRE, `contactSelfName(${name})`)
+    await this.manager.contactSelfName(name)
   }
 
-  contactSelfSignature (signature: string): Promise<void> {
-    log.silly(PRE, `signature : ${util.inspect(signature)}`)
-    throw new Error('Method not implemented.')
+  public async contactSelfSignature (signature: string): Promise<void> {
+    log.silly(PRE, `contactSelfSignature(${signature})`)
+    await this.manager.contactSelfSignature(signature)
   }
 
   contactAlias (contactId: string): Promise<string>

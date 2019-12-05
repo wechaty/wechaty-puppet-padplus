@@ -85,3 +85,20 @@ export interface ContactQrcodeGrpcResponse {
   qrcodeBuf: string,
   style: number,
 }
+
+export interface SetContactSelfInfoGrpcResponse {
+  status: number,
+  message: string,
+  loginer: string,
+  uin: string,
+  userName: string,
+  queueName: string,
+  updateData: ContactSelfUpdateInfo,
+}
+
+export interface ContactSelfUpdateInfo {
+  nickName?: string,
+  sex?: number,
+  area?: string,
+  signature?: string,
+}
