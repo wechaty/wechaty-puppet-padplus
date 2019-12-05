@@ -31,7 +31,7 @@ import {
 
 import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -212,6 +212,11 @@ export class PuppetPadplus extends Puppet {
   public async contactSelfSignature (signature: string): Promise<void> {
     log.silly(PRE, `contactSelfSignature(${signature})`)
     await this.manager.contactSelfSignature(signature)
+  }
+
+  public async contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
+    log.silly(PRE, `contactSelfInfo()`)
+    return this.manager.contactSelfInfo()
   }
 
   contactAlias (contactId: string): Promise<string>

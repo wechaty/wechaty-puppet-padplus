@@ -102,3 +102,26 @@ export interface ContactSelfUpdateInfo {
   area?: string,
   signature?: string,
 }
+
+export interface GetContactSelfInfoGrpcResponse {
+  alias: string,
+  bigHeadImg: string,
+  bindEmail: string,
+  bindMobile: string,
+  bindQQ: number,
+  bytes: string,
+  city: string,
+  country: string,
+  loginer: string,
+  message: string,
+  nickName: string,
+  province: string,
+  queueName: string,
+  sex: number,
+  signature: string,
+  smallHeadImg: string,
+  snsBGImg: string,
+  status: number,
+  uin: string,
+  userName: string,
+}

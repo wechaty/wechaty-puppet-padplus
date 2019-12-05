@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { GrpcSearchContact, ContactQrcodeGrpcResponse, SetContactSelfInfoGrpcResponse } from '../../schemas'
+import { GrpcSearchContact, ContactQrcodeGrpcResponse, SetContactSelfInfoGrpcResponse, GetContactSelfInfoGrpcResponse } from '../../schemas'
 
 const PRE = 'PadplusContact'
 
@@ -118,6 +118,30 @@ export class PadplusContact {
           throw new Error(`Can not set contact self ${Object.keys(data).join(',')}.`)
         } else {
           log.silly(`update info : ${JSON.stringify(setContactSelfInfoGrpcResponse.updateData)}`)
+        }
+      } else {
+        throw new Error(`can not parse data`)
+      }
+    } else {
+      throw new Error(`can not get callback result`)
+    }
+  }
+
+  public getContactSelfInfo = async (): Promise<GetContactSelfInfoGrpcResponse> => {
+    log.verbose(PRE, `getContactSelfInfo()`)
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.GET_CONTACT_SELF_INFO,
+    })
+
+    if (result) {
+      const getContactSelfInfoStr = result.getData()
+      if (getContactSelfInfoStr) {
+        const getContactSelfInfoGrpcResponse: GetContactSelfInfoGrpcResponse = JSON.parse(getContactSelfInfoStr)
+        if (getContactSelfInfoGrpcResponse.status !== 0) {
+          throw new Error(`Can not get contact self info.`)
+        } else {
+          return getContactSelfInfoGrpcResponse
         }
       } else {
         throw new Error(`can not parse data`)
