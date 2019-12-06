@@ -1,7 +1,7 @@
 import util from 'util'
 import path from 'path'
 import FileBox from 'file-box'
-import flatten from 'array-flatten'
+import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
@@ -882,7 +882,7 @@ export class PuppetPadplus extends Puppet {
       const inviteeIdList = await retry(async (retryException, attempt) => {
         log.verbose(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
 
-        const tryIdList = flatten<string>(
+        const tryIdList = flatten(
           await Promise.all(
             inviteeNameList.map(
               inviteeName => this.roomMemberSearch(roomId, inviteeName),
@@ -947,7 +947,7 @@ export class PuppetPadplus extends Puppet {
       const roomId         = leaveEvent.roomId
       const timestamp      = leaveEvent.timestamp
 
-      const leaverIdList = flatten<string>(
+      const leaverIdList = flatten(
         await Promise.all(
           leaverNameList.map(
             leaverName => this.roomMemberSearch(roomId, leaverName),
