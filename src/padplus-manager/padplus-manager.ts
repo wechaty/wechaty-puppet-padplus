@@ -488,11 +488,11 @@ export class PadplusManager extends EventEmitter {
                 log.verbose(PRE, `init cache manager`)
                 await CacheManager.init(wechatUser.userName)
                 this.cacheManager = CacheManager.Instance
-                if (this.padplusUser) {
+                /* if (this.padplusUser) {
                   await this.padplusUser.reconnect()
                 } else {
                   throw new Error(`no padplus user.`)
-                }
+                } */
 
                 const contactSelf: PadplusContactPayload = {
                   alias: wechatUser.alias,
