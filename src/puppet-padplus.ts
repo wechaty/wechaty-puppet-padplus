@@ -138,10 +138,9 @@ export class PuppetPadplus extends Puppet {
   public async logout (): Promise<void> {
     log.verbose(PRE, 'logout()')
 
-    // TODO: need to logout wechat
+    await this.manager.logout(this.selfId())
     this.emit('logout', this.selfId())
     this.id = undefined
-    await this.manager.logout()
     this.emit('reset', 'padplus reset')
   }
 
