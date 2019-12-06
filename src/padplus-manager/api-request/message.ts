@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData } from '../../schemas'
+import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData } from '../../schemas'
 import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PadplusMessage'
@@ -169,6 +169,34 @@ export class PadplusMessage {
     } else {
       throw new Error(`can not load rich media data.`)
     }
+  }
+
+  public async messageRecall (selfId: string, receiverId: string, svrMsgId: string): Promise<boolean> {
+    log.verbose(PRE, `messageRecall`)
+    const data = {
+      fromUserName: selfId,
+      msgId: svrMsgId,
+      toUserName: receiverId,
+    }
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.REVOKE_MESSAGE,
+      data,
+    })
+
+    if (res) {
+      const msgDataStr = res.getData()
+      if (msgDataStr) {
+        const msgData: PadplusRecallData = JSON.parse(msgDataStr)
+        return msgData.BaseResponse.Ret === 0 && msgData.BaseResponse.ErrMsg === '已撤回'
+      } else {
+        log.error(`can not parse message data from grpc`)
+      }
+    } else {
+      log.error(`can not get response from grpc server`)
+    }
+
+    return false
   }
 
 }

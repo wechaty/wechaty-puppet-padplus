@@ -11,7 +11,7 @@ import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload, Receiver } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -1207,6 +1207,17 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no cache.`)
     }
     await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
+  }
+
+  public async messageRecall (selfId: string, receiver: Receiver, svrMsgId: string): Promise<boolean> {
+    log.silly(PRE, `selfId : ${selfId}, receiver : ${receiver}, svrMsgId : ${svrMsgId}`)
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+
+    const receiverId = receiver.roomId || receiver.contactId
+    const isSuccess = await this.padplusMesasge.messageRecall(selfId, receiverId!, svrMsgId)
+    return isSuccess
   }
 
 }

@@ -864,6 +864,13 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
+  public async messageRecall (receiver: Receiver, svrMsgId: string): Promise<boolean> {
+    log.silly(PRE, 'messageRecall(%s, %s)', receiver, svrMsgId)
+
+    const isSuccess = await this.manager.messageRecall(this.selfId(), receiver, svrMsgId)
+    return isSuccess
+  }
+
   /**
    * ========================
    *      ROOM SECTION
