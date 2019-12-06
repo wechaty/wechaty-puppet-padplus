@@ -8,9 +8,13 @@
 
 ## Notice
 
-1. Wechaty-puppet-padplus is still in very Early Alpha Stage, please make sure you have the necessary engineering technics to deal with the bugs instead of just asking for support.
-2. You are welcome to file an issue to reproduce the problem, if it is reproducible, we will fix that as soon as possible.
-3. If you need a stable version, please keep waiting until we release the stable one.
+Our Mission: Make it easy to build a WeChat Chatbot for developers.
+
+We provide a **free** token for the developers who have a strong will and ability to build a valuable chatbot for users.
+
+Any developers can send info following the [template](https://github.com/wechaty/wechaty/wiki/Request-For-Free-Token-Template) to dev@juzi.bot
+
+See more: <https://github.com/wechaty/wechaty/wiki/Support-Developers>
 
 ## Install
 

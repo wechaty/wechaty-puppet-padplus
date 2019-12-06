@@ -31,7 +31,7 @@ import {
 
 import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -138,10 +138,9 @@ export class PuppetPadplus extends Puppet {
   public async logout (): Promise<void> {
     log.verbose(PRE, 'logout()')
 
-    // TODO: need to logout wechat
+    await this.manager.logout(this.selfId())
     this.emit('logout', this.selfId())
     this.id = undefined
-    await this.manager.logout()
     this.emit('reset', 'padplus reset')
   }
 
@@ -153,6 +152,7 @@ export class PuppetPadplus extends Puppet {
           this.onRoomJoinEvent(message),
           this.onRoomLeaveEvent(message),
           this.onRoomTopicEvent(message),
+          this.onFriendshipEvent(message),
         ])
         break
       case PadplusMessageType.VerifyMsg:
@@ -163,6 +163,9 @@ export class PuppetPadplus extends Puppet {
         await this.onRoomJoinEvent(message)
         break
       case PadplusMessageType.Text:
+        await this.onFriendshipEvent(message)
+        this.emit('message', message.msgId)
+        break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
@@ -195,18 +198,24 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
 
-  contactSelfQrcode (): Promise<string> {
-    throw new Error('Method not implemented.')
+  public async contactSelfQrcode (): Promise<string> {
+    log.silly(PRE, `contactSelfQrcode()`)
+    return this.manager.contactSelfQrcode()
   }
 
-  contactSelfName (name: string): Promise<void> {
-    log.silly(PRE, `name : ${util.inspect(name)}`)
-    throw new Error('Method not implemented.')
+  public async contactSelfName (name: string): Promise<void> {
+    log.silly(PRE, `contactSelfName(${name})`)
+    await this.manager.contactSelfName(name)
   }
 
-  contactSelfSignature (signature: string): Promise<void> {
-    log.silly(PRE, `signature : ${util.inspect(signature)}`)
-    throw new Error('Method not implemented.')
+  public async contactSelfSignature (signature: string): Promise<void> {
+    log.silly(PRE, `contactSelfSignature(${signature})`)
+    await this.manager.contactSelfSignature(signature)
+  }
+
+  public async contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
+    log.silly(PRE, `contactSelfInfo()`)
+    return this.manager.contactSelfInfo()
   }
 
   contactAlias (contactId: string): Promise<string>
