@@ -74,3 +74,54 @@ export interface GrpcDeleteContact {
   uin: string,
   userName: string,
 }
+
+export interface ContactQrcodeGrpcResponse {
+  status: number,
+  message: string,
+  loginer: string,
+  uin: string,
+  userName: string,
+  queueName: string,
+  qrcodeBuf: string,
+  style: number,
+}
+
+export interface SetContactSelfInfoGrpcResponse {
+  status: number,
+  message: string,
+  loginer: string,
+  uin: string,
+  userName: string,
+  queueName: string,
+  updateData: ContactSelfUpdateInfo,
+}
+
+export interface ContactSelfUpdateInfo {
+  nickName?: string,
+  sex?: number,
+  area?: string,
+  signature?: string,
+}
+
+export interface GetContactSelfInfoGrpcResponse {
+  alias: string,
+  bigHeadImg: string,
+  bindEmail: string,
+  bindMobile: string,
+  bindQQ: number,
+  bytes: string,
+  city: string,
+  country: string,
+  loginer: string,
+  message: string,
+  nickName: string,
+  province: string,
+  queueName: string,
+  sex: number,
+  signature: string,
+  smallHeadImg: string,
+  snsBGImg: string,
+  status: number,
+  uin: string,
+  userName: string,
+}
