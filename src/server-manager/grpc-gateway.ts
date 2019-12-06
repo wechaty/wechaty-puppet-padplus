@@ -36,6 +36,9 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SET_ROOM_ANNOUNCEMENT,
   ApiType.HEARTBEAT,
   ApiType.GET_ROOM_QRCODE,
+  ApiType.GET_CONTACT_SELF_QRCODE,
+  ApiType.SET_CONTACT_SELF_INFO,
+  ApiType.GET_CONTACT_SELF_INFO,
   ApiType.LOGOUT,
 ]
 
@@ -410,7 +413,7 @@ export class GrpcGateway extends EventEmitter {
     stream.on('data', async (data: StreamResponse) => {
       const traceId = data.getTraceid()
       const responseType = data.getResponsetype()
-      if (responseType !== ResponseType.LOGIN_QRCODE && responseType !== ResponseType.ROOM_QRCODE) {
+      if (responseType !== ResponseType.LOGIN_QRCODE && responseType !== ResponseType.ROOM_QRCODE && responseType !== ResponseType.CONTACT_SELF_QRCODE_GET) {
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)

@@ -38,11 +38,12 @@ import {
   GrpcDeleteContact,
   LogoutGrpcResponse,
   PadplusRoomMemberMap,
+  GetContactSelfInfoGrpcResponse,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
-import { convertFromGrpcContact } from '../convert-manager/contact-convertor'
+import { convertFromGrpcContact, convertFromGrpcContactSelf } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
@@ -494,26 +495,9 @@ export class PadplusManager extends EventEmitter {
                   throw new Error(`no padplus user.`)
                 }
 
-                const contactSelf: PadplusContactPayload = {
-                  alias: wechatUser.alias,
-                  bigHeadUrl: wechatUser.headImgUrl,
-                  city: '',
-                  contactFlag: 3,
-                  contactType: 0,
-                  country: '',
-                  labelLists: '',
-                  nickName: wechatUser.nickName,
-                  province: '',
-                  remark: '',
-                  sex: ContactGender.Unknown,
-                  signature: '',
-                  smallHeadUrl: '',
-                  stranger: '',
-                  ticket: '',
-                  userName: wechatUser.userName,
-                  verifyFlag: 0,
-                }
-                await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+                const contactSelfInfo = await this.contactSelfInfo()
+                const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
+                await this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
 
                 this.emit('login', wechatUser)
                 this.loginStatus = true
@@ -748,6 +732,54 @@ export class PadplusManager extends EventEmitter {
     })
   }
 
+  /**
+   * Contact Self Section
+   */
+  public async contactSelfQrcode (): Promise<string> {
+    log.silly(PRE, `contactSelfQrcode()`)
+
+    if (this.padplusContact) {
+      return this.padplusContact.contactSelfQrcode()
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
+  public async contactSelfName (name: string): Promise<void> {
+    log.silly(PRE, `contactSelfName(${name})`)
+
+    if (this.padplusContact) {
+      const data = {
+        nickName: name,
+      }
+      await this.padplusContact.setContactSelfInfo(data)
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
+  public async contactSelfSignature (signature: string): Promise<void> {
+    log.silly(PRE, `contactSelfSignature(${signature})`)
+
+    if (this.padplusContact) {
+      const data = {
+        signature,
+      }
+      await this.padplusContact.setContactSelfInfo(data)
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
+
+  public async contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
+    log.silly(PRE, `contactSelfInfo()`)
+
+    if (this.padplusContact) {
+      return this.padplusContact.getContactSelfInfo()
+    } else {
+      throw new Error(`no padplus contact`)
+    }
+  }
   /**
    * Message Section
    */
