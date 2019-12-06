@@ -37,11 +37,6 @@ export class RequestClient {
       Bucket: AWS_S3.BUCKET,
       Key: AWS_S3.PATH + filename,
     }
-    // TODO: 增加分块上传机制
-    /* let options = {
-      partSize: 10 * 1024 * 1024,
-      queueSize: 1,
-    } */
     AWS.config.accessKeyId = AWS_S3.ACCESS_KEY_ID
     AWS.config.secretAccessKey = AWS_S3.SECRET_ACCESS_KEY
 

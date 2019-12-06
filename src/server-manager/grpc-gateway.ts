@@ -219,7 +219,6 @@ export class GrpcGateway extends EventEmitter {
     try {
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        // TODO: add timeout for differ ApiType
         return new Promise<StreamResponse>((resolve, reject) => {
           let timeoutMs = 5 * 1000
           switch (apiType) {
