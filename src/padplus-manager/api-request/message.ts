@@ -171,11 +171,11 @@ export class PadplusMessage {
     }
   }
 
-  public async messageRecall (selfId: string, receiverId: string, svrMsgId: string): Promise<boolean> {
-    log.verbose(PRE, `messageRecall`)
+  public async recallMessage (selfId: string, receiverId: string, messageId: string): Promise<boolean> {
+    log.verbose(PRE, `recallMessage`)
     const data = {
       fromUserName: selfId,
-      msgId: svrMsgId,
+      msgId: messageId,
       toUserName: receiverId,
     }
 
