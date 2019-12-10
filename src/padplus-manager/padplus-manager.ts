@@ -495,12 +495,43 @@ export class PadplusManager extends EventEmitter {
                   throw new Error(`no padplus user.`)
                 } */
 
-                const contactSelfInfo = await this.contactSelfInfo()
-                const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
-                await this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
+                const contactSelf: PadplusContactPayload = {
+                  alias: wechatUser.alias,
+                  bigHeadUrl: wechatUser.headImgUrl,
+                  city: '',
+                  contactFlag: 3,
+                  contactType: 0,
+                  country: '',
+                  labelLists: '',
+                  nickName: wechatUser.nickName,
+                  province: '',
+                  remark: '',
+                  sex: ContactGender.Unknown,
+                  signature: '',
+                  smallHeadUrl: '',
+                  stranger: '',
+                  ticket: '',
+                  userName: wechatUser.userName,
+                  verifyFlag: 0,
+                }
+                await this.cacheManager.setContact(contactSelf.userName, contactSelf)
 
                 this.emit('login', wechatUser)
                 this.loginStatus = true
+
+                return this.contactSelfInfo()
+                  .then(async contactSelfInfo => {
+                    log.silly(`contactSelfInfo : ${contactSelfInfo}`)
+                    if (contactSelfInfo) {
+                      const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
+                      if (!this.cacheManager) {
+                        throw new Error(`no cache manager`)
+                      }
+                      return this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
+                    } else {
+                      throw new Error(`can not get contact self info.`)
+                    }
+                  })
               }
             } else {
               const uin = await grpcGatewayEmitter.getUIN()
@@ -771,7 +802,7 @@ export class PadplusManager extends EventEmitter {
     }
   }
 
-  public async contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
+  public contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
     log.silly(PRE, `contactSelfInfo()`)
 
     if (this.padplusContact) {

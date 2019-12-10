@@ -219,8 +219,8 @@ export class GrpcGateway extends EventEmitter {
     try {
       const result = await this._request(request)
       if (result && NEED_CALLBACK_API_LIST.includes(apiType)) {
-        return new Promise<StreamResponse>((resolve, reject) => {
-          let timeoutMs = 5 * 1000
+        return new Promise(resolve => {
+          let timeoutMs = 30 * 1000
           switch (apiType) {
             case ApiType.SEND_MESSAGE:
             case ApiType.SEND_FILE:
@@ -236,14 +236,15 @@ export class GrpcGateway extends EventEmitter {
               timeoutMs = 1 * 60 * 1000
               break
             default:
-              timeoutMs = 5 * 1000
+              timeoutMs = 30 * 1000
               break
           }
           const timeout = setTimeout(async () => {
             if (apiType !== ApiType.HEARTBEAT) {
               await this.checkTimeout(uin)
             }
-            reject(new Error(`ApiType: ${apiType} request timeout, traceId: ${traceId}`))
+            log.error(`ApiType: ${apiType} request timeout, traceId: ${traceId}`)
+            resolve(null)
           }, timeoutMs)
           CallbackPool.Instance.pushCallbackToPool(traceId, (data: StreamResponse) => {
             const _traceId = data.getTraceid()
