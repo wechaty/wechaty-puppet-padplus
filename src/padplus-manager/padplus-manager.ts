@@ -516,14 +516,22 @@ export class PadplusManager extends EventEmitter {
                 }
                 await this.cacheManager.setContact(contactSelf.userName, contactSelf)
 
-                const contactSelfInfo = await this.contactSelfInfo()
-                if (contactSelfInfo) {
-                  const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
-                  await this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
-                }
-
                 this.emit('login', wechatUser)
                 this.loginStatus = true
+
+                return this.contactSelfInfo()
+                  .then(async contactSelfInfo => {
+                    log.silly(`contactSelfInfo : ${contactSelfInfo}`)
+                    if (contactSelfInfo) {
+                      const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
+                      if (!this.cacheManager) {
+                        throw new Error(`no cache manager`)
+                      }
+                      return this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
+                    } else {
+                      throw new Error(`can not get contact self info.`)
+                    }
+                  })
               }
             } else {
               const uin = await grpcGatewayEmitter.getUIN()
@@ -794,7 +802,7 @@ export class PadplusManager extends EventEmitter {
     }
   }
 
-  public async contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
+  public contactSelfInfo (): Promise<GetContactSelfInfoGrpcResponse> {
     log.silly(PRE, `contactSelfInfo()`)
 
     if (this.padplusContact) {
