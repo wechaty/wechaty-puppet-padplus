@@ -53,7 +53,7 @@ export class PadplusFriendship {
         throw new Error(`can not parse data`)
       }
     } else {
-      throw new Error(`can not get callback result`)
+      throw new Error(`can not get callback result of ADD_CONTACT`)
     }
   }
 

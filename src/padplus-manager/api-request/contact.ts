@@ -44,7 +44,7 @@ export class PadplusContact {
         throw new Error(`can not parse data`)
       }
     } else {
-      throw new Error(`can not get callback result`)
+      throw new Error(`can not get callback result of SEARCH_CONTACT`)
     }
   }
 
@@ -98,7 +98,7 @@ export class PadplusContact {
         throw new Error(`can not parse data`)
       }
     } else {
-      throw new Error(`can not get callback result`)
+      throw new Error(`can not get callback result of GET_CONTACT_SELF_QRCODE`)
     }
   }
 
@@ -123,7 +123,7 @@ export class PadplusContact {
         throw new Error(`can not parse data`)
       }
     } else {
-      throw new Error(`can not get callback result`)
+      throw new Error(`can not get callback result of SET_CONTACT_SELF_INFO`)
     }
   }
 
@@ -147,7 +147,7 @@ export class PadplusContact {
         throw new Error(`can not parse data`)
       }
     } else {
-      throw new Error(`can not get callback result`)
+      throw new Error(`can not get callback result of GET_CONTACT_SELF_INFO`)
     }
   }
 

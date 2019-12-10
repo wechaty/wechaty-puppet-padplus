@@ -40,7 +40,7 @@ export class PadplusUser {
       data,
     })
     if (!res) {
-      log.error(`can not get result for logout`)
+      log.error(`can not get callback result of LOGOUT`)
       return false
     } else {
       const resultStr = res.getData()

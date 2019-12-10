@@ -495,9 +495,32 @@ export class PadplusManager extends EventEmitter {
                   throw new Error(`no padplus user.`)
                 } */
 
+                const contactSelf: PadplusContactPayload = {
+                  alias: wechatUser.alias,
+                  bigHeadUrl: wechatUser.headImgUrl,
+                  city: '',
+                  contactFlag: 3,
+                  contactType: 0,
+                  country: '',
+                  labelLists: '',
+                  nickName: wechatUser.nickName,
+                  province: '',
+                  remark: '',
+                  sex: ContactGender.Unknown,
+                  signature: '',
+                  smallHeadUrl: '',
+                  stranger: '',
+                  ticket: '',
+                  userName: wechatUser.userName,
+                  verifyFlag: 0,
+                }
+                await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+
                 const contactSelfInfo = await this.contactSelfInfo()
-                const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
-                await this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
+                if (contactSelfInfo) {
+                  const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
+                  await this.cacheManager.setContact(contactSelfPayload.userName, contactSelfPayload)
+                }
 
                 this.emit('login', wechatUser)
                 this.loginStatus = true
