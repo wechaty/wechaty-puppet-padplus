@@ -55,9 +55,11 @@ export class PuppetPadplus extends Puppet {
 
     const token = this.options.token || padplusToken()
     const name = this.options.name
+    const mongoCache: any = this.options.mongoCache
     if (token) {
       this.manager = new PadplusManager({
         endpoint: this.options.endpoint || GRPC_ENDPOINT,
+        mongoCache,
         name,
         token,
       })
@@ -348,7 +350,7 @@ export class PuppetPadplus extends Puppet {
       strangerV2 = searchContact.v2
       strangerV1 = searchContact.v1
     } else {
-      throw new Error('stranger neither v1 nor v2!')
+      throw new Error(`This account: ${contactId} is abnormal.`)
     }
 
     const isPhoneNumber = contactId.match(/^[1]([3-9])[0-9]{9}$/)
@@ -1023,8 +1025,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const payload = await this.manager.roomInvitationRawPayload(roomInvitationId)
-    return payload
+    return this.manager.roomInvitationRawPayload(roomInvitationId)
   }
 
   protected async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {

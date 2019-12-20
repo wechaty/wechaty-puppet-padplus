@@ -2,7 +2,12 @@ import {
   ContactGender,
 } from 'wechaty-puppet'
 
-export interface PadplusContactPayload {
+export interface BaseMongo {
+  uniqueKey?: string,
+  chatroomId?: string,
+}
+
+export interface PadplusContactPayload extends BaseMongo {
   alias            : string,
   contactType      : number,
   labelLists       : string,

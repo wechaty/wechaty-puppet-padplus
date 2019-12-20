@@ -1,4 +1,6 @@
-export interface PadplusRoomMemberPayload {
+import { BaseMongo } from './model-contact'
+
+export interface PadplusRoomMemberPayload extends BaseMongo {
   contactId: string,
   nickName: string,
   displayName: string,
@@ -26,7 +28,7 @@ export interface GrpcRoomMemberList {
   membersJson: string,
 }
 
-export interface PadplusRoomPayload {
+export interface PadplusRoomPayload extends BaseMongo {
   alias          : string,
   bigHeadUrl     : string,
   chatRoomOwner  : string,
@@ -77,7 +79,7 @@ export interface GrpcRoomPayload {
   BigHeadImgUrl: string,
 }
 
-export interface PadplusRoomInvitationPayload {
+export interface PadplusRoomInvitationPayload extends BaseMongo {
   id       : string,
   fromUser : string,
   roomName : string,

@@ -64,6 +64,7 @@ export interface ManagerOptions {
   token: string,
   name: unknown,
   endpoint?: string,
+  mongoCache?: string,
 }
 
 const PRE = 'PadplusManager'
@@ -80,7 +81,7 @@ export class PadplusManager extends EventEmitter {
   private padplusContact?    : PadplusContact
   private padplusRoom?       : PadplusRoom
   private padplusFriendship? : PadplusFriendship
-  public cacheManager?      : CacheManager
+  public cacheManager?       : CacheManager
   private memory?            : MemoryCard
   private memorySlot         : PadplusMemorySlot
   private qrcodeStatus?      : ScanStatus
@@ -401,8 +402,8 @@ export class PadplusManager extends EventEmitter {
 
               case QrcodeStatus.Canceled:
               case QrcodeStatus.Expired:
-                const uin = await grpcGatewayEmitter.getUIN()
-                const wxid = await grpcGatewayEmitter.getUserName()
+                const uin = grpcGatewayEmitter.getUIN()
+                const wxid = grpcGatewayEmitter.getUserName()
                 const data = {
                   uin,
                   wxid,
@@ -444,8 +445,8 @@ export class PadplusManager extends EventEmitter {
               await this.memory.save()
             }
 
-            log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
+            log.verbose(PRE, `init ${this.options.mongoCache ? 'mongo' : 'flash-store'} cache manager`)
+            await CacheManager.init(loginData.userName, this.options.mongoCache)
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
@@ -467,13 +468,13 @@ export class PadplusManager extends EventEmitter {
               userName: loginData.userName,
               verifyFlag: 0,
             }
-            await this.cacheManager.setContact(contactSelf.userName, contactSelf)
+            await this.cacheManager.setContact(loginData.userName, contactSelf)
 
             this.emit('login', loginData)
 
             const selfOnline = await this.getContact(loginData.userName)
             if (selfOnline) {
-              await this.cacheManager.setContact(selfOnline.userName, selfOnline)
+              await this.cacheManager.setContact(loginData.userName, selfOnline)
             }
           }
           break
@@ -486,8 +487,8 @@ export class PadplusManager extends EventEmitter {
             if (autoLoginData && autoLoginData.online) {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
-                log.verbose(PRE, `init cache manager`)
-                await CacheManager.init(wechatUser.userName)
+                log.verbose(PRE, `init ${this.options.mongoCache ? 'mongo' : 'flash-store'} cache manager`)
+                await CacheManager.init(wechatUser.userName, this.options.mongoCache)
                 this.cacheManager = CacheManager.Instance
                 /* if (this.padplusUser) {
                   await this.padplusUser.reconnect()
@@ -521,7 +522,6 @@ export class PadplusManager extends EventEmitter {
 
                 return this.contactSelfInfo()
                   .then(async contactSelfInfo => {
-                    log.silly(`contactSelfInfo : ${contactSelfInfo}`)
                     if (contactSelfInfo) {
                       const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
                       if (!this.cacheManager) {
@@ -534,14 +534,14 @@ export class PadplusManager extends EventEmitter {
                   })
               }
             } else {
-              const uin = await grpcGatewayEmitter.getUIN()
-              const wxid = await grpcGatewayEmitter.getUserName()
+              const uin = grpcGatewayEmitter.getUIN()
+              const wxid = grpcGatewayEmitter.getUserName()
               const data = {
                 uin,
                 wxid,
               }
-              await grpcGatewayEmitter.setUIN('')
-              await grpcGatewayEmitter.setUserName('')
+              grpcGatewayEmitter.setUIN('')
+              grpcGatewayEmitter.setUserName('')
               if (this.padplusUser) {
                 await this.padplusUser.getWeChatQRCode(data)
               }

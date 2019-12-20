@@ -2,6 +2,7 @@
 import {
   FriendshipType,
 } from 'wechaty-puppet'
+import { BaseMongo } from './model-contact'
 
 export interface PadplusRequestTokenPayload {
   full_url        : string,
@@ -18,7 +19,7 @@ export interface PadplusFriendshipPayload {
   ticket          : string,   // 'v2_1a0d2cf325e64b6f74bed09e944529e7cc7a7580cb323475050664566dd0302d89b8e2ed95b596b459cf762d94a0ce606da39babbae0dc26b18a62e079bfc120@stranger',
 }
 
-export interface FriendshipPayloadBase {
+export interface FriendshipPayloadBase extends BaseMongo {
   id        : string,
   contactId : string,
   hello?    : string,
