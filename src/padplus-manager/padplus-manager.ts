@@ -1062,7 +1062,7 @@ export class PadplusManager extends EventEmitter {
 
   public async getRoom (roomId: string): Promise<PadplusRoomPayload | null | undefined> {
     if (!this.cacheManager) {
-      throw new Error()
+      throw new Error('no cache manager')
     }
     const room = await this.cacheManager.getRoom(roomId)
     if (room) {

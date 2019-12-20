@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import util from 'util'
 
 import { log } from 'wechaty-puppet'
 import {
@@ -120,6 +119,8 @@ const roomInvitationSchema = new Schema({
   versionKey: false,
 })
 
+const PRE = 'MongoManager'
+
 export class MongoManager {
 
   private Contact: mongoose.Model<mongoose.Document>
@@ -127,7 +128,7 @@ export class MongoManager {
   private RoomMember: mongoose.Model<mongoose.Document>
   private Friendship: mongoose.Model<mongoose.Document>
   private RoomInvitation: mongoose.Model<mongoose.Document>
-
+  private db?: mongoose.Connection
   constructor (private userName: string) {
     this.Contact = mongoose.model('Contact', contactSchema)
     this.Room = mongoose.model('Room', roomSchema)
@@ -137,18 +138,26 @@ export class MongoManager {
   }
 
   public async init (mongoUrl: string) {
-    log.silly(`Mongo init()`)
+    log.silly(PRE, `Mongo init()`)
 
     await mongoose.connect(mongoUrl, {
       server: { poolSize: 30 },
       useNewUrlParser: true,
     })
 
-    const db = mongoose.connection
-    db.on('error', () => log.error('connection error'))
-    db.once('open', () => {
+    this.db = mongoose.connection
+    this.db.on('error', () => log.error('connection error'))
+    this.db.once('open', () => {
       log.info(`Connected successfully!`)
     })
+  }
+
+  public async release () {
+    log.silly(PRE, `Close mongo connection`)
+    if (!this.db) {
+      throw new Error(`mongoose connection has not init.`)
+    }
+    await this.db.close()
   }
 
   public removeAttribute (object: mongoose.Document): any {
@@ -348,11 +357,10 @@ export class MongoManager {
   public async deleteRoomMember (
     roomId: string,
   ): Promise<void> {
-    const result = this.RoomMember.deleteMany({
+    await this.RoomMember.deleteMany({
       chatroomId: roomId,
       uniqueKey: this.userName,
     })
-    log.silly(`deleteRoomMember result data : ${util.inspect(result)}`)
   }
 
   /**
@@ -362,6 +370,7 @@ export class MongoManager {
    */
   public async getFriendshipRawPayload (id: string) {
     const resultDoc = await this.Friendship.findOne({
+      contactId: id,
       uniqueKey: this.userName,
     })
     if (resultDoc) {
@@ -372,10 +381,8 @@ export class MongoManager {
   }
 
   public async setFriendshipRawPayload (
-    id: string,
     payload: FriendshipPayload,
   ) {
-    log.silly(`useless id : ${id}`)
     payload.uniqueKey = this.userName
     const result = this.Friendship.findOne({
       contactId: payload.contactId,
@@ -442,11 +449,10 @@ export class MongoManager {
   public async deleteRoomInvitation (
     messageId: string,
   ): Promise<void> {
-    const result = this.RoomInvitation.deleteOne({
+    await this.RoomInvitation.deleteOne({
       id: messageId,
       uniqueKey: this.userName,
     })
-    log.silly(`deleteRoomInvitation result data : ${util.inspect(result)}`)
   }
 
 }

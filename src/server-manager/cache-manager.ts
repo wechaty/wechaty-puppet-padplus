@@ -401,7 +401,7 @@ export class CacheManager {
       if (!this.mongoManager) {
         throw new Error(`can not init mongo connection`)
       }
-      await this.mongoManager.setFriendshipRawPayload(id, payload)
+      await this.mongoManager.setFriendshipRawPayload(payload)
     } else {
       if (!this.cacheFriendshipRawPayload) {
         throw new Error(`${PRE} setFriendshipRawPayload() has no cache.`)
@@ -461,7 +461,10 @@ export class CacheManager {
     log.verbose(PRE, 'releaseCache()')
 
     if (this.mongoCache) {
-      // FIXME: need to close mongo connection or not ?
+      if (!this.mongoManager) {
+        throw new Error(`can not init mongo connection`)
+      }
+      await this.mongoManager.release()
     } else {
       if (this.cacheContactRawPayload
           && this.cacheRoomMemberRawPayload
