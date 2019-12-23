@@ -1,5 +1,5 @@
 import { log } from '../../config'
-import { RequestStatus, GrpcCreateRoomData, GrpcGetAnnouncementData, GrpcSetAnnouncementData } from '../../schemas'
+import { GrpcCreateRoomData, GrpcGetAnnouncementData, GrpcSetAnnouncementData } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 
@@ -13,7 +13,7 @@ export class PadplusRoom {
   }
 
   // 修改微信群名称
-  public setTopic = async (roomId: string, topic: string): Promise<RequestStatus> => {
+  public setTopic = async (roomId: string, topic: string): Promise<void> => {
     log.verbose(PRE, `setTopic(${roomId}, ${topic})`)
     const OpType = 'UPDATE'
     const type = 'MOD_TOPIC'
@@ -24,12 +24,10 @@ export class PadplusRoom {
       type,
     }
 
-    const res = await this.requestClient.request({
+    await this.requestClient.request({
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    log.silly(PRE, `message : ${JSON.stringify(res)}`)
-    return RequestStatus.Success
   }
 
   public getRoomInfo = async (roomId: string): Promise<boolean> => {
@@ -88,13 +86,13 @@ export class PadplusRoom {
       roomId,
     }
 
-    const res = await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.GET_ROOM_QRCODE,
       data,
     })
 
-    if (res) {
-      const roomQrcodeDataStr = res.getData()
+    if (result) {
+      const roomQrcodeDataStr = result.getData()
       if (roomQrcodeDataStr) {
         const roomQrcodeData = JSON.parse(roomQrcodeDataStr)
         return roomQrcodeData.qrcodeBuf
@@ -102,7 +100,7 @@ export class PadplusRoom {
         throw new Error(`can not parse room qrcode data from grpc`)
       }
     } else {
-      throw new Error(`can not get room qrcode response from grpc server`)
+      throw new Error(`can not get callback result of GET_ROOM_QRCODE`)
     }
   }
 
@@ -114,12 +112,12 @@ export class PadplusRoom {
       wxid: roomId,
     }
 
-    const res = await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.SET_ROOM_ANNOUNCEMENT,
       data,
     })
-    if (res) {
-      const announcementDataStr = res.getData()
+    if (result) {
+      const announcementDataStr = result.getData()
       if (announcementDataStr) {
         const announcementData: GrpcSetAnnouncementData = JSON.parse(announcementDataStr)
         if (announcementData.status !== 0) { // status: -2025 '仅群主可编辑群公告。'
@@ -130,7 +128,7 @@ export class PadplusRoom {
         throw new Error(`can not parse announcement data from grpc`)
       }
     } else {
-      throw new Error(`can not get announcement response from grpc server`)
+      throw new Error(`can not get callback result of SET_ROOM_ANNOUNCEMENT`)
     }
   }
 
@@ -141,12 +139,12 @@ export class PadplusRoom {
       wxid: roomId,
     }
 
-    const res = await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.GET_ROOM_ANNOUNCEMENT,
       data,
     })
-    if (res) {
-      const announcementDataStr = res.getData()
+    if (result) {
+      const announcementDataStr = result.getData()
       if (announcementDataStr) {
         const announcementData: GrpcGetAnnouncementData = JSON.parse(announcementDataStr)
         return announcementData.announcement
@@ -154,11 +152,11 @@ export class PadplusRoom {
         throw new Error(`can not parse announcement data from grpc`)
       }
     } else {
-      throw new Error(`can not get announcement response from grpc server`)
+      throw new Error(`can not get callback result of GET_ROOM_ANNOUNCEMENT`)
     }
   }
 
-  public addMember = async (roomId: string, memberId: string): Promise<RequestStatus> => {
+  public addMember = async (roomId: string, memberId: string): Promise<void> => {
     log.verbose(PRE, `addMember(${roomId},${memberId})`)
     const data = {
       OpType: 'UPDATE',
@@ -171,7 +169,6 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    return RequestStatus.Success
   }
 
   public createRoom = async (topic: string, memberIdList: string[]): Promise<string> => {
@@ -181,13 +178,13 @@ export class PadplusRoom {
       topic,
     }
 
-    const res = await this.requestClient.request({
+    const result = await this.requestClient.request({
       apiType: ApiType.CREATE_ROOM,
       data,
     })
 
-    if (res) {
-      const roomDataStr = res.getData()
+    if (result) {
+      const roomDataStr = result.getData()
 
       if (roomDataStr) {
         const roomData: GrpcCreateRoomData = JSON.parse(roomDataStr)
@@ -200,11 +197,11 @@ export class PadplusRoom {
         throw new Error(`can not parse room data from grpc`)
       }
     } else {
-      throw new Error(`can not get response from grpc server`)
+      throw new Error(`can not get callback result of CREATE_ROOM`)
     }
   }
 
-  public quitRoom = async (roomId: string): Promise<RequestStatus> => {
+  public quitRoom = async (roomId: string): Promise<void> => {
     log.verbose(PRE, `quitRoom(${roomId})`)
     const data = {
       OpType: 'UPDATE',
@@ -216,7 +213,6 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
-    return RequestStatus.Success
   }
 
 }
