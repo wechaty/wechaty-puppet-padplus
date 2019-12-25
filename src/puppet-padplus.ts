@@ -1,5 +1,6 @@
 import util from 'util'
 import path from 'path'
+import axios from 'axios'
 import FileBox from 'file-box'
 import { flatten } from 'array-flatten'
 
@@ -433,8 +434,28 @@ export class PuppetPadplus extends Puppet {
         const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
 
         if (data && data.src) {
-          const name = path.parse(data.src).base
-          return FileBox.fromUrl(encodeURI(data.src), name)
+          const _name = path.parse(data.src).base
+          let name: string = ''
+          if (_name.indexOf('?')) {
+            name = decodeURI(_name.split('?')[0])
+          } else {
+            name = 'unknow'
+          }
+          try {
+            const res = await axios.get(data.src)
+            if (res.headers) {
+              log.silly(`The media src work right!`)
+            } else {
+              throw new Error(`The media src can not work right.`)
+            }
+          } catch (error) {
+            throw new Error(`Can not get rich medis data.`)
+          }
+          if (escape(data.src).indexOf('%u') === -1) {
+            return FileBox.fromUrl(data.src, name)
+          } else {
+            return FileBox.fromUrl(encodeURI(data.src), name)
+          }
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
