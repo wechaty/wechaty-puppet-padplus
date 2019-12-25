@@ -1,6 +1,5 @@
 import util from 'util'
 import path from 'path'
-import axios from 'axios'
 import FileBox from 'file-box'
 import { flatten } from 'array-flatten'
 
@@ -441,21 +440,13 @@ export class PuppetPadplus extends Puppet {
           } else {
             name = 'unknow'
           }
-          try {
-            const res = await axios.get(data.src)
-            if (res.headers) {
-              log.silly(`The media src work right!`)
-            } else {
-              throw new Error(`The media src can not work right.`)
-            }
-          } catch (error) {
-            throw new Error(`Can not get rich medis data.`)
-          }
+          let src: string
           if (escape(data.src).indexOf('%u') === -1) {
-            return FileBox.fromUrl(data.src, name)
+            src = data.src
           } else {
-            return FileBox.fromUrl(encodeURI(data.src), name)
+            src = encodeURI(data.src)
           }
+          return FileBox.fromUrl(src, name)
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
