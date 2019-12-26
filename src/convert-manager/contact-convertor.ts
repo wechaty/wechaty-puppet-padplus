@@ -1,5 +1,5 @@
-import { ContactGender } from 'wechaty-puppet'
-import { PadplusContactPayload, GrpcContactPayload, GetContactSelfInfoGrpcResponse } from '../schemas'
+import { ContactGender, ContactType } from 'wechaty-puppet'
+import { PadplusContactPayload, GrpcContactPayload, GetContactSelfInfoGrpcResponse, GrpcSearchContact } from '../schemas'
 
 export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSync?: boolean): PadplusContactPayload => {
   const payload: PadplusContactPayload = {
@@ -45,4 +45,27 @@ export const convertFromGrpcContactSelf = (contactPayload: GetContactSelfInfoGrp
     verifyFlag       : 0,
   }
   return payload
+}
+
+export const convertSearchContactToContact = (searchContact: GrpcSearchContact, isNumber: RegExpMatchArray | null): PadplusContactPayload => {
+  const contact: PadplusContactPayload = {
+    alias: isNumber ? '' : searchContact.searchId,
+    bigHeadUrl: searchContact.avatar,
+    city: '',
+    contactFlag: ContactType.Unknown,
+    contactType: 0,
+    country: '',
+    labelLists: '',
+    nickName: searchContact.nickName,
+    province: '',
+    remark: '',
+    sex: ContactGender.Unknown,
+    signature: '',
+    smallHeadUrl: searchContact.avatar,
+    stranger: '',
+    ticket: '',
+    userName: searchContact.searchId,
+    verifyFlag: 0,
+  }
+  return contact
 }

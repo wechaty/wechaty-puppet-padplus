@@ -41,6 +41,7 @@ import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParse
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
+import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 
 const PRE = 'PUPPET_PADPLUS'
 
@@ -323,6 +324,26 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async friendshipSearch (contactId: string): Promise<void> {
+    log.verbose(PRE, `friendshipSearch(${contactId})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId, true)
+    log.silly(PRE, `searchContact : ${util.inspect(searchContact)}`)
+    const isPhoneNumber = contactId.match(/^[1]([3-9])[0-9]{9}$/)
+    const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+    log.silly(PRE, `contactPayload : ${util.inspect(contactPayload)}`)
+
+    if (this.manager && this.manager.cacheManager) {
+      await this.manager.cacheManager.setContact(contactId, contactPayload)
+    } else {
+      throw new Error(`no cache manager`)
+    }
+  }
+
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
     log.verbose(PRE, `friendshipAdd(${contactId}, ${hello})`)
 
@@ -345,8 +366,8 @@ export class PuppetPadplus extends Puppet {
       strangerV1 = searchContact.v1
       strangerV2 = searchContact.v2
     } else if (isStrangerV2(searchContact.v2)) {
-      strangerV2 = searchContact.v2
       strangerV1 = searchContact.v1
+      strangerV2 = searchContact.v2
     } else {
       throw new Error('stranger neither v1 nor v2!')
     }

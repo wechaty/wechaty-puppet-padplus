@@ -86,6 +86,7 @@ export class PadplusManager extends EventEmitter {
   private qrcodeStatus?      : ScanStatus
   private loginStatus?       : boolean
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
+  public readonly cachePadplusSearchContactPayload: LRU<string, GrpcSearchContact>
   private contactAndRoomData? : {
     contactTotal: number,
     friendTotal: number,
@@ -108,8 +109,17 @@ export class PadplusManager extends EventEmitter {
       max: MESSAGE_CACHE_MAX,
       maxAge: MESSAGE_CACHE_AGE,
     }
-    this.loginStatus = false
     this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
+    const searchContactlruOptions: LRU.Options<string, GrpcSearchContact> = {
+      dispose (key: string, val: any) {
+        log.silly(PRE, `constructor() lruOptions.dispose(${key}, ${JSON.stringify(val)})`)
+      },
+      max: MESSAGE_CACHE_MAX,
+      maxAge: MESSAGE_CACHE_AGE,
+    }
+    this.cachePadplusSearchContactPayload = new LRU<string, GrpcSearchContact>(searchContactlruOptions)
+
+    this.loginStatus = false
 
     this.state = new StateSwitch('PadplusManager')
     this.state.off()
@@ -973,14 +983,24 @@ export class PadplusManager extends EventEmitter {
 
   public async searchContact (
     contactId: string,
+    save?: boolean,
   ): Promise<GrpcSearchContact> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-    const payload = await this.padplusContact.searchContact(contactId)
+
+    let payload = this.cachePadplusSearchContactPayload.get(contactId)
     if (!payload) {
-      throw new Error('Can not find payload for contactId ' + contactId)
+      log.silly(`No search friend data in cache, need to request.`)
+      payload = await this.padplusContact.searchContact(contactId)
+      if (!payload) {
+        throw new Error('Can not find payload for contactId ' + contactId)
+      }
+      if (save) {
+        this.cachePadplusSearchContactPayload.set(contactId, payload)
+      }
     }
+
     return payload
   }
 
