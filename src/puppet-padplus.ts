@@ -454,20 +454,28 @@ export class PuppetPadplus extends Puppet {
         const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
 
         if (data && data.src) {
-          const name = path.parse(data.src).base
-          return FileBox.fromUrl(encodeURI(data.src), name)
+          const name = this.getNameFromUrl(data.src)
+          let src: string
+          if (escape(data.src).indexOf('%u') === -1) {
+            src = data.src
+          } else {
+            src = encodeURI(data.src)
+          }
+          return FileBox.fromUrl(src, name)
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
       case MessageType.Emoticon:
         if (rawPayload && rawPayload.url) {
-          return FileBox.fromUrl(rawPayload.url)
+          const name = this.getNameFromUrl(rawPayload.url)
+          return FileBox.fromUrl(rawPayload.url, name)
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
-          const fileBox = FileBox.fromUrl(rawPayload.url)
+          const name = this.getNameFromUrl(rawPayload.url)
+          const fileBox = FileBox.fromUrl(rawPayload.url, name)
           let contentXML
           if (isRoomId(rawPayload.fromUserName)) {
             contentXML = rawPayload.content.split(':\n')[1]
@@ -490,6 +498,17 @@ export class PuppetPadplus extends Puppet {
           filename,
         )
     }
+  }
+
+  private getNameFromUrl (url: string): string {
+    const _name = path.parse(url).base
+    let name: string = ''
+    if (_name.indexOf('?')) {
+      name = decodeURI(_name.split('?')[0])
+    } else {
+      name = `unknow-${Date.now()}`
+    }
+    return name
   }
 
   public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
@@ -1134,8 +1153,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const roomQrcode = await this.manager.getRoomQrcode(roomId)
-    return roomQrcode
+    return this.manager.getRoomQrcode(roomId)
   }
 
   async roomList (): Promise<string[]> {
