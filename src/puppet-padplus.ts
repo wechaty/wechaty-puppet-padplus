@@ -105,7 +105,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout())
+    manager.on('logout', () => this.logout(true))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -135,10 +135,11 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (): Promise<void> {
+  public async logout (force?: boolean): Promise<void> {
     log.verbose(PRE, 'logout()')
-
-    await this.manager.logout(this.selfId())
+    if (!force) {
+      await this.manager.logout(this.selfId())
+    }
     this.emit('logout', this.selfId())
     this.id = undefined
     this.emit('reset', 'padplus reset')
@@ -483,7 +484,7 @@ export class PuppetPadplus extends Puppet {
     const _name = path.parse(url).base
     let name: string = ''
     if (_name.indexOf('?')) {
-      name = decodeURI(_name.split('?')[0])
+      name = decodeURIComponent(_name.split('?')[0])
     } else {
       name = `unknow-${Date.now()}`
     }
