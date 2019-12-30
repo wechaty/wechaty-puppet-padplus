@@ -124,7 +124,7 @@ export class PadplusManager extends EventEmitter {
     this.getRoomMemberQueue = new DelayQueueExecutor(500)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
-      log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
+      log.silly(PRE, 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
 
       if (this.grpcGatewayEmitter) {
         this.grpcGatewayEmitter.removeAllListeners()
@@ -198,7 +198,7 @@ export class PadplusManager extends EventEmitter {
     try {
       emitter = await GrpcGateway.init(this.options.token, this.options.endpoint || GRPC_ENDPOINT, String(this.options.name))
     } catch (e) {
-      log.info(`start grpc gateway failed for reason: ${e}, retry start in 5 seconds.`)
+      log.info(PRE, `start grpc gateway failed for reason: ${e}, retry start in 5 seconds.`)
       await new Promise(resolve => setTimeout(resolve, 5000))
       await this.start()
       return
@@ -258,7 +258,7 @@ export class PadplusManager extends EventEmitter {
     if (this.padplusUser) {
       const logoutResult: boolean = await this.padplusUser.logout(selfId)
       if (!logoutResult) {
-        log.error(`Logout WeChat failed!`)
+        log.error(PRE, `Logout WeChat failed!`)
       } else {
         log.silly(PRE, `Logout WeChat success!`)
       }
@@ -347,12 +347,12 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('EXPIRED_TOKEN', async () => {
-      log.info(EXPIRED_TOKEN_MESSAGE)
+      log.info(PRE, EXPIRED_TOKEN_MESSAGE)
       setTimeout(() => process.exit(), 5000)
     })
 
     grpcGatewayEmitter.on('INVALID_TOKEN', async () => {
-      log.info(INVALID_TOKEN_MESSAGE)
+      log.info(PRE, INVALID_TOKEN_MESSAGE)
       setTimeout(() => process.exit(), 5000)
     })
 
@@ -521,7 +521,6 @@ export class PadplusManager extends EventEmitter {
 
                 return this.contactSelfInfo()
                   .then(async contactSelfInfo => {
-                    log.silly(`contactSelfInfo : ${contactSelfInfo}`)
                     if (contactSelfInfo) {
                       const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
                       if (!this.cacheManager) {
@@ -567,7 +566,7 @@ export class PadplusManager extends EventEmitter {
               throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)
             }
           } else {
-            log.info(`can not get data from Event LOGOUT, ready to restart...`)
+            log.info(PRE, `can not get data from Event LOGOUT, ready to restart...`)
             if (!this.padplusUser) {
               throw new Error(`no padplusUser`)
             }
@@ -584,9 +583,7 @@ export class PadplusManager extends EventEmitter {
             const _data = JSON.parse(roomRawData)
             if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
-              if (contactData.Type7) {
-                log.warn(`This id: ${contactData.UserName} is not wxid, using weixin instead of wxid will potentially cause system failure. To make sure everything works as excepted, please use the wxid to load Contact.`)
-              }
+
               const contact = convertFromGrpcContact(contactData, true)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
