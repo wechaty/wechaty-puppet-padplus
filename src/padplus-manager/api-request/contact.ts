@@ -117,7 +117,7 @@ export class PadplusContact {
         if (setContactSelfInfoGrpcResponse.status !== 0) {
           throw new Error(`Can not set contact self ${Object.keys(data).join(',')}.`)
         } else {
-          log.silly(`update info : ${JSON.stringify(setContactSelfInfoGrpcResponse.updateData)}`)
+          log.silly(PRE, `update info : ${JSON.stringify(setContactSelfInfoGrpcResponse.updateData)}`)
         }
       } else {
         throw new Error(`can not parse data`)

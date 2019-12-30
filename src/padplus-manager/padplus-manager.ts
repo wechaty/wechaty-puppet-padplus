@@ -258,7 +258,7 @@ export class PadplusManager extends EventEmitter {
     if (this.padplusUser) {
       const logoutResult: boolean = await this.padplusUser.logout(selfId)
       if (!logoutResult) {
-        log.error(`Logout WeChat failed!`)
+        log.error(PRE, `Logout WeChat failed!`)
       } else {
         log.silly(PRE, `Logout WeChat success!`)
       }
@@ -521,7 +521,6 @@ export class PadplusManager extends EventEmitter {
 
                 return this.contactSelfInfo()
                   .then(async contactSelfInfo => {
-                    log.silly(`contactSelfInfo : ${contactSelfInfo}`)
                     if (contactSelfInfo) {
                       const contactSelfPayload = convertFromGrpcContactSelf(contactSelfInfo)
                       if (!this.cacheManager) {
@@ -584,9 +583,7 @@ export class PadplusManager extends EventEmitter {
             const _data = JSON.parse(roomRawData)
             if (!isRoomId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
-              if (contactData.Type7) {
-                log.warn(`This id: ${contactData.UserName} is not wxid, using weixin instead of wxid will potentially cause system failure. To make sure everything works as excepted, please use the wxid to load Contact.`)
-              }
+
               const contact = convertFromGrpcContact(contactData, true)
               if (this.cacheManager) {
                 await this.cacheManager.setContact(contact.userName, contact)
