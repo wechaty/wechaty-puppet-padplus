@@ -124,7 +124,7 @@ export class PadplusManager extends EventEmitter {
     this.getRoomMemberQueue = new DelayQueueExecutor(500)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
-      log.silly('Puppet', 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
+      log.silly(PRE, 'constructor() resetThrottleQueue.subscribe() reason: %s', reason)
 
       if (this.grpcGatewayEmitter) {
         this.grpcGatewayEmitter.removeAllListeners()
@@ -198,7 +198,7 @@ export class PadplusManager extends EventEmitter {
     try {
       emitter = await GrpcGateway.init(this.options.token, this.options.endpoint || GRPC_ENDPOINT, String(this.options.name))
     } catch (e) {
-      log.info(`start grpc gateway failed for reason: ${e}, retry start in 5 seconds.`)
+      log.info(PRE, `start grpc gateway failed for reason: ${e}, retry start in 5 seconds.`)
       await new Promise(resolve => setTimeout(resolve, 5000))
       await this.start()
       return
@@ -347,12 +347,12 @@ export class PadplusManager extends EventEmitter {
     })
 
     grpcGatewayEmitter.on('EXPIRED_TOKEN', async () => {
-      log.info(EXPIRED_TOKEN_MESSAGE)
+      log.info(PRE, EXPIRED_TOKEN_MESSAGE)
       setTimeout(() => process.exit(), 5000)
     })
 
     grpcGatewayEmitter.on('INVALID_TOKEN', async () => {
-      log.info(INVALID_TOKEN_MESSAGE)
+      log.info(PRE, INVALID_TOKEN_MESSAGE)
       setTimeout(() => process.exit(), 5000)
     })
 
@@ -566,7 +566,7 @@ export class PadplusManager extends EventEmitter {
               throw new Error(`can not get userName for this uin : ${uin}, userName: ${userName}`)
             }
           } else {
-            log.info(`can not get data from Event LOGOUT, ready to restart...`)
+            log.info(PRE, `can not get data from Event LOGOUT, ready to restart...`)
             if (!this.padplusUser) {
               throw new Error(`no padplusUser`)
             }
