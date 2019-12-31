@@ -88,7 +88,7 @@ export class GrpcGateway extends EventEmitter {
         throw new Error(`no heartbeat response from grpc server`)
       }
     } catch (error) {
-      log.error(`can not get heartbeat from grpc server`, error)
+      log.error(PRE, `can not get heartbeat from grpc server`, error)
       Object.values(this.eventEmitterMap).map(emitter => {
         emitter.emit('reconnect')
       })
@@ -244,7 +244,7 @@ export class GrpcGateway extends EventEmitter {
             if (apiType !== ApiType.HEARTBEAT) {
               await this.checkTimeout(uin)
             }
-            log.error(`ApiType: ${apiType} request timeout, traceId: ${traceId}`)
+            log.error(PRE, `ApiType: ${apiType} request timeout, traceId: ${traceId}`)
             resolve(null)
           }, timeoutMs)
           CallbackPool.Instance.pushCallbackToPool(traceId, (data: StreamResponse) => {
@@ -429,7 +429,7 @@ export class GrpcGateway extends EventEmitter {
         try {
           message = JSON.parse(_data).message
         } catch (error) {
-          log.error(`can not parse data`)
+          log.error(PRE, `can not parse data`)
         }
       }
       if (message && message === 'Another instance connected, disconnected the current one.') {

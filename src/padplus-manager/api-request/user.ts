@@ -3,7 +3,7 @@ import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { LogoutGrpcResponse } from '../../schemas'
 
-const PRE = 'USER'
+const PRE = 'PadplusUser'
 export class PadplusUser {
 
   private requestClient: RequestClient
@@ -40,7 +40,7 @@ export class PadplusUser {
       data,
     })
     if (!res) {
-      log.error(`can not get callback result of LOGOUT`)
+      log.error(PRE, `can not get callback result of LOGOUT`)
       return false
     } else {
       const resultStr = res.getData()
@@ -64,13 +64,13 @@ export class PadplusUser {
         apiType: ApiType.GET_QRCODE,
         data,
       })
-      log.silly(`Get qrcode with user info, res : ${JSON.stringify(res)}`)
+      log.silly(PRE, `Get qrcode with user info, res : ${JSON.stringify(res)}`)
       return res
     } else {
       const res = await this.requestClient.request({
         apiType: ApiType.GET_QRCODE,
       })
-      log.silly(`Get qrcode without user info, res : ${JSON.stringify(res)}`)
+      log.silly(PRE, `Get qrcode without user info, res : ${JSON.stringify(res)}`)
       return res
     }
   }

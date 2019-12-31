@@ -10,7 +10,7 @@ export interface RequestOption {
   apiType: ApiType,
 }
 
-const PRE = 'REQUEST'
+const PRE = 'RequestClient'
 
 export class RequestClient {
 
