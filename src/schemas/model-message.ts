@@ -167,3 +167,10 @@ export interface PadplusMediaData {
   status: string,
   thumb: string,
 }
+
+export interface PadplusRecallData {
+  BaseResponse: {
+    Ret: number,
+    ErrMsg: string,
+  },
+}

@@ -1237,5 +1237,15 @@ export class PadplusManager extends EventEmitter {
     await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
   }
 
+  public async recallMessage (selfId: string, receiverId: string, messageId: string): Promise<boolean> {
+    log.silly(PRE, `selfId : ${selfId}, receiver : ${receiverId}, messageId : ${messageId}`)
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+
+    const isSuccess = await this.padplusMesasge.recallMessage(selfId, receiverId, messageId)
+    return isSuccess
+  }
+
 }
 export default PadplusManager
