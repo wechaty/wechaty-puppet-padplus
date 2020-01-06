@@ -143,7 +143,7 @@ export class PadplusManager extends EventEmitter {
 
   public emit (event: 'scan', qrcode: string, status: number, data?: string): boolean
   public emit (event: 'login', data: GrpcQrCodeLogin): boolean
-  public emit (event: 'logout'): boolean
+  public emit (event: 'logout', reason?: string): boolean
   public emit (event: 'contact-list', data: string): boolean
   public emit (event: 'contact-modify', data: string): boolean
   public emit (event: 'contact-delete', data: string): boolean
@@ -166,7 +166,7 @@ export class PadplusManager extends EventEmitter {
 
   public on (event: 'scan', listener: ((this: PadplusManager, qrcode: string, status: number, data?: string) => void)): this
   public on (event: 'login', listener: ((this: PadplusManager, data: GrpcQrCodeLogin) => void)): this
-  public on (event: 'logout', listener: ((this: PadplusManager) => void)): this
+  public on (event: 'logout', listener: ((this: PadplusManager, reason?: string) => void)): this
   public on (event: 'message', listener: ((this: PadplusManager, msg: PadplusMessagePayload) => void)): this
   public on (event: 'status-notify', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'ready', listener: ((this: PadplusManager) => void)): this
@@ -559,7 +559,7 @@ export class PadplusManager extends EventEmitter {
               if (logoutData.mqType === 1100) {
                 this.emit('error', new PadplusError(PadplusErrorType.EXIT, logoutData.message))
                 await new Promise((resolve) => setTimeout(resolve, 5 * 1000))
-                this.emit('logout')
+                this.emit('logout', logoutData.message)
               }
             } else {
               const userName = grpcGatewayEmitter.getUserName()

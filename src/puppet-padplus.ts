@@ -105,7 +105,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout(true))
+    manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -135,12 +135,12 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (force?: boolean): Promise<void> {
-    log.verbose(PRE, 'logout()')
+  public async logout (force?: boolean, reason?: string): Promise<void> {
+    log.verbose(PRE, `logout(${reason})`)
     if (!force) {
       await this.manager.logout(this.selfId())
     }
-    this.emit('logout', this.selfId())
+    this.emit('logout', this.selfId(), reason)
     this.id = undefined
     this.emit('reset', 'padplus reset')
   }
