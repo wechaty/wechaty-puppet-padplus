@@ -4,6 +4,7 @@ import { log, AWS_S3 } from '../../config'
 import { GrpcGateway } from '../../server-manager/grpc-gateway'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { GrpcEventEmitter } from '../../server-manager/grpc-event-emitter'
+import { DedupeApi } from './dedupeApi'
 
 export interface RequestOption {
   data?: any,
@@ -16,17 +17,23 @@ export class RequestClient {
 
   private grpcGateway: GrpcGateway
   private emitter: GrpcEventEmitter
+  private dedupeApi: DedupeApi
 
   constructor (grpcGateway: GrpcGateway, emitter: GrpcEventEmitter) {
     this.grpcGateway = grpcGateway
     this.emitter = emitter
+    this.dedupeApi = new DedupeApi()
   }
 
   public async request (option: RequestOption) {
     log.silly(PRE, `request()`)
     const uin = this.emitter.getUIN()
-    const res = await this.grpcGateway.request(option.apiType, uin, option.data)
-    return res
+    return this.dedupeApi.dedupe(
+      this.grpcGateway.request.bind(this.grpcGateway),
+      option.apiType,
+      uin,
+      option.data,
+    )
   }
 
   public async uploadFile (filename: string, stream: NodeJS.ReadableStream) {
@@ -46,7 +53,6 @@ export class RequestClient {
         if (err) {
           reject(err)
         } else {
-          log.silly(PRE, `data : ${JSON.stringify(data)}`)
           resolve(data)
         }
       })
