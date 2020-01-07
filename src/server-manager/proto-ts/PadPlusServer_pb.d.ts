@@ -221,4 +221,8 @@ export enum ResponseType {
     MESSAGE_RECEIVE = 30,
     STATUS_NOTIFY = 31,
     MESSAGE_MEDIA_SRC = 32,
+    MESSAGE_REVOKE = 33,
+    LABEL_LIST = 40,
+    LABEL_ADD = 41,
+    LABEL_UPDATE = 42,
 }

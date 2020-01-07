@@ -67,7 +67,7 @@ npm install
 ```js
 import { Wechaty       } from 'wechaty'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
-import { generate      } from 'qrcode-terminal'
+import QrcodeTerminal from 'qrcode-terminal'
 
 const token = 'your-token'
 
@@ -83,8 +83,8 @@ const bot = new Wechaty({
 })
 
 bot
-  .on('scan', (qrcode) => {
-    generate(qrcode, {
+  .on('scan', (qrcode, status) => {
+    QrcodeTerminal.generate(qrcode, {
       small: true
     })
   })
@@ -145,6 +145,6 @@ bot
  **<其他>**|  |  |
  登录微信|✅|✅|✅
  扫码状态|✅|✅|❌
- 退出微信|✅|❌|✅
+ 退出微信|✅|✅|✅
  依赖协议|iPad|iPad|Mac|
 

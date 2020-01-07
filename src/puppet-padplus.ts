@@ -43,7 +43,7 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 
-const PRE = 'PUPPET_PADPLUS'
+const PRE = 'PuppetPadplus'
 
 export class PuppetPadplus extends Puppet {
 
@@ -106,7 +106,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout())
+    manager.on('logout', () => this.logout(true))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -136,10 +136,11 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (): Promise<void> {
+  public async logout (force?: boolean): Promise<void> {
     log.verbose(PRE, 'logout()')
-
-    await this.manager.logout(this.selfId())
+    if (!force) {
+      await this.manager.logout(this.selfId())
+    }
     this.emit('logout', this.selfId())
     this.id = undefined
     this.emit('reset', 'padplus reset')
@@ -504,7 +505,7 @@ export class PuppetPadplus extends Puppet {
     const _name = path.parse(url).base
     let name: string = ''
     if (_name.indexOf('?')) {
-      name = decodeURI(_name.split('?')[0])
+      name = decodeURIComponent(_name.split('?')[0])
     } else {
       name = `unknow-${Date.now()}`
     }
@@ -902,6 +903,15 @@ export class PuppetPadplus extends Puppet {
     }
 
     return payload
+  }
+
+  public async messageRecall (messageId: string): Promise<boolean> {
+    const payload = await this.messagePayload(messageId)
+    const receiverId = payload.roomId || payload.toId
+    log.silly(PRE, 'messageRecall(%s, %s)', receiverId, messageId)
+
+    const isSuccess = await this.manager.recallMessage(this.selfId(), receiverId!, messageId)
+    return isSuccess
   }
 
   /**
