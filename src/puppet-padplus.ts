@@ -42,7 +42,7 @@ import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadPars
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 
-const PRE = 'PUPPET_PADPLUS'
+const PRE = 'PuppetPadplus'
 
 export class PuppetPadplus extends Puppet {
 
