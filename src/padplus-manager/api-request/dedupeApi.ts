@@ -7,7 +7,6 @@ import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 const EXPIRE_TIME = 10
 
 const DEDUPE_API = [
-  ApiType.ADD_CONTACT,
   ApiType.GET_CONTACT,
   ApiType.GET_ROOM_MEMBER,
 ]
