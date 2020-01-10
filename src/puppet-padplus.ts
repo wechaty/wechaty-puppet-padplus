@@ -105,7 +105,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout(true))
+    manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -135,18 +135,25 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (force?: boolean): Promise<void> {
-    log.verbose(PRE, 'logout()')
+  public async logout (force?: boolean, reason?: string): Promise<void> {
+    log.verbose(PRE, `logout(${reason})`)
     if (!force) {
       await this.manager.logout(this.selfId())
     }
-    this.emit('logout', this.selfId())
+    this.emit('logout', this.selfId(), reason)
     this.id = undefined
     this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {
     const messageType = message.msgType
+
+    if (isRoomId(message.fromUserName)) {
+      await this.roomRawPayload(message.fromUserName)
+    } else {
+      await this.contactRawPayload(message.fromUserName)
+    }
+
     switch (messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -756,6 +763,8 @@ export class PuppetPadplus extends Puppet {
           this.manager.cachePadplusMessagePayload.set(videoData.msgId, msgPayload)
         }
         return videoData.msgId
+      case 'application/xml':
+        throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
         const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
