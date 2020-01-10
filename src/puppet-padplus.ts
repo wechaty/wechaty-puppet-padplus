@@ -147,6 +147,13 @@ export class PuppetPadplus extends Puppet {
 
   async onMessage (message: PadplusMessagePayload) {
     const messageType = message.msgType
+
+    if (isRoomId(message.fromUserName)) {
+      await this.roomRawPayload(message.fromUserName)
+    } else {
+      await this.contactRawPayload(message.fromUserName)
+    }
+
     switch (messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -756,6 +763,8 @@ export class PuppetPadplus extends Puppet {
           this.manager.cachePadplusMessagePayload.set(videoData.msgId, msgPayload)
         }
         return videoData.msgId
+      case 'application/xml':
+        throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
         const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
