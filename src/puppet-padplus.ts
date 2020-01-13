@@ -1205,12 +1205,12 @@ export class PuppetPadplus extends Puppet {
 
   roomAnnounce (roomId: string): Promise<string>
   roomAnnounce (roomId: string, text: string): Promise<void>
-  async roomAnnounce (roomId: any, text?: any): Promise<string | void> {
+  async roomAnnounce (roomId: any, text?: string | null): Promise<string | void> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}, text: ${text}`)
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    if (text) {
+    if (typeof text !== 'undefined') {
       return this.manager.setAnnouncement(roomId, text)
     } else {
       return this.manager.getAnnouncement(roomId)

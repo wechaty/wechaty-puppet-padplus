@@ -1124,7 +1124,7 @@ export class PadplusManager extends EventEmitter {
 
   public async setAnnouncement (
     roomId: string,
-    announcement: string,
+    announcement: string | null,
   ) {
     if (!this.padplusRoom) {
       throw new Error(`no padplus Room.`)

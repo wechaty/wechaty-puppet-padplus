@@ -104,11 +104,11 @@ export class PadplusRoom {
     }
   }
 
-  public setAnnouncement = async (roomId: string, announcement: string): Promise<string> => {
+  public setAnnouncement = async (roomId: string, announcement: string | null): Promise<string> => {
     log.verbose(PRE, `setAnnouncement(${roomId},${announcement})`)
 
     const data = {
-      announcement,
+      announcement: announcement || '',
       wxid: roomId,
     }
 
