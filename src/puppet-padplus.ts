@@ -5,20 +5,20 @@ import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
-  MessagePayload,
-  Receiver,
   FriendshipPayload,
+  FriendshipPayloadReceive,
+  FriendshipType,
+  MessagePayload,
+  MessageType,
+  MiniProgramPayload,
+  Puppet,
+  PuppetOptions,
+  Receiver,
+  RoomInvitationPayload,
   RoomMemberPayload,
   RoomPayload,
-  UrlLinkPayload,
-  MiniProgramPayload,
-  PuppetOptions,
   ScanStatus,
-  Puppet,
-  RoomInvitationPayload,
-  FriendshipType,
-  FriendshipPayloadReceive,
-  MessageType,
+  UrlLinkPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -202,6 +202,36 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
+   *     TAG SECTION
+   * ========================
+   */
+
+  public async tagContactAdd (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactAdd()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    return this.manager.addTag(tagId, contactId)
+  }
+
+  public async tagContactRemove (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactRemove()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.removeTag(tagId, contactId)
+  }
+
+  public async tagContactDelete (name: string) : Promise<void> {
+    log.silly(PRE, `tagContactDelete()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.deleteTag(tagId)
+  }
+
+  public async tagContactList (contactId?: string) : Promise<string[]> {
+    log.silly(PRE, `tagContactList()`)
+    const tags = await this.manager.tags(contactId)
+    return tags.map(tag => tag.name)
+  }
+
+  /**
+   * ========================
    *     CONTACT SECTION
    * ========================
    */
@@ -296,6 +326,14 @@ export class PuppetPadplus extends Puppet {
    *    FRIENDSHIP SECTION
    * =========================
    */
+
+  friendshipSearchPhone (phone: string): Promise<string | null> {
+    throw new Error(`not supported`)
+  }
+
+  friendshipSearchWeixin (weixin: string): Promise<string | null> {
+    throw new Error(`not supported`)
+  }
 
   async onFriendshipEvent (message: PadplusMessagePayload): Promise<void> {
     log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)

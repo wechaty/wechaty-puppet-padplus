@@ -34,7 +34,7 @@ export interface PadplusRoomPayload {
   contactType    : number,
   stranger       : string,
   members        : PadplusMemberBrief[],
-  labelLists     : string,
+  tagList     : string,
   nickName       : string,
   smallHeadUrl   : string,
   ticket         : string,

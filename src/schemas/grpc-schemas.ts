@@ -103,7 +103,7 @@ export interface GrpcRoomRawPayload {
   encryptUsername: string,
   extInfo        : string,
   extInfoExt     : string,
-  labelLists     : string,
+  tagList     : string,
   msgType        : PadplusMessageType,
   nickName       : string,
   smallHeadImgUrl: string,

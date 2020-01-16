@@ -38,10 +38,13 @@ import {
   GrpcDeleteContact,
   LogoutGrpcResponse,
   PadplusRoomMemberMap,
+  TagGrpcPayload,
+  GrpcMessagePayload,
+  GrpcQrCodeLogin,
   GetContactSelfInfoGrpcResponse,
+  TagPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact, convertFromGrpcContactSelf } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
@@ -455,7 +458,6 @@ export class PadplusManager extends EventEmitter {
               contactFlag: 3,
               contactType: 0,
               country: '',
-              labelLists: '',
               nickName: loginData.nickName,
               province: '',
               remark: '',
@@ -463,6 +465,7 @@ export class PadplusManager extends EventEmitter {
               signature: '',
               smallHeadUrl: '',
               stranger: '',
+              tagList: '',
               ticket: '',
               userName: loginData.userName,
               verifyFlag: 0,
@@ -502,7 +505,6 @@ export class PadplusManager extends EventEmitter {
                   contactFlag: 3,
                   contactType: 0,
                   country: '',
-                  labelLists: '',
                   nickName: wechatUser.nickName,
                   province: '',
                   remark: '',
@@ -510,6 +512,7 @@ export class PadplusManager extends EventEmitter {
                   signature: '',
                   smallHeadUrl: '',
                   stranger: '',
+                  tagList: '',
                   ticket: '',
                   userName: wechatUser.userName,
                   verifyFlag: 0,
@@ -627,12 +630,12 @@ export class PadplusManager extends EventEmitter {
                     chatroomVersion: 0,
                     contactType    : 0,
                     isDelete       : true,
-                    labelLists     : '',
                     memberCount    : 0,
                     members        : [],
                     nickName       : '',
                     smallHeadUrl   : '',
                     stranger       : '',
+                    tagList     : '',
                     ticket         : '',
                   }
                   await this.cacheManager.setRoom(deleteUserName, roomPayload)
@@ -702,7 +705,6 @@ export class PadplusManager extends EventEmitter {
                     contactFlag: 0,
                     contactType: 0,
                     country: '',
-                    labelLists: '',
                     nickName: member.NickName,
                     province: '',
                     remark: '',
@@ -710,6 +712,7 @@ export class PadplusManager extends EventEmitter {
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
                     stranger: '',
+                    tagList: '',
                     ticket: '',
                     userName: member.UserName,
                     verifyFlag: 0,
@@ -901,6 +904,111 @@ export class PadplusManager extends EventEmitter {
   /**
    * Contact Section
    */
+
+  public async getOrCreateTag (tagName: string): Promise<string> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    return this.padplusContact.getOrCreateTag(tagName)
+  }
+
+  public async addTag (tagId: string, contactId: string): Promise<void> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+    const tags = await this.tags(contactId)
+    const tagsId = tags.map(tag => tag.id)
+    const allTagsId = tagsId.length === 0 ? tagId : tagsId.join(',') + ',' + tagId
+    await this.padplusContact.addTag(allTagsId, contactId)
+  }
+
+  public async removeTag (tagId: string, contactId: string): Promise<void> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    const tags = await this.tags(contactId)
+    const tagsId = tags.map(tag => {
+      if (tag.id !== tagId) {
+        return tag.id
+      } else {
+        return ''
+      }
+    })
+
+    await this.padplusContact.addTag(tagsId.join(','), contactId)
+  }
+
+  public async tags (contactId?: string): Promise<TagPayload []> {
+    if (!this.cacheManager) {
+      throw new Error(`no cacheManager`)
+    }
+
+    const tagList: TagPayload[] = await this.tagList()
+
+    if (!contactId) {
+      return tagList
+    }
+
+    const contact = await this.cacheManager.getContact(contactId)
+    if (!contact || !contact.tagList) {
+      throw new Error(`can not get contact or tagList of contact by this contactId: ${contactId}`)
+    }
+    const contactTagIdList = contact.tagList
+
+    const contactTagIdArray = contactTagIdList.split(',')
+
+    const tags: TagPayload[] = []
+    await Promise.all(contactTagIdArray.map((id: string) => {
+      tagList.map(tag => {
+        if (tag && id === tag.id.toString()) {
+          tags.push(tag)
+        }
+      })
+    }))
+
+    return tags
+  }
+
+  public async tagList (): Promise<TagPayload []> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    const tagGrpcList: TagGrpcPayload[] = await this.padplusContact.tagList()
+
+    if (tagGrpcList && tagGrpcList.length === 0) {
+      return []
+    }
+
+    return tagGrpcList.map(t => {
+      const tag: TagPayload = {
+        id: t.LabelID,
+        name: t.LabelName,
+      }
+      return tag
+    })
+  }
+
+  public async modifyTag (tagId: string, name: string): Promise<void> {
+    log.silly(PRE, `modifyTag(${tagId}, ${name})`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.modifyTag(tagId, name)
+  }
+
+  public async deleteTag (tagId: string): Promise<void> {
+    log.silly(PRE, `deleteTag(${tagId})`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.deleteTag(tagId)
+  }
+
   public async setContactAlias (
     contactId: string,
     alias: string,
