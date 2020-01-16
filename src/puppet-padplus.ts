@@ -106,7 +106,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout(true))
+    manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -136,18 +136,25 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (force?: boolean): Promise<void> {
-    log.verbose(PRE, 'logout()')
+  public async logout (force?: boolean, reason?: string): Promise<void> {
+    log.verbose(PRE, `logout(${reason})`)
     if (!force) {
       await this.manager.logout(this.selfId())
     }
-    this.emit('logout', this.selfId())
+    this.emit('logout', this.selfId(), reason)
     this.id = undefined
     this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {
     const messageType = message.msgType
+
+    if (isRoomId(message.fromUserName)) {
+      await this.roomRawPayload(message.fromUserName)
+    } else {
+      await this.contactRawPayload(message.fromUserName)
+    }
+
     switch (messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -287,6 +294,30 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * =========================
+   *    TAGS SECTION
+   * =========================
+   */
+
+  // add a tag for a Contact. Create it first if it not exist.
+  public async tagContactAdd (id: string, contactId: string) : Promise<void> {
+    log.error(`tagContactAdd not supported`)
+  }
+  // remove a tag from the Contact
+  public async tagContactRemove (id: string, contactId: string) : Promise<void> {
+    log.error(`tagContactRemove not supported`)
+  }
+  // delete a tag from Wechat
+  public async tagContactDelete (id: string) : Promise<void> {
+    log.error(`tagContactDelete not supported`)
+  }
+  // get tags from a specific Contact
+  public async tagContactList (contactId?: string) : Promise<string[]> {
+    log.error(`tagContactList not supported`)
+    return []
+  }
+
+  /**
+   * =========================
    *    FRIENDSHIP SECTION
    * =========================
    */
@@ -325,21 +356,38 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  public async friendshipSearch (contactId: string): Promise<void> {
-    log.verbose(PRE, `friendshipSearch(${contactId})`)
+  public async friendshipSearchPhone (phone: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchPhone(${phone})`)
 
     if (!this.manager) {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId, true)
-    log.silly(PRE, `searchContact : ${util.inspect(searchContact)}`)
-    const isPhoneNumber = contactId.match(/^[1]([3-9])[0-9]{9}$/)
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
+    const isPhoneNumber = phone.match(/^[1]([3-9])[0-9]{9}$/)
     const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
-    log.silly(PRE, `contactPayload : ${util.inspect(contactPayload)}`)
 
     if (this.manager && this.manager.cacheManager) {
-      await this.manager.cacheManager.setContact(contactId, contactPayload)
+      await this.manager.cacheManager.setContact(phone, contactPayload)
+      return phone
+    } else {
+      throw new Error(`no cache manager`)
+    }
+  }
+
+  public async friendshipSearchWeixin (weixin: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchWeixin(${weixin})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(weixin, true)
+    const contactPayload = convertSearchContactToContact(searchContact)
+
+    if (this.manager && this.manager.cacheManager) {
+      await this.manager.cacheManager.setContact(weixin, contactPayload)
+      return weixin
     } else {
       throw new Error(`no cache manager`)
     }
@@ -777,6 +825,8 @@ export class PuppetPadplus extends Puppet {
           this.manager.cachePadplusMessagePayload.set(videoData.msgId, msgPayload)
         }
         return videoData.msgId
+      case 'application/xml':
+        throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
         const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {

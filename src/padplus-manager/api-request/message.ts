@@ -109,7 +109,7 @@ export class PadplusMessage {
           throw new Error(`can not parse message data from grpc`)
         }
       } else {
-        throw new Error(`can not get callback result of SEND_MESSAGE`)
+        throw new Error(`can not get callback result of SEND_FILE, subType : ${subType}`)
       }
     }
     if (subType === 'pic') {
@@ -152,7 +152,7 @@ export class PadplusMessage {
         throw new Error(`can not parse message data from grpc`)
       }
     } else {
-      throw new Error(`can not get callback result of SEND_FILE`)
+      throw new Error(`can not get callback result of SEND_FILE, subType : ${subType}`)
     }
   }
 
