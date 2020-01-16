@@ -207,7 +207,7 @@ export class PuppetPadplus extends Puppet {
    */
 
   public async tagContactAdd (name: string, contactId: string) : Promise<void> {
-    log.silly(PRE, `tagContactAdd()`)
+    log.silly(PRE, `tagContactAdd(${name}, ${contactId})`)
     const tagId = await this.manager.getOrCreateTag(name)
     return this.manager.addTag(tagId, contactId)
   }

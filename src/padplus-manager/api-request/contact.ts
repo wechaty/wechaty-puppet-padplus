@@ -25,7 +25,7 @@ export class PadplusContact {
     log.verbose(PRE, `getOrCreateTag(${tag})`)
 
     const data = {
-      tag,
+      name: tag,
     }
     const result = await this.requestClient.request({
       apiType: ApiType.CREATE_TAG,

@@ -928,16 +928,18 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplusContact`)
     }
 
-    const tags = await this.tags(contactId)
-    const tagsId = tags.map(tag => {
-      if (tag.id !== tagId) {
-        return tag.id
-      } else {
-        return ''
+    if (!this.cacheManager) {
+      throw new Error(`no cacheManager`)
+    }
+    const contact = await this.cacheManager.getContact(contactId)
+    if (contact && contact.tagList) {
+      const array = contact.tagList.split(',')
+      const index = array.indexOf(tagId)
+      if (index !== -1) {
+        array.splice(index, 1)
+        await this.padplusContact.addTag(array.join(','), contactId)
       }
-    })
-
-    await this.padplusContact.addTag(tagsId.join(','), contactId)
+    }
   }
 
   public async tags (contactId?: string): Promise<TagPayload []> {
