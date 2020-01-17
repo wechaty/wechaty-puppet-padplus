@@ -42,6 +42,7 @@ import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadPars
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
+import checkNumber from './utils/util'
 
 const PRE = 'PuppetPadplus'
 
@@ -364,7 +365,7 @@ export class PuppetPadplus extends Puppet {
     }
 
     const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
-    const isPhoneNumber = phone.match(/^[1]([3-9])[0-9]{9}$/)
+    const isPhoneNumber = checkNumber(phone)
     const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
 
     if (this.manager && this.manager.cacheManager) {

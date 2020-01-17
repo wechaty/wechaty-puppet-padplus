@@ -47,7 +47,7 @@ export const convertFromGrpcContactSelf = (contactPayload: GetContactSelfInfoGrp
   return payload
 }
 
-export const convertSearchContactToContact = (searchContact: GrpcSearchContact, isNumber?: RegExpMatchArray | null): PadplusContactPayload => {
+export const convertSearchContactToContact = (searchContact: GrpcSearchContact, isNumber?: boolean): PadplusContactPayload => {
   const contact: PadplusContactPayload = {
     alias: isNumber ? '' : searchContact.searchId,
     bigHeadUrl: searchContact.avatar,
