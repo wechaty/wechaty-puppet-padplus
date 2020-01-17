@@ -5,20 +5,20 @@ import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
-  MessagePayload,
-  Receiver,
   FriendshipPayload,
+  FriendshipPayloadReceive,
+  FriendshipType,
+  MessagePayload,
+  MessageType,
+  MiniProgramPayload,
+  Puppet,
+  PuppetOptions,
+  Receiver,
+  RoomInvitationPayload,
   RoomMemberPayload,
   RoomPayload,
-  UrlLinkPayload,
-  MiniProgramPayload,
-  PuppetOptions,
   ScanStatus,
-  Puppet,
-  RoomInvitationPayload,
-  FriendshipType,
-  FriendshipPayloadReceive,
-  MessageType,
+  UrlLinkPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -204,6 +204,36 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
+   *     TAG SECTION
+   * ========================
+   */
+
+  public async tagContactAdd (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactAdd(${name}, ${contactId})`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    return this.manager.addTag(tagId, contactId)
+  }
+
+  public async tagContactRemove (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactRemove()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.removeTag(tagId, contactId)
+  }
+
+  public async tagContactDelete (name: string) : Promise<void> {
+    log.silly(PRE, `tagContactDelete()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.deleteTag(tagId)
+  }
+
+  public async tagContactList (contactId?: string) : Promise<string[]> {
+    log.silly(PRE, `tagContactList()`)
+    const tags = await this.manager.tags(contactId)
+    return tags.map(tag => tag.name)
+  }
+
+  /**
+   * ========================
    *     CONTACT SECTION
    * ========================
    */
@@ -291,30 +321,6 @@ export class PuppetPadplus extends Puppet {
 
     const payload = contactRawPayloadParser(rawPayload)
     return payload
-  }
-
-  /**
-   * =========================
-   *    TAGS SECTION
-   * =========================
-   */
-
-  // add a tag for a Contact. Create it first if it not exist.
-  public async tagContactAdd (id: string, contactId: string) : Promise<void> {
-    log.error(`tagContactAdd not supported`)
-  }
-  // remove a tag from the Contact
-  public async tagContactRemove (id: string, contactId: string) : Promise<void> {
-    log.error(`tagContactRemove not supported`)
-  }
-  // delete a tag from Wechat
-  public async tagContactDelete (id: string) : Promise<void> {
-    log.error(`tagContactDelete not supported`)
-  }
-  // get tags from a specific Contact
-  public async tagContactList (contactId?: string) : Promise<string[]> {
-    log.error(`tagContactList not supported`)
-    return []
   }
 
   /**
