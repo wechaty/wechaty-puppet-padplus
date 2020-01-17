@@ -27,7 +27,12 @@ export class RequestClient {
 
   public async request (option: RequestOption) {
     log.silly(PRE, `request()`)
-    const uin = this.emitter.getUIN()
+    let uin
+    if (option.apiType === ApiType.GET_QRCODE) {
+      uin = this.emitter.getUIN() || (option.data && option.data.uin)
+    } else {
+      uin = this.emitter.getUIN()
+    }
     return this.dedupeApi.dedupe(
       this.grpcGateway.request.bind(this.grpcGateway),
       option.apiType,
