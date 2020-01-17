@@ -38,10 +38,13 @@ import {
   GrpcDeleteContact,
   LogoutGrpcResponse,
   PadplusRoomMemberMap,
+  TagGrpcPayload,
+  GrpcMessagePayload,
+  GrpcQrCodeLogin,
   GetContactSelfInfoGrpcResponse,
+  TagPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { GrpcMessagePayload, GrpcQrCodeLogin } from '../schemas/grpc-schemas'
 import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact, convertFromGrpcContactSelf } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
@@ -86,6 +89,7 @@ export class PadplusManager extends EventEmitter {
   private qrcodeStatus?      : ScanStatus
   private loginStatus?       : boolean
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
+  public readonly cachePadplusSearchContactPayload: LRU<string, GrpcSearchContact>
   private contactAndRoomData? : {
     contactTotal: number,
     friendTotal: number,
@@ -108,8 +112,17 @@ export class PadplusManager extends EventEmitter {
       max: MESSAGE_CACHE_MAX,
       maxAge: MESSAGE_CACHE_AGE,
     }
-    this.loginStatus = false
     this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
+    const searchContactlruOptions: LRU.Options<string, GrpcSearchContact> = {
+      dispose (key: string, val: any) {
+        log.silly(PRE, `constructor() lruOptions.dispose(${key}, ${JSON.stringify(val)})`)
+      },
+      max: MESSAGE_CACHE_MAX,
+      maxAge: MESSAGE_CACHE_AGE,
+    }
+    this.cachePadplusSearchContactPayload = new LRU<string, GrpcSearchContact>(searchContactlruOptions)
+
+    this.loginStatus = false
 
     this.state = new StateSwitch('PadplusManager')
     this.state.off()
@@ -455,7 +468,6 @@ export class PadplusManager extends EventEmitter {
               contactFlag: 3,
               contactType: 0,
               country: '',
-              labelLists: '',
               nickName: loginData.nickName,
               province: '',
               remark: '',
@@ -463,6 +475,7 @@ export class PadplusManager extends EventEmitter {
               signature: '',
               smallHeadUrl: '',
               stranger: '',
+              tagList: '',
               ticket: '',
               userName: loginData.userName,
               verifyFlag: 0,
@@ -502,7 +515,6 @@ export class PadplusManager extends EventEmitter {
                   contactFlag: 3,
                   contactType: 0,
                   country: '',
-                  labelLists: '',
                   nickName: wechatUser.nickName,
                   province: '',
                   remark: '',
@@ -510,6 +522,7 @@ export class PadplusManager extends EventEmitter {
                   signature: '',
                   smallHeadUrl: '',
                   stranger: '',
+                  tagList: '',
                   ticket: '',
                   userName: wechatUser.userName,
                   verifyFlag: 0,
@@ -533,14 +546,23 @@ export class PadplusManager extends EventEmitter {
                   })
               }
             } else {
-              const uin = await grpcGatewayEmitter.getUIN()
-              const wxid = await grpcGatewayEmitter.getUserName()
-              const data = {
-                uin,
-                wxid,
+              const uin = grpcGatewayEmitter.getUIN()
+              const wxid = grpcGatewayEmitter.getUserName()
+              let data: {uin: string, wxid: string}
+              if (this.memory) {
+                const slot = await this.memory!.get(MEMORY_SLOT_NAME)
+                data = {
+                  uin: slot.uin,
+                  wxid: slot.userName,
+                }
+              } else {
+                data = {
+                  uin,
+                  wxid,
+                }
               }
-              await grpcGatewayEmitter.setUIN('')
-              await grpcGatewayEmitter.setUserName('')
+              grpcGatewayEmitter.setUIN('')
+              grpcGatewayEmitter.setUserName('')
               if (this.padplusUser) {
                 await this.padplusUser.getWeChatQRCode(data)
               }
@@ -627,12 +649,12 @@ export class PadplusManager extends EventEmitter {
                     chatroomVersion: 0,
                     contactType    : 0,
                     isDelete       : true,
-                    labelLists     : '',
                     memberCount    : 0,
                     members        : [],
                     nickName       : '',
                     smallHeadUrl   : '',
                     stranger       : '',
+                    tagList     : '',
                     ticket         : '',
                   }
                   await this.cacheManager.setRoom(deleteUserName, roomPayload)
@@ -702,7 +724,6 @@ export class PadplusManager extends EventEmitter {
                     contactFlag: 0,
                     contactType: 0,
                     country: '',
-                    labelLists: '',
                     nickName: member.NickName,
                     province: '',
                     remark: '',
@@ -710,6 +731,7 @@ export class PadplusManager extends EventEmitter {
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
                     stranger: '',
+                    tagList: '',
                     ticket: '',
                     userName: member.UserName,
                     verifyFlag: 0,
@@ -901,6 +923,113 @@ export class PadplusManager extends EventEmitter {
   /**
    * Contact Section
    */
+
+  public async getOrCreateTag (tagName: string): Promise<string> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    return this.padplusContact.getOrCreateTag(tagName)
+  }
+
+  public async addTag (tagId: string, contactId: string): Promise<void> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+    const tags = await this.tags(contactId)
+    const tagsId = tags.map(tag => tag.id)
+    const allTagsId = tagsId.length === 0 ? tagId : tagsId.join(',') + ',' + tagId
+    await this.padplusContact.addTag(allTagsId, contactId)
+  }
+
+  public async removeTag (tagId: string, contactId: string): Promise<void> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    if (!this.cacheManager) {
+      throw new Error(`no cacheManager`)
+    }
+    const contact = await this.cacheManager.getContact(contactId)
+    if (contact && contact.tagList) {
+      const array = contact.tagList.split(',')
+      const index = array.indexOf(tagId)
+      if (index !== -1) {
+        array.splice(index, 1)
+        await this.padplusContact.addTag(array.join(','), contactId)
+      }
+    }
+  }
+
+  public async tags (contactId?: string): Promise<TagPayload []> {
+    if (!this.cacheManager) {
+      throw new Error(`no cacheManager`)
+    }
+
+    const tagList: TagPayload[] = await this.tagList()
+
+    if (!contactId) {
+      return tagList
+    }
+
+    const contact = await this.cacheManager.getContact(contactId)
+    if (!contact || !contact.tagList) {
+      throw new Error(`can not get contact or tagList of contact by this contactId: ${contactId}`)
+    }
+    const contactTagIdList = contact.tagList
+
+    const contactTagIdArray = contactTagIdList.split(',')
+
+    const tags: TagPayload[] = []
+    await Promise.all(contactTagIdArray.map((id: string) => {
+      tagList.map(tag => {
+        if (tag && id === tag.id.toString()) {
+          tags.push(tag)
+        }
+      })
+    }))
+
+    return tags
+  }
+
+  public async tagList (): Promise<TagPayload []> {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    const tagGrpcList: TagGrpcPayload[] = await this.padplusContact.tagList()
+
+    if (tagGrpcList && tagGrpcList.length === 0) {
+      return []
+    }
+
+    return tagGrpcList.map(t => {
+      const tag: TagPayload = {
+        id: t.LabelID,
+        name: t.LabelName,
+      }
+      return tag
+    })
+  }
+
+  public async modifyTag (tagId: string, name: string): Promise<void> {
+    log.silly(PRE, `modifyTag(${tagId}, ${name})`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.modifyTag(tagId, name)
+  }
+
+  public async deleteTag (tagId: string): Promise<void> {
+    log.silly(PRE, `deleteTag(${tagId})`)
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+
+    await this.padplusContact.deleteTag(tagId)
+  }
+
   public async setContactAlias (
     contactId: string,
     alias: string,
@@ -972,14 +1101,25 @@ export class PadplusManager extends EventEmitter {
 
   public async searchContact (
     contactId: string,
-  ): Promise<GrpcSearchContact> {
+    save?: boolean,
+  ): Promise<GrpcSearchContact | null> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-    const payload = await this.padplusContact.searchContact(contactId)
+
+    let payload = this.cachePadplusSearchContactPayload.get(contactId)
     if (!payload) {
-      throw new Error('Can not find payload for contactId ' + contactId)
+      log.silly(PRE, `No search-friend data in cache, need to request.`)
+      payload = await this.padplusContact.searchContact(contactId)
+
+      if (!payload || payload.status !== '0') {
+        log.error(PRE, 'Can not find payload for contactId ' + contactId)
+        return null
+      } else if (save) {
+        this.cachePadplusSearchContactPayload.set(contactId, payload)
+      }
     }
+
     return payload
   }
 
