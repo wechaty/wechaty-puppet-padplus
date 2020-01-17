@@ -89,6 +89,7 @@ export class PadplusManager extends EventEmitter {
   private qrcodeStatus?      : ScanStatus
   private loginStatus?       : boolean
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
+  public readonly cachePadplusSearchContactPayload: LRU<string, GrpcSearchContact>
   private contactAndRoomData? : {
     contactTotal: number,
     friendTotal: number,
@@ -111,8 +112,17 @@ export class PadplusManager extends EventEmitter {
       max: MESSAGE_CACHE_MAX,
       maxAge: MESSAGE_CACHE_AGE,
     }
-    this.loginStatus = false
     this.cachePadplusMessagePayload = new LRU<string, PadplusMessagePayload>(lruOptions)
+    const searchContactlruOptions: LRU.Options<string, GrpcSearchContact> = {
+      dispose (key: string, val: any) {
+        log.silly(PRE, `constructor() lruOptions.dispose(${key}, ${JSON.stringify(val)})`)
+      },
+      max: MESSAGE_CACHE_MAX,
+      maxAge: MESSAGE_CACHE_AGE,
+    }
+    this.cachePadplusSearchContactPayload = new LRU<string, GrpcSearchContact>(searchContactlruOptions)
+
+    this.loginStatus = false
 
     this.state = new StateSwitch('PadplusManager')
     this.state.off()
@@ -536,14 +546,23 @@ export class PadplusManager extends EventEmitter {
                   })
               }
             } else {
-              const uin = await grpcGatewayEmitter.getUIN()
-              const wxid = await grpcGatewayEmitter.getUserName()
-              const data = {
-                uin,
-                wxid,
+              const uin = grpcGatewayEmitter.getUIN()
+              const wxid = grpcGatewayEmitter.getUserName()
+              let data: {uin: string, wxid: string}
+              if (this.memory) {
+                const slot = await this.memory!.get(MEMORY_SLOT_NAME)
+                data = {
+                  uin: slot.uin,
+                  wxid: slot.userName,
+                }
+              } else {
+                data = {
+                  uin,
+                  wxid,
+                }
               }
-              await grpcGatewayEmitter.setUIN('')
-              await grpcGatewayEmitter.setUserName('')
+              grpcGatewayEmitter.setUIN('')
+              grpcGatewayEmitter.setUserName('')
               if (this.padplusUser) {
                 await this.padplusUser.getWeChatQRCode(data)
               }
@@ -1082,14 +1101,25 @@ export class PadplusManager extends EventEmitter {
 
   public async searchContact (
     contactId: string,
-  ): Promise<GrpcSearchContact> {
+    save?: boolean,
+  ): Promise<GrpcSearchContact | null> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-    const payload = await this.padplusContact.searchContact(contactId)
+
+    let payload = this.cachePadplusSearchContactPayload.get(contactId)
     if (!payload) {
-      throw new Error('Can not find payload for contactId ' + contactId)
+      log.silly(PRE, `No search-friend data in cache, need to request.`)
+      payload = await this.padplusContact.searchContact(contactId)
+
+      if (!payload || payload.status !== '0') {
+        log.error(PRE, 'Can not find payload for contactId ' + contactId)
+        return null
+      } else if (save) {
+        this.cachePadplusSearchContactPayload.set(contactId, payload)
+      }
     }
+
     return payload
   }
 
