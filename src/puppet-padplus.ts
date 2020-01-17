@@ -293,9 +293,41 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * =========================
+   *    TAGS SECTION
+   * =========================
+   */
+
+  // add a tag for a Contact. Create it first if it not exist.
+  public async tagContactAdd (id: string, contactId: string) : Promise<void> {
+    log.error(`tagContactAdd not supported`)
+  }
+  // remove a tag from the Contact
+  public async tagContactRemove (id: string, contactId: string) : Promise<void> {
+    log.error(`tagContactRemove not supported`)
+  }
+  // delete a tag from Wechat
+  public async tagContactDelete (id: string) : Promise<void> {
+    log.error(`tagContactDelete not supported`)
+  }
+  // get tags from a specific Contact
+  public async tagContactList (contactId?: string) : Promise<string[]> {
+    log.error(`tagContactList not supported`)
+    return []
+  }
+
+  /**
+   * =========================
    *    FRIENDSHIP SECTION
    * =========================
    */
+
+  public async friendshipSearchPhone (phone: string) : Promise<string | null> {
+    throw new Error(`tagContactAdd not supported, ${phone}`)
+  }
+
+  public async friendshipSearchWeixin (wexin: string) : Promise<string | null> {
+    throw new Error(`tagContactAdd not supported, ${wexin}`)
+  }
 
   async onFriendshipEvent (message: PadplusMessagePayload): Promise<void> {
     log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
