@@ -992,19 +992,20 @@ export class PadplusManager extends EventEmitter {
   public async searchContact (
     contactId: string,
     save?: boolean,
-  ): Promise<GrpcSearchContact> {
+  ): Promise<GrpcSearchContact | null> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
 
     let payload = this.cachePadplusSearchContactPayload.get(contactId)
     if (!payload) {
-      log.silly(`No search friend data in cache, need to request.`)
+      log.silly(PRE, `No search-friend data in cache, need to request.`)
       payload = await this.padplusContact.searchContact(contactId)
-      if (!payload) {
-        throw new Error('Can not find payload for contactId ' + contactId)
-      }
-      if (save) {
+
+      if (!payload || payload.status !== '0') {
+        log.error(PRE, 'Can not find payload for contactId ' + contactId)
+        return null
+      } else if (save) {
         this.cachePadplusSearchContactPayload.set(contactId, payload)
       }
     }

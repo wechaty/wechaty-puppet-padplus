@@ -364,15 +364,23 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
     const isPhoneNumber = checkNumber(phone)
-    const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
-
-    if (this.manager && this.manager.cacheManager) {
-      await this.manager.cacheManager.setContact(phone, contactPayload)
-      return phone
+    if (!isPhoneNumber) {
+      log.error(PRE, `Some wrong with your phone number, please check it again.`)
+      return null
     } else {
-      throw new Error(`no cache manager`)
+      const searchContact: GrpcSearchContact | null = await this.manager.searchContact(phone, true)
+      if (searchContact === null) {
+        return null
+      }
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+
+      if (this.manager && this.manager.cacheManager) {
+        await this.manager.cacheManager.setContact(phone, contactPayload)
+        return phone
+      } else {
+        throw new Error(`no cache manager`)
+      }
     }
   }
 
@@ -383,7 +391,10 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(weixin, true)
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(weixin, true)
+    if (searchContact === null) {
+      return null
+    }
     const contactPayload = convertSearchContactToContact(searchContact)
 
     if (this.manager && this.manager.cacheManager) {
@@ -401,7 +412,10 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId)
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(contactId)
+    if (searchContact === null) {
+      throw new Error(`Can not search friend by contact id : ${contactId}`)
+    }
     /**
      * If the contact is not stranger, than using WXSearchContact can get userName
      */
