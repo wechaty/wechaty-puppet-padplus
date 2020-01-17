@@ -41,6 +41,8 @@ import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParse
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
+import { convertSearchContactToContact } from './convert-manager/contact-convertor'
+import checkNumber from './utils/util'
 
 const PRE = 'PuppetPadplus'
 
@@ -321,14 +323,6 @@ export class PuppetPadplus extends Puppet {
    * =========================
    */
 
-  public async friendshipSearchPhone (phone: string) : Promise<string | null> {
-    throw new Error(`tagContactAdd not supported, ${phone}`)
-  }
-
-  public async friendshipSearchWeixin (wexin: string) : Promise<string | null> {
-    throw new Error(`tagContactAdd not supported, ${wexin}`)
-  }
-
   async onFriendshipEvent (message: PadplusMessagePayload): Promise<void> {
     log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
     /**
@@ -363,6 +357,54 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async friendshipSearchPhone (phone: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchPhone(${phone})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const isPhoneNumber = checkNumber(phone)
+    if (!isPhoneNumber) {
+      log.error(PRE, `Some wrong with your phone number, please check it again.`)
+      return null
+    } else {
+      const searchContact: GrpcSearchContact | null = await this.manager.searchContact(phone, true)
+      if (searchContact === null) {
+        return null
+      }
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+
+      if (this.manager && this.manager.cacheManager) {
+        await this.manager.cacheManager.setContact(phone, contactPayload)
+        return phone
+      } else {
+        throw new Error(`no cache manager`)
+      }
+    }
+  }
+
+  public async friendshipSearchWeixin (weixin: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchWeixin(${weixin})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(weixin, true)
+    if (searchContact === null) {
+      return null
+    }
+    const contactPayload = convertSearchContactToContact(searchContact)
+
+    if (this.manager && this.manager.cacheManager) {
+      await this.manager.cacheManager.setContact(weixin, contactPayload)
+      return weixin
+    } else {
+      throw new Error(`no cache manager`)
+    }
+  }
+
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
     log.verbose(PRE, `friendshipAdd(${contactId}, ${hello})`)
 
@@ -370,7 +412,10 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId)
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(contactId)
+    if (searchContact === null) {
+      throw new Error(`Can not search friend by contact id : ${contactId}`)
+    }
     /**
      * If the contact is not stranger, than using WXSearchContact can get userName
      */
@@ -385,8 +430,8 @@ export class PuppetPadplus extends Puppet {
       strangerV1 = searchContact.v1
       strangerV2 = searchContact.v2
     } else if (isStrangerV2(searchContact.v2)) {
-      strangerV2 = searchContact.v2
       strangerV1 = searchContact.v1
+      strangerV2 = searchContact.v2
     } else {
       throw new Error('stranger neither v1 nor v2!')
     }
