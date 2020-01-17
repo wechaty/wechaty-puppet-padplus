@@ -322,6 +322,14 @@ export class PuppetPadplus extends Puppet {
    * =========================
    */
 
+  public async friendshipSearchPhone (phone: string) : Promise<string | null> {
+    throw new Error(`tagContactAdd not supported, ${phone}`)
+  }
+
+  public async friendshipSearchWeixin (wexin: string) : Promise<string | null> {
+    throw new Error(`tagContactAdd not supported, ${wexin}`)
+  }
+
   async onFriendshipEvent (message: PadplusMessagePayload): Promise<void> {
     log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
     /**

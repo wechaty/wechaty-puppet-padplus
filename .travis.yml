@@ -1,4 +1,5 @@
 language: node_js
+version: 1.0
 node_js:
   - 10
 
@@ -43,6 +44,7 @@ jobs:
         - echo "NPM Building Finished."
 
       deploy:
+        edge: true
         provider: npm
         email: ruiruibupt@gmail.com
         api_key: "$NPM_TOKEN"
