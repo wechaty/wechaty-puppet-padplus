@@ -84,7 +84,7 @@
     "jsqr": "^1.2.0",
     "koa": "^2.7.0",
     "koa-body": "^4.1.0",
-    "koa-router": "^7.4.0",
+    "koa-router": "^8.0.6",
     "lru-cache": "^5.1.1",
     "moment": "^2.24.0",
     "normalize-package-data": "^2.4.0",
