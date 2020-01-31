@@ -465,7 +465,7 @@ export class PuppetPadplus extends Puppet {
     }
     const payload = await this.manager.getFriendship(friendshipId)
     if (!payload || payload.type !== FriendshipType.Receive) {
-      throw new Error(`can not find friendship payload ${payload} or friendship type ${payload?.type} error.`)
+      throw new Error(`can not find friendship payload ${JSON.stringify(payload)} or friendship type ${payload?.type} error.`)
     }
     const { contactId, stranger, ticket } = payload as FriendshipPayloadReceive
     if (!stranger || !ticket) {
