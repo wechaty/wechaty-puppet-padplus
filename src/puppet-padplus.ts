@@ -491,13 +491,33 @@ export class PuppetPadplus extends Puppet {
     return rawPayload as FriendshipPayload
   }
 
-  protected async friendshipPayloadSave (FriendshipPayload: FriendshipPayload): Promise<FriendshipPayload | void> {
-    log.silly(PRE, `friendship savePayload : ${util.inspect(FriendshipPayload)}`)
-    await this.manager.saveFriendship(FriendshipPayload.id, FriendshipPayload)
-    const cacheFriendShip = await this.manager.getFriendship(FriendshipPayload.id)
-    if (cacheFriendShip) {
-      return cacheFriendShip
+  // get
+  public async friendshipPayload (friendshipId: string): Promise<FriendshipPayload>
+  // set
+  public async friendshipPayload (friendshipId: string, friendshipPayload: FriendshipPayload): Promise<void>
+
+  public async friendshipPayload (
+    friendshipId: string,
+    friendshipPayload?: FriendshipPayload,
+  ): Promise<void | FriendshipPayload> {
+    log.verbose('PadPlus', 'friendshipPayload(%s)',
+      friendshipId,
+      friendshipPayload
+        ? ',' + JSON.stringify(friendshipPayload)
+        : '',
+    )
+
+    if (typeof friendshipPayload === 'object') {
+      const payloadCache = await this.manager.getFriendship(friendshipId)
+      if (!payloadCache) {
+        await this.manager.saveFriendship(friendshipId, friendshipPayload)
+      }
+      return
     }
+
+    const rawPayload = await this.friendshipRawPayload(friendshipId)
+    const payload = await this.friendshipRawPayloadParser(rawPayload)
+    return payload
   }
 
   /**
