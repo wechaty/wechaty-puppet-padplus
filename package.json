@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-padplus",
-  "version": "0.1.4",
+  "version": "0.3.11",
   "description": "Puppet Padplus for Wechaty",
   "directories": {
     "test": "tests"
@@ -62,13 +62,12 @@
     "pkg-jq": "^0.2.2",
     "shx": "^0.3.1",
     "ts-protoc-gen": "^0.12.0",
-    "tstest": "^0.4.1",
-    "wechaty-puppet": "^0.17.4"
+    "tstest": "^0.4.1"
   },
   "peerDependencies": {
     "file-box": "^0.8.22",
     "memory-card": "^0.6.13",
-    "wechaty-puppet": "^0.15.3"
+    "wechaty-puppet": "^0.17.12"
   },
   "dependencies": {
     "array-flatten": "^3.0.0",
@@ -95,7 +94,7 @@
     "state-switch": "^0.6.2",
     "uuid": "^3.3.3",
     "watchdog": "^0.8.10",
-    "wechaty-puppet": "^0.17.4",
+    "wechaty-puppet": "^0.17.12",
     "xml2js": "^0.4.22"
   },
   "publishConfig": {

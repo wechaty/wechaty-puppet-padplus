@@ -1041,9 +1041,11 @@ proto.PadPlusServer.ApiType = {
   SEND_FILE: 51,
   REVOKE_MESSAGE: 52,
   GET_MESSAGE_MEDIA: 53,
-  GET_ALL_LABEL: 70,
-  ADD_LABEL: 71,
-  MODIFY_LABEL: 72
+  GET_ALL_TAG: 70,
+  CREATE_TAG: 71,
+  ADD_TAG: 72,
+  MODIFY_TAG: 73,
+  DELETE_TAG: 74
 };
 
 /**
@@ -1072,7 +1074,13 @@ proto.PadPlusServer.ResponseType = {
   ROOM_QRCODE: 27,
   MESSAGE_RECEIVE: 30,
   STATUS_NOTIFY: 31,
-  MESSAGE_MEDIA_SRC: 32
+  MESSAGE_MEDIA_SRC: 32,
+  MESSAGE_REVOKE: 33,
+  TAG_LIST: 40,
+  TAG_CREATE: 41,
+  TAG_ADD: 42,
+  TAG_MODIFY: 43,
+  TAG_DELETE: 44
 };
 
 goog.object.extend(exports, proto.PadPlusServer);

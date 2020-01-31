@@ -5,20 +5,20 @@ import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
-  MessagePayload,
-  Receiver,
   FriendshipPayload,
+  FriendshipPayloadReceive,
+  FriendshipType,
+  MessagePayload,
+  MessageType,
+  MiniProgramPayload,
+  Puppet,
+  PuppetOptions,
+  Receiver,
+  RoomInvitationPayload,
   RoomMemberPayload,
   RoomPayload,
-  UrlLinkPayload,
-  MiniProgramPayload,
-  PuppetOptions,
   ScanStatus,
-  Puppet,
-  RoomInvitationPayload,
-  FriendshipType,
-  FriendshipPayloadReceive,
-  MessageType,
+  UrlLinkPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -41,8 +41,10 @@ import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParse
 import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
+import { convertSearchContactToContact } from './convert-manager/contact-convertor'
+import checkNumber from './utils/util'
 
-const PRE = 'PUPPET_PADPLUS'
+const PRE = 'PuppetPadplus'
 
 export class PuppetPadplus extends Puppet {
 
@@ -105,7 +107,7 @@ export class PuppetPadplus extends Puppet {
       })
     })
 
-    manager.on('logout', () => this.logout())
+    manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
       this.emit('error', err)
@@ -135,17 +137,25 @@ export class PuppetPadplus extends Puppet {
     log.verbose(PRE, `stop() finished`)
   }
 
-  public async logout (): Promise<void> {
-    log.verbose(PRE, 'logout()')
-
-    await this.manager.logout(this.selfId())
-    this.emit('logout', this.selfId())
+  public async logout (force?: boolean, reason?: string): Promise<void> {
+    log.verbose(PRE, `logout(${reason})`)
+    if (!force) {
+      await this.manager.logout(this.selfId())
+    }
+    this.emit('logout', this.selfId(), reason)
     this.id = undefined
     this.emit('reset', 'padplus reset')
   }
 
   async onMessage (message: PadplusMessagePayload) {
     const messageType = message.msgType
+
+    if (isRoomId(message.fromUserName)) {
+      await this.roomRawPayload(message.fromUserName)
+    } else {
+      await this.contactRawPayload(message.fromUserName)
+    }
+
     switch (messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -190,6 +200,36 @@ export class PuppetPadplus extends Puppet {
         this.emit('message', message.msgId)
         break
     }
+  }
+
+  /**
+   * ========================
+   *     TAG SECTION
+   * ========================
+   */
+
+  public async tagContactAdd (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactAdd(${name}, ${contactId})`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    return this.manager.addTag(tagId, contactId)
+  }
+
+  public async tagContactRemove (name: string, contactId: string) : Promise<void> {
+    log.silly(PRE, `tagContactRemove()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.removeTag(tagId, contactId)
+  }
+
+  public async tagContactDelete (name: string) : Promise<void> {
+    log.silly(PRE, `tagContactDelete()`)
+    const tagId = await this.manager.getOrCreateTag(name)
+    await this.manager.deleteTag(tagId)
+  }
+
+  public async tagContactList (contactId?: string) : Promise<string[]> {
+    log.silly(PRE, `tagContactList()`)
+    const tags = await this.manager.tags(contactId)
+    return tags.map(tag => tag.name)
   }
 
   /**
@@ -323,6 +363,54 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
+  public async friendshipSearchPhone (phone: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchPhone(${phone})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const isPhoneNumber = checkNumber(phone)
+    if (!isPhoneNumber) {
+      log.error(PRE, `Some wrong with your phone number, please check it again.`)
+      return null
+    } else {
+      const searchContact: GrpcSearchContact | null = await this.manager.searchContact(phone, true)
+      if (searchContact === null) {
+        return null
+      }
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+
+      if (this.manager && this.manager.cacheManager) {
+        await this.manager.cacheManager.setContact(phone, contactPayload)
+        return phone
+      } else {
+        throw new Error(`no cache manager`)
+      }
+    }
+  }
+
+  public async friendshipSearchWeixin (weixin: string): Promise<string | null> {
+    log.verbose(PRE, `friendshipSearchWeixin(${weixin})`)
+
+    if (!this.manager) {
+      throw new Error('no padplus manager')
+    }
+
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(weixin, true)
+    if (searchContact === null) {
+      return null
+    }
+    const contactPayload = convertSearchContactToContact(searchContact)
+
+    if (this.manager && this.manager.cacheManager) {
+      await this.manager.cacheManager.setContact(weixin, contactPayload)
+      return weixin
+    } else {
+      throw new Error(`no cache manager`)
+    }
+  }
+
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
     log.verbose(PRE, `friendshipAdd(${contactId}, ${hello})`)
 
@@ -330,7 +418,10 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact = await this.manager.searchContact(contactId)
+    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(contactId)
+    if (searchContact === null) {
+      throw new Error(`Can not search friend by contact id : ${contactId}`)
+    }
     /**
      * If the contact is not stranger, than using WXSearchContact can get userName
      */
@@ -345,8 +436,8 @@ export class PuppetPadplus extends Puppet {
       strangerV1 = searchContact.v1
       strangerV2 = searchContact.v2
     } else if (isStrangerV2(searchContact.v2)) {
-      strangerV2 = searchContact.v2
       strangerV1 = searchContact.v1
+      strangerV2 = searchContact.v2
     } else {
       throw new Error('stranger neither v1 nor v2!')
     }
@@ -442,20 +533,28 @@ export class PuppetPadplus extends Puppet {
         const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
 
         if (data && data.src) {
-          const name = path.parse(data.src).base
-          return FileBox.fromUrl(encodeURI(data.src), name)
+          const name = this.getNameFromUrl(data.src)
+          let src: string
+          if (escape(data.src).indexOf('%u') === -1) {
+            src = data.src
+          } else {
+            src = encodeURI(data.src)
+          }
+          return FileBox.fromUrl(src, name)
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
       case MessageType.Emoticon:
         if (rawPayload && rawPayload.url) {
-          return FileBox.fromUrl(rawPayload.url)
+          const name = this.getNameFromUrl(rawPayload.url)
+          return FileBox.fromUrl(rawPayload.url, name)
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
       case MessageType.Audio:
         if (rawPayload && rawPayload.url) {
-          const fileBox = FileBox.fromUrl(rawPayload.url)
+          const name = this.getNameFromUrl(rawPayload.url)
+          const fileBox = FileBox.fromUrl(rawPayload.url, name)
           let contentXML
           if (isRoomId(rawPayload.fromUserName)) {
             contentXML = rawPayload.content.split(':\n')[1]
@@ -478,6 +577,17 @@ export class PuppetPadplus extends Puppet {
           filename,
         )
     }
+  }
+
+  private getNameFromUrl (url: string): string {
+    const _name = path.parse(url).base
+    let name: string = ''
+    if (_name.indexOf('?')) {
+      name = decodeURIComponent(_name.split('?')[0])
+    } else {
+      name = `unknow-${Date.now()}`
+    }
+    return name
   }
 
   public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
@@ -745,6 +855,8 @@ export class PuppetPadplus extends Puppet {
           this.manager.cachePadplusMessagePayload.set(videoData.msgId, msgPayload)
         }
         return videoData.msgId
+      case 'application/xml':
+        throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
         const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
@@ -871,6 +983,15 @@ export class PuppetPadplus extends Puppet {
     }
 
     return payload
+  }
+
+  public async messageRecall (messageId: string): Promise<boolean> {
+    const payload = await this.messagePayload(messageId)
+    const receiverId = payload.roomId || payload.toId
+    log.silly(PRE, 'messageRecall(%s, %s)', receiverId, messageId)
+
+    const isSuccess = await this.manager.recallMessage(this.selfId(), receiverId!, messageId)
+    return isSuccess
   }
 
   /**
@@ -1122,8 +1243,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const roomQrcode = await this.manager.getRoomQrcode(roomId)
-    return roomQrcode
+    return this.manager.getRoomQrcode(roomId)
   }
 
   async roomList (): Promise<string[]> {
