@@ -1088,10 +1088,13 @@ export class PuppetPadplus extends Puppet {
       }
 
       /**
-       * Set Cache Dirty
+       * // Set Cache Dirty
+       *
+       * Huan(202001): I think where we should comment out is the following two lines
+       *  See: https://github.com/wechaty/wechaty/pull/1833
        */
-      await this.roomMemberPayloadDirty(roomId)
-      await this.roomPayloadDirty(roomId)
+      // await this.roomMemberPayloadDirty(roomId)
+      // await this.roomPayloadDirty(roomId)
 
       this.emit('room-leave', roomId, leaverIdList, removerId, timestamp)
     }
