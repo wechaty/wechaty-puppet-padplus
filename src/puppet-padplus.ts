@@ -465,7 +465,7 @@ export class PuppetPadplus extends Puppet {
     }
     const payload = await this.manager.getFriendship(friendshipId)
     if (!payload || payload.type !== FriendshipType.Receive) {
-      throw new Error(`friendship type error.`)
+      throw new Error(`can not find friendship payload ${JSON.stringify(payload)} or friendship type ${payload?.type} error.`)
     }
     const { contactId, stranger, ticket } = payload as FriendshipPayloadReceive
     if (!stranger || !ticket) {
@@ -489,6 +489,35 @@ export class PuppetPadplus extends Puppet {
   protected async friendshipRawPayloadParser (rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
     log.silly(PRE, `friendship rawPayload : ${util.inspect(rawPayload)}`)
     return rawPayload as FriendshipPayload
+  }
+
+  // get
+  public async friendshipPayload (friendshipId: string): Promise<FriendshipPayload>
+  // set
+  public async friendshipPayload (friendshipId: string, friendshipPayload: FriendshipPayload): Promise<void>
+
+  public async friendshipPayload (
+    friendshipId: string,
+    friendshipPayload?: FriendshipPayload,
+  ): Promise<void | FriendshipPayload> {
+    log.verbose('PadPlus', 'friendshipPayload(%s)',
+      friendshipId,
+      friendshipPayload
+        ? ',' + JSON.stringify(friendshipPayload)
+        : '',
+    )
+
+    if (typeof friendshipPayload === 'object') {
+      const payloadCache = await this.manager.getFriendship(friendshipId)
+      if (!payloadCache) {
+        await this.manager.saveFriendship(friendshipId, friendshipPayload)
+      }
+      return
+    }
+
+    const rawPayload = await this.friendshipRawPayload(friendshipId)
+    const payload = await this.friendshipRawPayloadParser(rawPayload)
+    return payload
   }
 
   /**
