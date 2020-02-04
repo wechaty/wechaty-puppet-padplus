@@ -1163,8 +1163,9 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusRoom) {
       throw new Error(`no padplusRoom`)
     }
-    const qrcodeBuf = this.padplusRoom.getRoomQrcode(roomId)
-    return qrcodeBuf
+    const qrcodeBuf = await this.padplusRoom.getRoomQrcode(roomId)
+    const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
+    return fileBoxToQrcode(fileBox)
   }
 
   public async getRoomIdList ():Promise<string[]> {
