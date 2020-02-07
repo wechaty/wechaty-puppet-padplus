@@ -983,9 +983,7 @@ export class PuppetPadplus extends Puppet {
 
   public async messageRawPayload (messageId: string): Promise<PadplusMessagePayload> {
     log.verbose(PRE, 'messageRawPayload(%s)', messageId)
-    if (!messageId) {
-      throw new Error(`Can not load message by this message id : ${messageId}.`)
-    }
+
     const rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
     if (!rawPayload) {
       throw new Error('no message rawPayload')
