@@ -56,7 +56,7 @@
     "@types/qr-image": "^3.2.1",
     "@types/uuid": "^3.4.5",
     "@types/xml2js": "^0.4.5",
-    "file-box": "^0.8.27",
+    "file-box": "^0.10.6",
     "grpc_tools_node_protoc_ts": "~2.5.8",
     "memory-card": "^0.6.13",
     "pkg-jq": "^0.2.2",
