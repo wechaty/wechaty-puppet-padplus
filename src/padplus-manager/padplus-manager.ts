@@ -857,7 +857,11 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusMesasge) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
   }
 
   public async sendContact (selfId: string, receiver: string, contentStr: string) {
