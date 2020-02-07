@@ -6,6 +6,7 @@ import {
   FriendshipPayloadConfirm,
   FriendshipPayloadReceive,
   FriendshipPayloadVerify,
+  FriendshipSceneType,
 } from 'wechaty-puppet'
 
 import {
@@ -88,11 +89,51 @@ async function friendshipRawPayloadParserReceive (
   }
   const padplusFriendshipPayload: PadplusFriendshipPayload = jsonPayload.msg.$
 
+  let scene: FriendshipSceneType
+  switch (padplusFriendshipPayload.scene) {
+    case '1':
+      scene = FriendshipSceneType.QQTbd1
+      break
+    case '2':
+      scene = FriendshipSceneType.Email
+      break
+    case '3':
+      scene = FriendshipSceneType.Account
+      break
+    case '12':
+      scene = FriendshipSceneType.QQTbd2
+      break
+    case '14':
+      scene = FriendshipSceneType.Room
+      break
+    case '15':
+      scene = FriendshipSceneType.Phone
+      break
+    case '17':
+      scene = FriendshipSceneType.Card
+      break
+    case '18':
+      scene = FriendshipSceneType.Location
+      break
+    case '25':
+      scene = FriendshipSceneType.Bottle
+      break
+    case '29':
+      scene = FriendshipSceneType.Shaking
+      break
+    case '30':
+      scene = FriendshipSceneType.QRCode
+      break
+    default:
+      scene = FriendshipSceneType.Account
+      break
+  }
+
   const friendshipPayload: FriendshipPayloadReceive = {
     contactId : padplusFriendshipPayload.fromusername,
     hello     : padplusFriendshipPayload.content,
     id        : rawPayload.msgId,
-    scene     : padplusFriendshipPayload.scene,
+    scene     : scene,
     stranger  : padplusFriendshipPayload.encryptusername,
     ticket    : padplusFriendshipPayload.ticket,
     timestamp : rawPayload.createTime,

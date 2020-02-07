@@ -471,7 +471,7 @@ export class PuppetPadplus extends Puppet {
     if (!stranger || !ticket) {
       throw new Error(`friendship data error, stranger or ticket is null.`)
     }
-    await this.manager.confirmFriendship(contactId, stranger, ticket, scene || '3')
+    await this.manager.confirmFriendship(contactId, stranger, ticket, scene?.toString() || '3')
   }
 
   protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {
