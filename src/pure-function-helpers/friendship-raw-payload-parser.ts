@@ -92,6 +92,7 @@ async function friendshipRawPayloadParserReceive (
     contactId : padplusFriendshipPayload.fromusername,
     hello     : padplusFriendshipPayload.content,
     id        : rawPayload.msgId,
+    scene     : padplusFriendshipPayload.scene,
     stranger  : padplusFriendshipPayload.encryptusername,
     ticket    : padplusFriendshipPayload.ticket,
     timestamp : rawPayload.createTime,

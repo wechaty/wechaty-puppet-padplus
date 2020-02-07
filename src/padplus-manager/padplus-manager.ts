@@ -1353,11 +1353,13 @@ export class PadplusManager extends EventEmitter {
     contactId: string,
     encryptUserName: string,
     ticket: string,
+    scene: string,
   ) {
+    log.silly(PRE, `confirmFriendship(), contactId: ${contactId}, encryptUserName: ${encryptUserName}, ticket: ${ticket}, scene: ${scene}`)
     if (!this.padplusFriendship) {
       throw new Error(`no padplusFriendship`)
     }
-    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
+    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket, scene)
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('accept friend request timeout.'))
