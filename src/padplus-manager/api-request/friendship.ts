@@ -17,7 +17,7 @@ export class PadplusFriendship {
     log.verbose(PRE, `confirmFriendship()`)
 
     const data = {
-      type: scene,
+      type: scene.toString(),
       userName: encryptUserName,
       verifyUserTicket: ticket,
     }
