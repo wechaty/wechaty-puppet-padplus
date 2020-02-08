@@ -46,7 +46,7 @@
     "@chatie/eslint-config": "^0.8.1",
     "@chatie/git-scripts": "^0.2.5",
     "@chatie/semver": "^0.4.7",
-    "@chatie/tsconfig": "^0.6.1",
+    "@chatie/tsconfig": "^0.8.0",
     "@types/fs-extra": "^8.0.0",
     "@types/google-protobuf": "^3.2.7",
     "@types/lru-cache": "^5.1.0",
