@@ -7,7 +7,6 @@ import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READ
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
-import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
@@ -380,7 +379,7 @@ export class PadplusManager extends EventEmitter {
             grpcGatewayEmitter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
-            const qrcodeUrl = await fileBoxToQrcode(fileBox)
+            const qrcodeUrl = await fileBox.toQRCode()
             this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
             this.qrcodeStatus = ScanStatus.Cancel
           }
@@ -857,7 +856,11 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusMesasge) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
   }
 
   public async sendContact (selfId: string, receiver: string, contentStr: string) {
@@ -1165,7 +1168,7 @@ export class PadplusManager extends EventEmitter {
     }
     const qrcodeBuf = await this.padplusRoom.getRoomQrcode(roomId)
     const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
-    return fileBoxToQrcode(fileBox)
+    return fileBox.toQRCode()
   }
 
   public async getRoomIdList ():Promise<string[]> {
@@ -1353,11 +1356,13 @@ export class PadplusManager extends EventEmitter {
     contactId: string,
     encryptUserName: string,
     ticket: string,
+    scene: string,
   ) {
+    log.silly(PRE, `confirmFriendship(), contactId: ${contactId}, encryptUserName: ${encryptUserName}, ticket: ${ticket}, scene: ${scene}`)
     if (!this.padplusFriendship) {
       throw new Error(`no padplusFriendship`)
     }
-    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket)
+    await this.padplusFriendship.confirmFriendship(encryptUserName, ticket, scene)
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('accept friend request timeout.'))

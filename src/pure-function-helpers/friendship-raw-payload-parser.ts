@@ -1,3 +1,4 @@
+/* eslint-disable sort-keys */
 import { xmlToJson } from './xml-to-json'
 
 import {
@@ -6,6 +7,7 @@ import {
   FriendshipPayloadConfirm,
   FriendshipPayloadReceive,
   FriendshipPayloadVerify,
+  FriendshipSceneType,
 } from 'wechaty-puppet'
 
 import {
@@ -18,6 +20,20 @@ import {
   friendshipReceiveEventMessageParser,
   friendshipVerifyEventMessageParser,
 }                                         from './friendship-event-message-parser'
+
+const friendshipTypeMap: { [scene: string]: FriendshipSceneType } = {
+  '1': FriendshipSceneType.QQTbd1,
+  '2': FriendshipSceneType.Email,
+  '3': FriendshipSceneType.Account,
+  '12': FriendshipSceneType.QQTbd2,
+  '14': FriendshipSceneType.Room,
+  '15': FriendshipSceneType.Phone,
+  '17': FriendshipSceneType.Card,
+  '18': FriendshipSceneType.Location,
+  '25': FriendshipSceneType.Bottle,
+  '29': FriendshipSceneType.Shaking,
+  '30': FriendshipSceneType.QRCode,
+}
 
 export async function friendshipRawPayloadParser (
   rawPayload: PadplusMessagePayload,
@@ -92,6 +108,7 @@ async function friendshipRawPayloadParserReceive (
     contactId : padplusFriendshipPayload.fromusername,
     hello     : padplusFriendshipPayload.content,
     id        : rawPayload.msgId,
+    scene     : friendshipTypeMap[padplusFriendshipPayload.scene],
     stranger  : padplusFriendshipPayload.encryptusername,
     ticket    : padplusFriendshipPayload.ticket,
     timestamp : rawPayload.createTime,
