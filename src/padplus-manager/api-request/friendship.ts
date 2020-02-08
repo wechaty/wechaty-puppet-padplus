@@ -12,12 +12,12 @@ export class PadplusFriendship {
     this.requestClient = requestClient
   }
 
-  // Set alias for contact
-  public confirmFriendship = async (encryptUserName: string, ticket: string): Promise<boolean> => {
-    log.verbose(PRE, `setAlias()`)
+  // confirm friendship
+  public confirmFriendship = async (encryptUserName: string, ticket: string, scene: string): Promise<boolean> => {
+    log.verbose(PRE, `confirmFriendship()`)
 
     const data = {
-      type: 3,
+      type: scene,
       userName: encryptUserName,
       verifyUserTicket: ticket,
     }
