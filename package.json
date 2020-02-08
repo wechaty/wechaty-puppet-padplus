@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-padplus",
-  "version": "0.3.21",
+  "version": "0.3.24",
   "description": "Puppet Padplus for Wechaty",
   "directories": {
     "test": "tests"
@@ -71,7 +71,7 @@
     "array-flatten": "^3.0.0",
     "aws-sdk": "^2.510.0",
     "brolog": "^1.6.5",
-    "flash-store": "^0.18.12",
+    "flash-store": "^0.18.14",
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",
     "grpc": "^1.22.0",
