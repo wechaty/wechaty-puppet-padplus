@@ -7,7 +7,6 @@ import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READ
 import { MemoryCard } from 'memory-card'
 import FileBox from 'file-box'
 import LRU from 'lru-cache'
-import fileBoxToQrcode from '../utils/file-box-to-qrcode'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
@@ -380,7 +379,7 @@ export class PadplusManager extends EventEmitter {
             grpcGatewayEmitter.setQrcodeId(qrcodeData.qrcodeId)
 
             const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
-            const qrcodeUrl = await fileBoxToQrcode(fileBox)
+            const qrcodeUrl = await fileBox.toQRCode()
             this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
             this.qrcodeStatus = ScanStatus.Cancel
           }
@@ -1169,7 +1168,7 @@ export class PadplusManager extends EventEmitter {
     }
     const qrcodeBuf = await this.padplusRoom.getRoomQrcode(roomId)
     const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
-    return fileBoxToQrcode(fileBox)
+    return fileBox.toQRCode()
   }
 
   public async getRoomIdList ():Promise<string[]> {
