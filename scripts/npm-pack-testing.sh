@@ -24,7 +24,6 @@ npm install --production \
   @chatie/tsconfig \
   @babel/runtime@7.0.0-beta.39 \
   @types/quick-lru \
-  @types/normalize-package-data \
   @types/xml2js \
   clone-class \
   brolog \
@@ -33,12 +32,10 @@ npm install --production \
   hot-import \
   quick-lru \
   memory-card \
-  normalize-package-data \
   rx-queue \
   state-switch \
   "wechaty-puppet@$NPM_TAG" \
   watchdog \
-  qr-image \
   xml2js \
 
 ./node_modules/.bin/tsc \
