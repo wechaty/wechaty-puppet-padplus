@@ -66,7 +66,6 @@ export class PadplusMessage {
     log.verbose(PRE, `sendVoice()`)
 
     const data = {
-      // content: '',
       fileSize,
       fromUserName: selfId,
       messageType: PadplusMessageType.Voice,
@@ -86,7 +85,7 @@ export class PadplusMessage {
           const msgData: GrpcResponseMessageData = JSON.parse(msgDataStr)
           return msgData
         } else {
-          throw new Error(`can not parse message data from grpc`)
+          throw new Error(`the message response data is empty, params: ${JSON.stringify(data)}`)
         }
       } else {
         throw new Error(`can not get response from grpc server`)
