@@ -657,7 +657,19 @@ export class PuppetPadplus extends Puppet {
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
-      throw new Error('Message type Audio not supported.')
+      const rawPayload = await this.messageRawPayload(payload.id)
+      let contentXML
+      let url
+      if (isRoomId(rawPayload.fromUserName)) {
+        contentXML = rawPayload.content.split(':\n')[1]
+        url = rawPayload.url!
+      } else {
+        contentXML = rawPayload.content
+        url = rawPayload.fileName!
+      }
+      const content = await xmlToJson(contentXML)
+      const voiceLength = content.msg.voicemsg.$.voicelength
+      await this.messageSendVoice(receiver, url, voiceLength)
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
         receiver,
@@ -750,6 +762,36 @@ export class PuppetPadplus extends Puppet {
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
     this.emit('message', payload.msgId)
+  }
+
+  public async messageSendVoice (receiver: Receiver, url: string, fileSize: string): Promise<void | string> {
+    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+
+    log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, contactIdOrRoomId, url, fileSize)
+
+    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), contactIdOrRoomId!, url, fileSize)
+
+    if (voiceMessageData.success) {
+      const msgPayload: PadplusMessagePayload = {
+        content: url,
+        createTime: voiceMessageData.timestamp,
+        fromUserName: this.selfId(),
+        imgStatus: 0,
+        l1MsgType: 0,
+        msgId: voiceMessageData.msgId,
+        msgSource: 'self',
+        msgSourceCd: 0,
+        msgType: PadplusMessageType.Text,
+        newMsgId: Number(voiceMessageData.msgId),
+        pushContent: url,
+        status: 1,
+        toUserName: contactIdOrRoomId!,
+        uin: '',
+        wechatUserName: '',
+      }
+      this.manager.cachePadplusMessagePayload.set(voiceMessageData.msgId, msgPayload)
+    }
+    return voiceMessageData.msgId
   }
 
   public async messageSendContact (receiver: Receiver, contactId: string): Promise<void | string> {
