@@ -42,6 +42,7 @@ import {
   GrpcQrCodeLogin,
   GetContactSelfInfoGrpcResponse,
   TagPayload,
+  PadplusRoomInviteEvent,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { CacheManager } from '../server-manager/cache-manager'
@@ -1327,6 +1328,38 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplus Room.`)
     }
     await this.padplusRoom.quitRoom(roomId)
+  }
+
+  public async saveRoomInvitationRawPayload (roomInvitation: PadplusRoomInviteEvent): Promise<void> {
+    log.verbose(PRE, `saveRoomInvitationRawPayload(${JSON.stringify(roomInvitation)})`)
+    const { msgId, roomName, url, fromUser, timestamp } = roomInvitation
+
+    if (!this.cacheManager) {
+      throw new Error(`${PRE} saveRoomInvitationRawPayload() has no cache.`)
+    }
+    await this.cacheManager.setRoomInvitation(msgId, {
+      fromUser,
+      id: msgId,
+      roomName,
+      timestamp,
+      url,
+    })
+  }
+
+  public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
+    log.verbose(PRE, `roomInvitationAccept(${roomInvitationId})`)
+    if (!this.cacheManager) {
+      throw new Error(`no cache manager`)
+    }
+
+    const roomInvitationData = await this.cacheManager.getRoomInvitation(roomInvitationId)
+
+    if (roomInvitationData) {
+      if (!this.padplusRoom) {
+        throw new Error(`no padplus room instance`)
+      }
+      await this.padplusRoom.getRoomInvitationDetail(roomInvitationData.url, roomInvitationData.fromUser)
+    }
   }
 
   /**

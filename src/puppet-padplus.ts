@@ -38,7 +38,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId, roomInviteEventMessageParser } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
@@ -187,6 +187,8 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Emoticon:
       case PadplusMessageType.Location:
       case PadplusMessageType.App:
+        await this.onRoomInvitation(message)
+        break
       case PadplusMessageType.VoipMsg:
       case PadplusMessageType.StatusNotify:
       case PadplusMessageType.VoipNotify:
@@ -1208,12 +1210,32 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  roomInvitationAccept (roomInvitationId: string): Promise<void> {
-    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
-    throw new Error('Method not implemented.')
+  protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
+    log.verbose(PRE, 'onRoomInvitation(%s)', rawPayload)
+    const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
+
+    if (!this.manager) {
+      throw new Error('no padpro manager')
+    }
+
+    if (roomInviteEvent) {
+      await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
+
+      this.emit('room-invite', roomInviteEvent.msgId)
+    } else {
+      this.emit('message', rawPayload.msgId)
+    }
   }
 
-  protected async roomInvitationRawPayload (roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
+  public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
+    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
+    if (!this.manager) {
+      throw new Error('no padpro manager')
+    }
+    await this.manager.roomInvitationAccept(roomInvitationId)
+  }
+
+  public async roomInvitationRawPayload (roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     if (!this.manager) {
       throw new Error(`no manager.`)

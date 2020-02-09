@@ -122,3 +122,16 @@ export interface GrpcSetAnnouncementData {
 export interface PadplusRoomMemberMap {
   [contactId: string]: PadplusRoomMemberPayload
 }
+
+export interface GrpcAccpetRoomInvitation {
+  chatRoomType: string,
+  cmdid: string,
+  inviteDetailUrl: string,
+  inviteFrom: string,
+  inviteUrl: string,
+  loginer: string,
+  queueName: string,
+  source: string,
+  uin: string,
+  userName: string,
+}
