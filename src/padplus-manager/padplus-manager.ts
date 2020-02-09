@@ -1358,7 +1358,7 @@ export class PadplusManager extends EventEmitter {
       if (!this.padplusRoom) {
         throw new Error(`no padplus room instance`)
       }
-      await this.padplusRoom.acceptRoomInvitation(roomInvitationData.url, roomInvitationData.fromUser)
+      await this.padplusRoom.getRoomInvitationDetail(roomInvitationData.url, roomInvitationData.fromUser)
     }
   }
 

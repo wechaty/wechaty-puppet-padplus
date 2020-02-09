@@ -216,8 +216,8 @@ export class PadplusRoom {
     })
   }
 
-  public async acceptRoomInvitation (inviteUrl: string, inviteFrom: string): Promise<void> {
-    log.verbose(PRE, `acceptRoomInvitation(${inviteUrl}, ${inviteFrom})`)
+  public async getRoomInvitationDetail (inviteUrl: string, inviteFrom: string): Promise<void> {
+    log.verbose(PRE, `getRoomInvitationDetail(${inviteUrl}, ${inviteFrom})`)
     const data = {
       inviteFrom,
       inviteUrl,
@@ -235,10 +235,28 @@ export class PadplusRoom {
       if (roomDataStr) {
         const grpcAccpetRoomInvitation: GrpcAccpetRoomInvitation = JSON.parse(roomDataStr)
         if (grpcAccpetRoomInvitation && grpcAccpetRoomInvitation.inviteDetailUrl) {
+          let body
           try {
-            await axios.post(grpcAccpetRoomInvitation.inviteDetailUrl)
+            body = await axios.post(grpcAccpetRoomInvitation.inviteDetailUrl)
           } catch (error) {
-            log.warn(`Some info for post weixin room invitation url`)
+            // no need to care about this error
+          }
+          if (body && body.data) {
+            const res = body.data
+            if (res.indexOf('你无法查看被转发过的邀请') !== -1 || res.indexOf('Unable to view forwarded invitations') !== -1) {
+              throw new Error('FORWARDED: Accept invitation failed, this is a forwarded invitation, can not be accepted')
+            } else if (res.indexOf('你未开通微信支付') !== -1 || res.indexOf('You haven\'t enabled WeChat Pay') !== -1
+                      || res.indexOf('你需要实名验证后才能接受邀请') !== -1) {
+              throw new Error('WXPAY: The user need to enable wechaty pay(微信支付) to join the room, this is requested by Wechat.')
+            } else if (res.indexOf('该邀请已过期') !== -1 || res.indexOf('Invitation expired') !== -1) {
+              throw new Error('EXPIRED: The invitation is expired, please request the user to send again')
+            } else if (res.indexOf('群聊邀请操作太频繁请稍后再试') !== -1 || res.indexOf('操作太频繁，请稍后再试') !== -1) {
+              throw new Error('FREQUENT: Room invitation operation too frequent.')
+            } else if (res.indexOf('已达群聊人数上限') !== -1) {
+              throw new Error('LIMIT: The room member count has reached the limit.')
+            } else if (res.indexOf('该群因违规已被限制使用，无法添加群成员') !== -1) {
+              throw new Error('INVALID: This room has been mal used, can not add new members.')
+            }
           }
         } else {
           throw new Error(`can not parse room invitation data: ${JSON.stringify(grpcAccpetRoomInvitation)}`)
@@ -247,7 +265,7 @@ export class PadplusRoom {
         throw new Error(`can not parse room data from grpc`)
       }
     } else {
-      throw new Error(`can not get callback result of CREATE_ROOM`)
+      throw new Error(`can not get callback result of GET_INVITE_INFO`)
     }
   }
 
