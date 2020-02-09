@@ -655,19 +655,19 @@ export class PuppetPadplus extends Puppet {
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
-      log.silly(PRE, `receive audio message : ${util.inspect(payload)}`)
       const rawPayload = await this.messageRawPayload(payload.id)
-      log.silly(PRE, `receive audio message rawPayload : ${util.inspect(rawPayload)}`)
       let contentXML
+      let url
       if (isRoomId(rawPayload.fromUserName)) {
         contentXML = rawPayload.content.split(':\n')[1]
+        url = rawPayload.url!
       } else {
         contentXML = rawPayload.content
+        url = rawPayload.fileName!
       }
       const content = await xmlToJson(contentXML)
       const voiceLength = content.msg.voicemsg.$.voicelength
-      log.silly(PRE, `voiceLength : ${util.inspect(voiceLength)}`)
-      await this.messageSendVoice(receiver, 'https://macpro-message-file.s3.cn-northwest-1.amazonaws.com.cn/584939401083297056_.silk', 1948)
+      await this.messageSendVoice(receiver, url, voiceLength)
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
         receiver,
@@ -762,7 +762,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendVoice (receiver: Receiver, url: string, fileSize: number): Promise<void | string> {
+  public async messageSendVoice (receiver: Receiver, url: string, fileSize: string): Promise<void | string> {
     const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
     log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, contactIdOrRoomId, url, fileSize)

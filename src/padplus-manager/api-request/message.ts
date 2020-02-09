@@ -62,7 +62,7 @@ export class PadplusMessage {
   }
 
   // send voice
-  public sendVoice = async (selfId: string, receiver: string, url: string, fileSize: number): Promise<GrpcResponseMessageData> => {
+  public sendVoice = async (selfId: string, receiver: string, url: string, fileSize: string): Promise<GrpcResponseMessageData> => {
     log.verbose(PRE, `sendVoice()`)
 
     const data = {

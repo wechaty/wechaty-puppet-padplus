@@ -863,7 +863,7 @@ export class PadplusManager extends EventEmitter {
     return messageResponse
   }
 
-  public async sendVoice (selfId: string, receiver: string, url: string, fileSize: number) {
+  public async sendVoice (selfId: string, receiver: string, url: string, fileSize: string) {
     log.silly(PRE, `selfId : ${selfId},receiver : ${receiver}`)
     if (!this.cacheManager) {
       throw new PadplusError(PadplusErrorType.NO_CACHE, `sendContact()`)
