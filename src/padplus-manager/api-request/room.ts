@@ -1,7 +1,8 @@
 import { log } from '../../config'
-import { GrpcCreateRoomData, GrpcGetAnnouncementData, GrpcSetAnnouncementData } from '../../schemas'
+import { GrpcCreateRoomData, GrpcGetAnnouncementData, GrpcSetAnnouncementData, GrpcAccpetRoomInvitation } from '../../schemas'
 import { RequestClient } from './request'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import axios from 'axios'
 
 const PRE = 'PadplusRoom'
 
@@ -213,6 +214,41 @@ export class PadplusRoom {
       apiType: ApiType.ROOM_OPERATION,
       data,
     })
+  }
+
+  public async acceptRoomInvitation (inviteUrl: string, inviteFrom: string): Promise<void> {
+    log.verbose(PRE, `acceptRoomInvitation(${inviteUrl}, ${inviteFrom})`)
+    const data = {
+      inviteFrom,
+      inviteUrl,
+      type: 'GET_INVITE_INFO',
+    }
+
+    const result = await this.requestClient.request({
+      apiType: ApiType.ACCEPT_ROOM_INVITATION,
+      data,
+    })
+
+    if (result) {
+      const roomDataStr = result.getData()
+
+      if (roomDataStr) {
+        const grpcAccpetRoomInvitation: GrpcAccpetRoomInvitation = JSON.parse(roomDataStr)
+        if (grpcAccpetRoomInvitation && grpcAccpetRoomInvitation.inviteDetailUrl) {
+          try {
+            await axios.post(grpcAccpetRoomInvitation.inviteDetailUrl)
+          } catch (error) {
+            log.warn(`Some info for post weixin room invitation url`)
+          }
+        } else {
+          throw new Error(`can not parse room invitation data: ${JSON.stringify(grpcAccpetRoomInvitation)}`)
+        }
+      } else {
+        throw new Error(`can not parse room data from grpc`)
+      }
+    } else {
+      throw new Error(`can not get callback result of CREATE_ROOM`)
+    }
   }
 
 }
