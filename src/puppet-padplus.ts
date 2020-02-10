@@ -852,7 +852,6 @@ export class PuppetPadplus extends Puppet {
     const fileSize = (await file.toBuffer()).length
     log.silly(PRE, `file url : ${util.inspect(fileUrl)}`)
     // this needs to run before mimeType is available
-    await file.ready()
 
     const type = (file.mimeType && file.mimeType !== 'application/octet-stream')
       ? file.mimeType
