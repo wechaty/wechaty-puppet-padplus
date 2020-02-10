@@ -32,7 +32,6 @@ import {
   GrpcRoomMemberPayload,
   GrpcRoomMemberList,
   PadplusMediaData,
-  PadplusRoomMemberPayload,
   GrpcSearchContact,
   GrpcDeleteContact,
   LogoutGrpcResponse,
@@ -639,30 +638,8 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
-                const room = await this.cacheManager.getRoom(deleteUserName)
-                if (!room) {
-                  const roomPayload: PadplusRoomPayload = {
-                    alias          : '',
-                    bigHeadUrl     : '',
-                    chatRoomOwner  : '',
-                    chatroomId     : deleteUserName,
-                    chatroomVersion: 0,
-                    contactType    : 0,
-                    isDelete       : true,
-                    memberCount    : 0,
-                    members        : [],
-                    nickName       : '',
-                    smallHeadUrl   : '',
-                    stranger       : '',
-                    tagList     : '',
-                    ticket         : '',
-                  }
-                  await this.cacheManager.setRoom(deleteUserName, roomPayload)
-                } else {
-                  room.isDelete = true
-                  await this.cacheManager.setRoom(deleteUserName, room)
-                }
-                await this.cacheManager.setRoomMember(deleteUserName, {} as { [contactId: string]: PadplusRoomMemberPayload })
+                // No need to clear this room cache when the bot been removed.
+                // TODO: add a flag for the removed room
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
