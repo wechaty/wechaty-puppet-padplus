@@ -61,6 +61,40 @@ export class PadplusMessage {
     return this.sendMessage(selfId, receiverId, content, PadplusMessageType.App)
   }
 
+  // send voice
+  public sendVoice = async (selfId: string, receiver: string, url: string, fileSize: string): Promise<GrpcResponseMessageData> => {
+    log.verbose(PRE, `sendVoice()`)
+
+    const data = {
+      fileSize,
+      fromUserName: selfId,
+      messageType: PadplusMessageType.Voice,
+      toUserName: receiver,
+      url,
+    }
+
+    try {
+      const result = await this.requestClient.request({
+        apiType: ApiType.SEND_MESSAGE,
+        data,
+      })
+
+      if (result) {
+        const msgDataStr = result.getData()
+        if (msgDataStr) {
+          const msgData: GrpcResponseMessageData = JSON.parse(msgDataStr)
+          return msgData
+        } else {
+          throw new Error(`the message response data is empty, params: ${JSON.stringify(data)}`)
+        }
+      } else {
+        throw new Error(`can not get response from grpc server`)
+      }
+    } catch (e) {
+      throw new Error(`can not send message due to this error: ${e}`)
+    }
+  }
+
   // send contact card
   public sendContact = async (selfId: string, receiver: string, content: string): Promise<GrpcResponseMessageData> => {
     log.verbose(PRE, `sendContact()`)

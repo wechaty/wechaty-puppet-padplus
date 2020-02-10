@@ -38,7 +38,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId, roomInviteEventMessageParser } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
@@ -187,6 +187,8 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Emoticon:
       case PadplusMessageType.Location:
       case PadplusMessageType.App:
+        await this.onRoomInvitation(message)
+        break
       case PadplusMessageType.VoipMsg:
       case PadplusMessageType.StatusNotify:
       case PadplusMessageType.VoipNotify:
@@ -655,7 +657,19 @@ export class PuppetPadplus extends Puppet {
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
-      throw new Error('Message type Audio not supported.')
+      const rawPayload = await this.messageRawPayload(payload.id)
+      let contentXML
+      let url
+      if (isRoomId(rawPayload.fromUserName)) {
+        contentXML = rawPayload.content.split(':\n')[1]
+        url = rawPayload.url!
+      } else {
+        contentXML = rawPayload.content
+        url = rawPayload.fileName!
+      }
+      const content = await xmlToJson(contentXML)
+      const voiceLength = content.msg.voicemsg.$.voicelength
+      await this.messageSendVoice(receiver, url, voiceLength)
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
         receiver,
@@ -748,6 +762,36 @@ export class PuppetPadplus extends Puppet {
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
     this.emit('message', payload.msgId)
+  }
+
+  public async messageSendVoice (receiver: Receiver, url: string, fileSize: string): Promise<void | string> {
+    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+
+    log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, contactIdOrRoomId, url, fileSize)
+
+    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), contactIdOrRoomId!, url, fileSize)
+
+    if (voiceMessageData.success) {
+      const msgPayload: PadplusMessagePayload = {
+        content: url,
+        createTime: voiceMessageData.timestamp,
+        fromUserName: this.selfId(),
+        imgStatus: 0,
+        l1MsgType: 0,
+        msgId: voiceMessageData.msgId,
+        msgSource: 'self',
+        msgSourceCd: 0,
+        msgType: PadplusMessageType.Text,
+        newMsgId: Number(voiceMessageData.msgId),
+        pushContent: url,
+        status: 1,
+        toUserName: contactIdOrRoomId!,
+        uin: '',
+        wechatUserName: '',
+      }
+      this.manager.cachePadplusMessagePayload.set(voiceMessageData.msgId, msgPayload)
+    }
+    return voiceMessageData.msgId
   }
 
   public async messageSendContact (receiver: Receiver, contactId: string): Promise<void | string> {
@@ -1166,12 +1210,32 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  roomInvitationAccept (roomInvitationId: string): Promise<void> {
-    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
-    throw new Error('Method not implemented.')
+  protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
+    log.verbose(PRE, 'onRoomInvitation(%s)', rawPayload)
+    const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
+
+    if (!this.manager) {
+      throw new Error('no padpro manager')
+    }
+
+    if (roomInviteEvent) {
+      await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
+
+      this.emit('room-invite', roomInviteEvent.msgId)
+    } else {
+      this.emit('message', rawPayload.msgId)
+    }
   }
 
-  protected async roomInvitationRawPayload (roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
+  public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
+    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
+    if (!this.manager) {
+      throw new Error('no padpro manager')
+    }
+    await this.manager.roomInvitationAccept(roomInvitationId)
+  }
+
+  public async roomInvitationRawPayload (roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     if (!this.manager) {
       throw new Error(`no manager.`)
