@@ -1210,7 +1210,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', rawPayload)
+    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
@@ -1219,11 +1219,18 @@ export class PuppetPadplus extends Puppet {
 
     if (roomInviteEvent) {
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-
       this.emit('room-invite', roomInviteEvent.msgId)
     } else {
       this.emit('message', rawPayload.msgId)
     }
+  }
+
+  public async setRoomInvitaionPayload (roomInvitationId: string, roomInvitationRawPayload: RoomInvitationPayload): Promise<any> {
+    log.silly(PRE, `setRoomInvitaionPayload(${roomInvitationId}, ${util.inspect(roomInvitationRawPayload)}`)
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.setRoomInvitaionPayload(roomInvitationId, roomInvitationRawPayload)
   }
 
   public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
@@ -1247,6 +1254,7 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `room invitation rawPayload : ${util.inspect(rawPayload)}`)
     const payload: RoomInvitationPayload = {
       id: rawPayload.id,
+      invitation: rawPayload.url,
       inviterId: rawPayload.fromUser,
       roomMemberCount: 0,
       roomMemberIdList: [],
