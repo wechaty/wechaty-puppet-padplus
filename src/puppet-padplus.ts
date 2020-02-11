@@ -13,7 +13,6 @@ import {
   MiniProgramPayload,
   Puppet,
   PuppetOptions,
-  Receiver,
   RoomInvitationPayload,
   RoomMemberPayload,
   RoomPayload,
@@ -240,7 +239,7 @@ export class PuppetPadplus extends Puppet {
    * ========================
    */
 
-  public async contactSelfQrcode (): Promise<string> {
+  public async contactSelfQRCode (): Promise<string> {
     log.silly(PRE, `contactSelfQrcode()`)
     return this.manager.contactSelfQrcode()
   }
@@ -465,15 +464,15 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const payload = await this.manager.getFriendship(friendshipId)
+    const payload = await this.manager.getFriendship(friendshipId) as undefined | FriendshipPayloadReceive
     if (!payload || payload.type !== FriendshipType.Receive) {
-      throw new Error(`can not find friendship payload ${JSON.stringify(payload)} or friendship type ${payload?.type} error.`)
+      throw new Error(`can not find friendship payload ${JSON.stringify(payload)} or friendship type ${payload && payload.type} error.`)
     }
     const { contactId, scene, stranger, ticket } = payload as FriendshipPayloadReceive
     if (!stranger || !ticket) {
       throw new Error(`friendship data error, stranger or ticket is null.`)
     }
-    await this.manager.confirmFriendship(contactId, stranger, ticket, scene?.toString() || '3')
+    await this.manager.confirmFriendship(contactId, stranger, ticket, (scene && scene.toString()) || '3')
   }
 
   protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {
@@ -643,8 +642,8 @@ export class PuppetPadplus extends Puppet {
     throw new Error('Method not implemented.')
   }
 
-  public async messageForward (receiver: Receiver, messageId: string): Promise<void> {
-    log.silly(PRE, `messageForward() receiver: ${receiver}, messageId : ${util.inspect(messageId)}`)
+  public async messageForward (conversationId: string, messageId: string): Promise<void> {
+    log.silly(PRE, `messageForward() receiver: ${conversationId}, messageId : ${util.inspect(messageId)}`)
 
     const payload = await this.messagePayload(messageId)
 
@@ -653,7 +652,7 @@ export class PuppetPadplus extends Puppet {
         throw new Error('no text')
       }
       await this.messageSendText(
-        receiver,
+        conversationId,
         payload.text,
       )
     } else if (payload.type === MessageType.Audio) {
@@ -669,22 +668,22 @@ export class PuppetPadplus extends Puppet {
       }
       const content = await xmlToJson(contentXML)
       const voiceLength = content.msg.voicemsg.$.voicelength
-      await this.messageSendVoice(receiver, url, voiceLength)
+      await this.messageSendVoice(conversationId, url, voiceLength)
     } else if (payload.type === MessageType.Url) {
       await this.messageSendUrl(
-        receiver,
+        conversationId,
         await this.messageUrl(messageId)
       )
     } else if (payload.type === MessageType.MiniProgram) {
       await this.messageSendMiniProgram(
-        receiver,
+        conversationId,
         await this.messageMiniProgram(messageId)
       )
     } else if (payload.type === MessageType.ChatHistory) {
       throw new Error('Message type ChatHistory not supported.')
     } else {
       await this.messageSendFile(
-        receiver,
+        conversationId,
         await this.messageFile(messageId),
       )
     }
@@ -713,21 +712,19 @@ export class PuppetPadplus extends Puppet {
     return msg
   }
 
-  public async messageSendText (receiver: Receiver, text: string, mentionIdList?: string[]): Promise<void | string> {
-    log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(receiver), text)
-
-    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+  public async messageSendText (conversationId: string, text: string, mentionIdList?: string[]): Promise<void | string> {
+    log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(conversationId), text)
 
     let msgData: GrpcResponseMessageData
     if (mentionIdList && mentionIdList.length > 0) {
-      msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text, mentionIdList.toString())
+      msgData = await this.manager.sendMessage(this.selfId(), conversationId!, text, PadplusMessageType.Text, mentionIdList.toString())
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text, mentionIdList)
+        this.replayTextMsg(msgData.msgId, conversationId!, text, mentionIdList)
       }
     } else {
-      msgData = await this.manager.sendMessage(this.selfId(), contactIdOrRoomId!, text, PadplusMessageType.Text)
+      msgData = await this.manager.sendMessage(this.selfId(), conversationId!, text, PadplusMessageType.Text)
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayTextMsg(msgData.msgId, contactIdOrRoomId!, text)
+        this.replayTextMsg(msgData.msgId, conversationId!, text)
       }
     }
     if (msgData.success) {
@@ -744,7 +741,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(msgData.msgId),
         pushContent: text,
         status: 1,
-        toUserName: contactIdOrRoomId!,
+        toUserName: conversationId!,
         uin: '',
         wechatUserName: '',
       }
@@ -764,12 +761,10 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendVoice (receiver: Receiver, url: string, fileSize: string): Promise<void | string> {
-    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+  public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
+    log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, conversationId, url, fileSize)
 
-    log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, contactIdOrRoomId, url, fileSize)
-
-    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), contactIdOrRoomId!, url, fileSize)
+    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), conversationId!, url, fileSize)
 
     if (voiceMessageData.success) {
       const msgPayload: PadplusMessagePayload = {
@@ -785,7 +780,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(voiceMessageData.msgId),
         pushContent: url,
         status: 1,
-        toUserName: contactIdOrRoomId!,
+        toUserName: conversationId!,
         uin: '',
         wechatUserName: '',
       }
@@ -794,10 +789,9 @@ export class PuppetPadplus extends Puppet {
     return voiceMessageData.msgId
   }
 
-  public async messageSendContact (receiver: Receiver, contactId: string): Promise<void | string> {
-    log.verbose(PRE, `messageSend('%s', %s)`, receiver, contactId)
+  public async messageSendContact (conversationId: string, contactId: string): Promise<void | string> {
+    log.verbose(PRE, `messageSend('%s', %s)`, conversationId, contactId)
 
-    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
     let contact = await this.manager.getContact(contactId)
     if (contact) {
       const content = {
@@ -805,9 +799,9 @@ export class PuppetPadplus extends Puppet {
         nickName: contact.nickName,
         userName: contact.userName,
       }
-      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), contactIdOrRoomId!, JSON.stringify(content))
+      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), conversationId!, JSON.stringify(content))
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayContactMsg(contactData.msgId, contactIdOrRoomId!, JSON.stringify(content))
+        this.replayContactMsg(contactData.msgId, conversationId!, JSON.stringify(content))
       }
       if (contactData.success) {
         const msgPayload: PadplusMessagePayload = {
@@ -823,7 +817,7 @@ export class PuppetPadplus extends Puppet {
           newMsgId: Number(contactData.msgId),
           pushContent: JSON.stringify(content),
           status: 1,
-          toUserName: contactIdOrRoomId!,
+          toUserName: conversationId!,
           uin: '',
           wechatUserName: '',
         }
@@ -843,10 +837,8 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendFile (receiver: Receiver, file: FileBox): Promise<void | string> {
-    log.verbose(PRE, 'messageSendFile(%s, %s)', receiver, file)
-
-    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
+  public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
+    log.verbose(PRE, 'messageSendFile(%s, %s)', conversationId, file)
 
     const fileUrl = await this.manager.generatorFileUrl(file)
     const fileSize = (await file.toBuffer()).length
@@ -866,9 +858,9 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.selfId(), conversationId!, decodeURIComponent(fileUrl), file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayImageMsg(picData.msgId, contactIdOrRoomId!, decodeURIComponent(fileUrl))
+          this.replayImageMsg(picData.msgId, conversationId!, decodeURIComponent(fileUrl))
         }
         if (picData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -884,7 +876,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(picData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: contactIdOrRoomId!,
+            toUserName: conversationId!,
             uin: '',
             wechatUserName: '',
           }
@@ -893,9 +885,9 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendFile(this.selfId(), conversationId!, fileUrl, file.name, 'video')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayAppMsg(videoData.msgId, contactIdOrRoomId!, fileUrl)
+          this.replayAppMsg(videoData.msgId, conversationId!, fileUrl)
         }
         if (videoData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -911,7 +903,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(videoData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: contactIdOrRoomId!,
+            toUserName: conversationId!,
             uin: '',
             wechatUserName: '',
           }
@@ -921,9 +913,9 @@ export class PuppetPadplus extends Puppet {
       case 'application/xml':
         throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
-        const docData = await this.manager.sendFile(this.selfId(), contactIdOrRoomId!, fileUrl, file.name, 'doc', fileSize)
+        const docData = await this.manager.sendFile(this.selfId(), conversationId!, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayAppMsg(docData.msgId, contactIdOrRoomId!, fileUrl)
+          this.replayAppMsg(docData.msgId, conversationId!, fileUrl)
         }
         if (docData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -939,7 +931,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(docData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: contactIdOrRoomId!,
+            toUserName: conversationId!,
             uin: '',
             wechatUserName: '',
           }
@@ -966,13 +958,11 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  public async messageSendUrl (receiver: Receiver, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
-    log.verbose(PRE, `messageSendUrl(${receiver})`,
-      JSON.stringify(receiver),
+  public async messageSendUrl (conversationId: string, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
+    log.verbose(PRE, `messageSendUrl(${conversationId})`,
+      conversationId,
       JSON.stringify(urlLinkPayload),
     )
-
-    const contactIdOrRoomId =  receiver.roomId || receiver.contactId
 
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
@@ -983,9 +973,9 @@ export class PuppetPadplus extends Puppet {
       type: 5,
       url,
     }
-    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), contactIdOrRoomId!, JSON.stringify(payload))
+    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), conversationId!, JSON.stringify(payload))
     if (PADPLUS_REPLAY_MESSAGE) {
-      this.replayUrlLinkMsg(urlLinkData.msgId, contactIdOrRoomId!, JSON.stringify(payload))
+      this.replayUrlLinkMsg(urlLinkData.msgId, conversationId!, JSON.stringify(payload))
     }
     if (urlLinkData.success) {
       const msgPayload: PadplusMessagePayload = {
@@ -1001,7 +991,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(urlLinkData.msgId),
         pushContent: JSON.stringify(payload),
         status: 1,
-        toUserName: contactIdOrRoomId!,
+        toUserName: conversationId!,
         uin: '',
         wechatUserName: '',
       }
@@ -1019,8 +1009,8 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  messageSendMiniProgram (receiver: Receiver, miniProgramPayload: MiniProgramPayload): Promise<void | string> {
-    log.silly(PRE, `messageSendMiniProgram() receiver : ${util.inspect(receiver)}, miniProgramPayload: ${miniProgramPayload}`)
+  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<void | string> {
+    log.silly(PRE, `messageSendMiniProgram() receiver : ${conversationId}, miniProgramPayload: ${miniProgramPayload}`)
     throw new Error('Method not implemented.')
   }
 
@@ -1246,12 +1236,14 @@ export class PuppetPadplus extends Puppet {
   protected async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
     log.silly(PRE, `room invitation rawPayload : ${util.inspect(rawPayload)}`)
     const payload: RoomInvitationPayload = {
+      avatar: '',
       id: rawPayload.id,
+      invitation: '',
       inviterId: rawPayload.fromUser,
-      roomMemberCount: 0,
-      roomMemberIdList: [],
-      roomTopic: rawPayload.roomName,
+      memberCount: 0,
+      memberIdList: [],
       timestamp: rawPayload.timestamp,
+      topic: rawPayload.roomName,
     }
     return payload
   }
@@ -1324,7 +1316,7 @@ export class PuppetPadplus extends Puppet {
     await this.roomTopic(roomId)
   }
 
-  async roomQrcode (roomId: string): Promise<string> {
+  async roomQRCode (roomId: string): Promise<string> {
     log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
     if (!this.manager) {
       throw new Error(`no manager.`)
