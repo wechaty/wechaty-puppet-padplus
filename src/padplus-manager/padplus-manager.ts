@@ -10,7 +10,7 @@ import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload, RoomInvitationPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -42,7 +42,6 @@ import {
   GetContactSelfInfoGrpcResponse,
   TagPayload,
   PadplusRoomInviteEvent,
-  PadplusRoomInvitationPayload,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { CacheManager } from '../server-manager/cache-manager'
@@ -1322,25 +1321,6 @@ export class PadplusManager extends EventEmitter {
       timestamp,
       url,
     })
-  }
-
-  public async setRoomInvitaionPayload (roomInvitationId: string, roomInvitationRawPayload: RoomInvitationPayload): Promise<void> {
-    log.verbose(PRE, `setRoomInvitaionPayload()`)
-    if (!this.cacheManager) {
-      throw new Error(`no cache manager`)
-    }
-
-    const roomInvitationData = await this.cacheManager.getRoomInvitation(roomInvitationId)
-    if (!roomInvitationData) {
-      const payload: PadplusRoomInvitationPayload = {
-        fromUser : roomInvitationRawPayload.inviterId,
-        id       : roomInvitationRawPayload.id,
-        roomName : roomInvitationRawPayload.topic!,
-        timestamp: roomInvitationRawPayload.timestamp,
-        url      : roomInvitationRawPayload.invitation!,
-      }
-      await this.cacheManager.setRoomInvitation(roomInvitationId, payload)
-    }
   }
 
   public async roomInvitationAccept (roomInvitationId: string): Promise<void> {

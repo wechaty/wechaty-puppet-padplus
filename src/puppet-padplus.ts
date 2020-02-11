@@ -1225,14 +1225,6 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  public async setRoomInvitaionPayload (roomInvitationId: string, roomInvitationRawPayload: RoomInvitationPayload): Promise<any> {
-    log.silly(PRE, `setRoomInvitaionPayload(${roomInvitationId}, ${util.inspect(roomInvitationRawPayload)}`)
-    if (!this.manager) {
-      throw new Error(`no manager.`)
-    }
-    await this.manager.setRoomInvitaionPayload(roomInvitationId, roomInvitationRawPayload)
-  }
-
   public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     if (!this.manager) {
