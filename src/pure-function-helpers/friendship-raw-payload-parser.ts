@@ -25,7 +25,7 @@ const friendshipTypeMap: { [scene: string]: FriendshipSceneType } = {
   '1': FriendshipSceneType.QQ,
   '2': FriendshipSceneType.Email,
   '3': FriendshipSceneType.Weixin,
-  '12': FriendshipSceneType.QQTbd,
+  '12': FriendshipSceneType.QQtbd,
   '14': FriendshipSceneType.Room,
   '15': FriendshipSceneType.Phone,
   '17': FriendshipSceneType.Card,
