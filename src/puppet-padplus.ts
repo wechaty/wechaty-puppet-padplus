@@ -717,14 +717,14 @@ export class PuppetPadplus extends Puppet {
 
     let msgData: GrpcResponseMessageData
     if (mentionIdList && mentionIdList.length > 0) {
-      msgData = await this.manager.sendMessage(this.selfId(), conversationId!, text, PadplusMessageType.Text, mentionIdList.toString())
+      msgData = await this.manager.sendMessage(this.selfId(), conversationId, text, PadplusMessageType.Text, mentionIdList.toString())
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayTextMsg(msgData.msgId, conversationId!, text, mentionIdList)
+        this.replayTextMsg(msgData.msgId, conversationId, text, mentionIdList)
       }
     } else {
-      msgData = await this.manager.sendMessage(this.selfId(), conversationId!, text, PadplusMessageType.Text)
+      msgData = await this.manager.sendMessage(this.selfId(), conversationId, text, PadplusMessageType.Text)
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayTextMsg(msgData.msgId, conversationId!, text)
+        this.replayTextMsg(msgData.msgId, conversationId, text)
       }
     }
     if (msgData.success) {
@@ -741,7 +741,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(msgData.msgId),
         pushContent: text,
         status: 1,
-        toUserName: conversationId!,
+        toUserName: conversationId,
         uin: '',
         wechatUserName: '',
       }
@@ -764,7 +764,7 @@ export class PuppetPadplus extends Puppet {
   public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
     log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, conversationId, url, fileSize)
 
-    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), conversationId!, url, fileSize)
+    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), conversationId, url, fileSize)
 
     if (voiceMessageData.success) {
       const msgPayload: PadplusMessagePayload = {
@@ -780,7 +780,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(voiceMessageData.msgId),
         pushContent: url,
         status: 1,
-        toUserName: conversationId!,
+        toUserName: conversationId,
         uin: '',
         wechatUserName: '',
       }
@@ -799,9 +799,9 @@ export class PuppetPadplus extends Puppet {
         nickName: contact.nickName,
         userName: contact.userName,
       }
-      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), conversationId!, JSON.stringify(content))
+      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), conversationId, JSON.stringify(content))
       if (PADPLUS_REPLAY_MESSAGE) {
-        this.replayContactMsg(contactData.msgId, conversationId!, JSON.stringify(content))
+        this.replayContactMsg(contactData.msgId, conversationId, JSON.stringify(content))
       }
       if (contactData.success) {
         const msgPayload: PadplusMessagePayload = {
@@ -817,7 +817,7 @@ export class PuppetPadplus extends Puppet {
           newMsgId: Number(contactData.msgId),
           pushContent: JSON.stringify(content),
           status: 1,
-          toUserName: conversationId!,
+          toUserName: conversationId,
           uin: '',
           wechatUserName: '',
         }
@@ -858,9 +858,9 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.selfId(), conversationId!, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.selfId(), conversationId, decodeURIComponent(fileUrl), file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayImageMsg(picData.msgId, conversationId!, decodeURIComponent(fileUrl))
+          this.replayImageMsg(picData.msgId, conversationId, decodeURIComponent(fileUrl))
         }
         if (picData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -876,7 +876,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(picData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: conversationId!,
+            toUserName: conversationId,
             uin: '',
             wechatUserName: '',
           }
@@ -885,9 +885,9 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.selfId(), conversationId!, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'video')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayAppMsg(videoData.msgId, conversationId!, fileUrl)
+          this.replayAppMsg(videoData.msgId, conversationId, fileUrl)
         }
         if (videoData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -903,7 +903,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(videoData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: conversationId!,
+            toUserName: conversationId,
             uin: '',
             wechatUserName: '',
           }
@@ -913,9 +913,9 @@ export class PuppetPadplus extends Puppet {
       case 'application/xml':
         throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
-        const docData = await this.manager.sendFile(this.selfId(), conversationId!, fileUrl, file.name, 'doc', fileSize)
+        const docData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayAppMsg(docData.msgId, conversationId!, fileUrl)
+          this.replayAppMsg(docData.msgId, conversationId, fileUrl)
         }
         if (docData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -931,7 +931,7 @@ export class PuppetPadplus extends Puppet {
             newMsgId: Number(docData.msgId),
             pushContent: `<msg>${fileUrl}</msg>`,
             status: 1,
-            toUserName: conversationId!,
+            toUserName: conversationId,
             uin: '',
             wechatUserName: '',
           }
@@ -973,9 +973,9 @@ export class PuppetPadplus extends Puppet {
       type: 5,
       url,
     }
-    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), conversationId!, JSON.stringify(payload))
+    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), conversationId, JSON.stringify(payload))
     if (PADPLUS_REPLAY_MESSAGE) {
-      this.replayUrlLinkMsg(urlLinkData.msgId, conversationId!, JSON.stringify(payload))
+      this.replayUrlLinkMsg(urlLinkData.msgId, conversationId, JSON.stringify(payload))
     }
     if (urlLinkData.success) {
       const msgPayload: PadplusMessagePayload = {
@@ -991,7 +991,7 @@ export class PuppetPadplus extends Puppet {
         newMsgId: Number(urlLinkData.msgId),
         pushContent: JSON.stringify(payload),
         status: 1,
-        toUserName: conversationId!,
+        toUserName: conversationId,
         uin: '',
         wechatUserName: '',
       }
