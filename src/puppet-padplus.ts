@@ -1009,7 +1009,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<void | string> {
+  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
     log.silly(PRE, `messageSendMiniProgram() receiver : ${conversationId}, miniProgramPayload: ${miniProgramPayload}`)
     throw new Error('Method not implemented.')
   }
@@ -1200,7 +1200,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', rawPayload)
+    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
@@ -1209,7 +1209,6 @@ export class PuppetPadplus extends Puppet {
 
     if (roomInviteEvent) {
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-
       this.emit('room-invite', roomInviteEvent.msgId)
     } else {
       this.emit('message', rawPayload.msgId)
@@ -1238,7 +1237,7 @@ export class PuppetPadplus extends Puppet {
     const payload: RoomInvitationPayload = {
       avatar: '',
       id: rawPayload.id,
-      invitation: '',
+      invitation: rawPayload.url,
       inviterId: rawPayload.fromUser,
       memberCount: 0,
       memberIdList: [],
