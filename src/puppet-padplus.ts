@@ -729,13 +729,13 @@ export class PuppetPadplus extends Puppet {
     }
     if (msgData.success) {
       const msgPayload: PadplusMessagePayload = {
-        content: text + ((mentionIdList && mentionIdList.length > 0) ? mentionIdList!.toString() : ''),
+        content: text,
         createTime: msgData.timestamp,
         fromUserName: this.selfId(),
         imgStatus: 0,
         l1MsgType: 0,
         msgId: msgData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(mentionIdList),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(msgData.msgId),
@@ -755,10 +755,18 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.Text
     payload.content = text
     if (atUserList) {
-      payload.msgSource = `<msgsource>\n\t<atuserlist>${atUserList.join(',')}</atuserlist>\n</msgsource>\n`
+      payload.msgSource = this.generateMsgSource(atUserList)
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
     this.emit('message', payload.msgId)
+  }
+
+  protected generateMsgSource (mentionIdList?: string[]) {
+    if (mentionIdList && mentionIdList.length > 0) {
+      return `<msgsource>\n\t<atuserlist>${mentionIdList.join(',')}</atuserlist>\n</msgsource>\n`
+    } else {
+      return '<msgsource>\n</msgsource>'
+    }
   }
 
   public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
@@ -774,7 +782,7 @@ export class PuppetPadplus extends Puppet {
         imgStatus: 0,
         l1MsgType: 0,
         msgId: voiceMessageData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(voiceMessageData.msgId),
@@ -811,7 +819,7 @@ export class PuppetPadplus extends Puppet {
           imgStatus: 0,
           l1MsgType: 0,
           msgId: contactData.msgId,
-          msgSource: '<msgsource>\n</msgsource>',
+          msgSource: this.generateMsgSource(),
           msgSourceCd: 0,
           msgType: PadplusMessageType.Text,
           newMsgId: Number(contactData.msgId),
@@ -870,7 +878,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: picData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(picData.msgId),
@@ -897,7 +905,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: videoData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(videoData.msgId),
@@ -925,7 +933,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: docData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(docData.msgId),
@@ -985,7 +993,7 @@ export class PuppetPadplus extends Puppet {
         imgStatus: 0,
         l1MsgType: 0,
         msgId: urlLinkData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(urlLinkData.msgId),
