@@ -42,6 +42,7 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 import checkNumber from './utils/util'
+import { MessageImageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PuppetPadplus'
 
@@ -519,6 +520,52 @@ export class PuppetPadplus extends Puppet {
     const rawPayload = await this.friendshipRawPayload(friendshipId)
     const payload = await this.friendshipRawPayloadParser(rawPayload)
     return payload
+  }
+
+  /**
+   * ========================
+   *     MESSAGE IMAGE SECTION
+   * ========================
+   */
+  public async messageImage (messageId: string, type: MessageImageType): Promise<string> {
+    log.silly(PRE, `messageImage(${messageId})`)
+    const rawPayload = await this.messageRawPayload(messageId)
+
+    switch (type) {
+      case MessageImageType.URL:
+      case MessageImageType.THUMBNAIL:
+      case MessageImageType.HD:
+        return rawPayload.url!
+      case MessageImageType.ARTWORK:
+        let content = rawPayload.content
+        const mediaData: PadplusRichMediaData = {
+          appMsgType: 0,
+          content,
+          contentType: 'img',
+          createTime: rawPayload.createTime,
+          fileName: rawPayload.fileName || '',
+          fromUserName: rawPayload.fromUserName,
+          msgId: rawPayload.msgId,
+          msgType: rawPayload.msgType,
+          src: rawPayload.url,
+          toUserName: rawPayload.toUserName,
+        }
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
+
+        if (data && data.src) {
+          let src: string
+          if (escape(data.src).indexOf('%u') === -1) {
+            src = data.src
+          } else {
+            src = encodeURI(data.src)
+          }
+          return src
+        } else {
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
+        }
+      default:
+        throw new Error(`this type : ${type} is wrong.`)
+    }
   }
 
   /**
