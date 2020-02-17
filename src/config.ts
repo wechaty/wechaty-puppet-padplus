@@ -59,9 +59,9 @@ export const MESSAGE_CACHE_MAX = 1000
 
 export const WAIT_FOR_READY_TIME = 1000 * 60 * 1
 
-export const COMPACT_CACHE_FIRST_START = 1000 * 60 * 1
+export const COMPACT_CACHE_FIRST_START = 1000 * 60 * 15
 
-export const COMPACT_CACHE_INTERVAL = 1000 * 60 * 3
+export const COMPACT_CACHE_INTERVAL = 1000 * 60 * 60
 
 export {
   log,
