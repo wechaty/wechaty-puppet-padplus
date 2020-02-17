@@ -46,7 +46,6 @@ jobs:
         - echo "NPM Building Finished."
 
       deploy:
-        edge: true
         provider: npm
         email: ruiruibupt@gmail.com
         api_key: "$NPM_TOKEN"
