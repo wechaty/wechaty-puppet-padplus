@@ -527,15 +527,19 @@ export class PuppetPadplus extends Puppet {
    *     MESSAGE IMAGE SECTION
    * ========================
    */
-  public async messageImage (messageId: string, type: MessageImageType): Promise<string> {
+  public async messageImage (messageId: string, type: MessageImageType): Promise<FileBox> {
     log.silly(PRE, `messageImage(${messageId})`)
     const rawPayload = await this.messageRawPayload(messageId)
 
+    if (!rawPayload || !rawPayload.url) {
+      throw new Error(`can not find message raw payload by id : ${messageId}`)
+    }
+
     switch (type) {
-      case MessageImageType.URL:
       case MessageImageType.THUMBNAIL:
+        return FileBox.fromUrl(rawPayload.url)
       case MessageImageType.HD:
-        return rawPayload.url!
+        throw new Error(`HD not support!`)
       case MessageImageType.ARTWORK:
         let content = rawPayload.content
         const mediaData: PadplusRichMediaData = {
@@ -553,13 +557,14 @@ export class PuppetPadplus extends Puppet {
         const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
 
         if (data && data.src) {
+          const name = this.getNameFromUrl(data.src)
           let src: string
           if (escape(data.src).indexOf('%u') === -1) {
             src = data.src
           } else {
             src = encodeURI(data.src)
           }
-          return src
+          return FileBox.fromUrl(src, name)
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
