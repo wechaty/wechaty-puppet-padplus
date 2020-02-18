@@ -8,6 +8,7 @@ import {
   FriendshipPayload,
   FriendshipPayloadReceive,
   FriendshipType,
+  ImageType,
   MessagePayload,
   MessageType,
   MiniProgramPayload,
@@ -42,7 +43,6 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 import checkNumber from './utils/util'
-import { MessageImageType } from 'wechaty-puppet/dist/src/schemas/message'
 
 const PRE = 'PuppetPadplus'
 
@@ -527,7 +527,7 @@ export class PuppetPadplus extends Puppet {
    *     MESSAGE IMAGE SECTION
    * ========================
    */
-  public async messageImage (messageId: string, type: MessageImageType): Promise<FileBox> {
+  public async messageImage (messageId: string, type: ImageType): Promise<FileBox> {
     log.silly(PRE, `messageImage(${messageId})`)
     const rawPayload = await this.messageRawPayload(messageId)
 
@@ -536,11 +536,11 @@ export class PuppetPadplus extends Puppet {
     }
 
     switch (type) {
-      case MessageImageType.THUMBNAIL:
+      case ImageType.Thumbnail:
         return FileBox.fromUrl(rawPayload.url)
-      case MessageImageType.HD:
+      case ImageType.HD:
         throw new Error(`HD not support!`)
-      case MessageImageType.ARTWORK:
+      case ImageType.Artwork:
         let content = rawPayload.content
         const mediaData: PadplusRichMediaData = {
           appMsgType: 0,

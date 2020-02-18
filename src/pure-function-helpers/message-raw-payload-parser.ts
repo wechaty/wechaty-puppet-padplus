@@ -65,7 +65,7 @@ export async function messageRawPayloadParser (
 
   let text:   undefined | string
 
-  let mentionIdList: undefined | string[]
+  let mentionIdList: string[] = []
 
   /**
    * 1. Set Room Id
@@ -182,7 +182,7 @@ export async function messageRawPayloadParser (
   if (roomId) {
     const messageSource = await messageSourceParser(rawPayload.msgSource)
     if (messageSource !== null && messageSource.atUserList) {
-      mentionIdList = messageSource.atUserList
+      mentionIdList = messageSource.atUserList || []
     }
   }
 

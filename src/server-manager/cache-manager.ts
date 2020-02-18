@@ -4,7 +4,7 @@ import path   from 'path'
 
 import { FlashStore } from 'flash-store'
 
-import { log } from '../config'
+import { log, COMPACT_CACHE_FIRST_START, COMPACT_CACHE_INTERVAL } from '../config'
 import {
   PadplusContactPayload,
   PadplusRoomPayload,
@@ -65,6 +65,8 @@ export class CacheManager {
   private cacheRoomRawPayload?       : FlashStore<string, PadplusRoomPayload>
   private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
   private cacheFriendshipRawPayload? : FlashStore<string, FriendshipPayload>
+
+  private compactCacheTimer?: NodeJS.Timeout
 
   /**
    * -------------------------------
@@ -345,6 +347,8 @@ export class CacheManager {
     this.cacheRoomInvitationRawPayload = new FlashStore(path.join(baseDir, 'room-invitation-raw-payload'))
     const contactTotal = this.cacheContactRawPayload.size
 
+    this.compactCache().catch(e => log.error(`compactCache failed for reason:\n${e.stack}`))
+
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)
   }
 
@@ -358,6 +362,11 @@ export class CacheManager {
         && this.cacheRoomInvitationRawPayload
     ) {
       log.silly(PRE, 'releaseCache() closing caches ...')
+
+      if (this.compactCacheTimer) {
+        clearTimeout(this.compactCacheTimer)
+        this.compactCacheTimer = undefined
+      }
 
       await Promise.all([
         this.cacheContactRawPayload.close(),
@@ -377,6 +386,54 @@ export class CacheManager {
     } else {
       log.verbose(PRE, 'releaseCache() cache not exist.')
     }
+  }
+
+  private async compactCache (inited?: boolean) {
+    if (inited) {
+      this.compactCacheTimer = setTimeout(
+        this.compactCache.bind(this),
+        COMPACT_CACHE_FIRST_START,
+      )
+    } else {
+      if (this.cacheContactRawPayload
+        && this.cacheRoomMemberRawPayload
+        && this.cacheRoomRawPayload
+        && this.cacheFriendshipRawPayload
+        && this.cacheRoomInvitationRawPayload
+      ) {
+        await this.compactDB(this.cacheContactRawPayload, 'contact-raw-payload')
+        await this.compactDB(this.cacheRoomMemberRawPayload, 'room-member-raw-payload')
+        await this.compactDB(this.cacheRoomRawPayload, 'room-raw-payload')
+        await this.compactDB(this.cacheFriendshipRawPayload, 'friendship-raw-payload')
+        await this.compactDB(this.cacheRoomInvitationRawPayload, 'room-invitation-payload')
+      }
+
+      log.verbose(`Compact all dbs finished.`)
+      this.compactCacheTimer = setTimeout(
+        this.compactCache.bind(this),
+        COMPACT_CACHE_INTERVAL,
+      )
+    }
+  }
+
+  private async compactDB (flashStore: FlashStore, storeName: string) {
+    try {
+      await flashStore.size
+    } catch (e) {
+      log.warn(`Failed to to flash-store check before compact for ${storeName} DB.`)
+      return
+    }
+    const db = (flashStore as any).levelDb.db.db.db
+    await new Promise((resolve) => {
+      db.compact((err: any) => {
+        if (err) {
+          log.warn(`Compact ${storeName} DB failed, error stack:\n${err.stack}`)
+        } else {
+          log.verbose(`Compact ${storeName} DB success.`)
+        }
+        resolve()
+      })
+    })
   }
 
 }
