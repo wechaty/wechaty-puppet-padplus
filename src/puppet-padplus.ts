@@ -380,13 +380,13 @@ export class PuppetPadplus extends Puppet {
       if (searchContact === null) {
         return null
       }
-      if (!this.manager || !this.manager.cacheManager) {
-        throw new Error(`no cache manager`)
+
+      if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+        return searchContact.v1
       }
 
-      const cacheContactPayload = await this.manager.cacheManager.getContact(searchContact.v1)
-      if (cacheContactPayload && cacheContactPayload.verifyFlag === 0 && cacheContactPayload.contactFlag === 3) {
-        return searchContact.v1
+      if (!this.manager || !this.manager.cacheManager) {
+        throw new Error(`no cache manager`)
       }
 
       const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
@@ -406,14 +406,18 @@ export class PuppetPadplus extends Puppet {
     if (searchContact === null) {
       return null
     }
-    const contactPayload = convertSearchContactToContact(searchContact)
 
-    if (this.manager && this.manager.cacheManager) {
-      await this.manager.cacheManager.setContact(weixin, contactPayload)
-      return weixin
-    } else {
+    if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+      return searchContact.v1
+    }
+
+    if (!this.manager || !this.manager.cacheManager) {
       throw new Error(`no cache manager`)
     }
+
+    const contactPayload = convertSearchContactToContact(searchContact)
+    await this.manager.cacheManager.setContact(weixin, contactPayload)
+    return weixin
   }
 
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
