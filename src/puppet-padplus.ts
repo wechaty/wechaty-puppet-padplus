@@ -380,14 +380,18 @@ export class PuppetPadplus extends Puppet {
       if (searchContact === null) {
         return null
       }
-      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
-
-      if (this.manager && this.manager.cacheManager) {
-        await this.manager.cacheManager.setContact(phone, contactPayload)
-        return phone
-      } else {
+      if (!this.manager || !this.manager.cacheManager) {
         throw new Error(`no cache manager`)
       }
+
+      const cacheContactPayload = await this.manager.cacheManager.getContact(searchContact.v1)
+      if (cacheContactPayload && cacheContactPayload.verifyFlag === 0 && cacheContactPayload.contactFlag === 3) {
+        return searchContact.v1
+      }
+
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+      await this.manager.cacheManager.setContact(phone, contactPayload)
+      return phone
     }
   }
 
