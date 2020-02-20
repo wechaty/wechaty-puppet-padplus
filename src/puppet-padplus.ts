@@ -586,7 +586,6 @@ export class PuppetPadplus extends Puppet {
    *      MESSAGE SECTION
    * ========================
    */
-
   public async messageFile (messageId: string): Promise<FileBox> {
     log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
     const rawPayload = await this.messageRawPayload(messageId)
