@@ -8,6 +8,7 @@ import {
   FriendshipPayload,
   FriendshipPayloadReceive,
   FriendshipType,
+  ImageType,
   MessagePayload,
   MessageType,
   MiniProgramPayload,
@@ -519,13 +520,60 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
+   *     MESSAGE IMAGE SECTION
+   * ========================
+   */
+  public async messageImage (messageId: string, type: ImageType): Promise<FileBox> {
+    log.silly(PRE, `messageImage(${messageId})`)
+    const rawPayload = await this.messageRawPayload(messageId)
+
+    if (!rawPayload || !rawPayload.url) {
+      throw new Error(`can not find message raw payload by id : ${messageId}`)
+    }
+
+    switch (type) {
+      case ImageType.Thumbnail:
+        return FileBox.fromUrl(rawPayload.url)
+      case ImageType.HD:
+        throw new Error(`HD not support!`)
+      case ImageType.Artwork:
+        let content = rawPayload.content
+        const mediaData: PadplusRichMediaData = {
+          appMsgType: 0,
+          content,
+          contentType: 'img',
+          createTime: rawPayload.createTime,
+          fileName: rawPayload.fileName || '',
+          fromUserName: rawPayload.fromUserName,
+          msgId: rawPayload.msgId,
+          msgType: rawPayload.msgType,
+          src: rawPayload.url,
+          toUserName: rawPayload.toUserName,
+        }
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
+
+        if (data && data.src) {
+          const name = this.getNameFromUrl(data.src)
+          let src: string
+          if (escape(data.src).indexOf('%u') === -1) {
+            src = data.src
+          } else {
+            src = encodeURI(data.src)
+          }
+          return FileBox.fromUrl(src, name)
+        } else {
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
+        }
+      default:
+        throw new Error(`this type : ${type} is wrong.`)
+    }
+  }
+
+  /**
+   * ========================
    *      MESSAGE SECTION
    * ========================
    */
-  public async messageImage (messageId: string): Promise<FileBox> {
-    throw new Error(`not support`)
-  }
-
   public async messageFile (messageId: string): Promise<FileBox> {
     log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
     const rawPayload = await this.messageRawPayload(messageId)
