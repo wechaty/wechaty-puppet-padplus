@@ -378,15 +378,17 @@ export class PuppetPadplus extends Puppet {
       return null
     } else {
       const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
+      if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+        return searchContact.v1
+      }
 
-      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
-
-      if (this.manager && this.manager.cacheManager) {
-        await this.manager.cacheManager.setContact(phone, contactPayload)
-        return phone
-      } else {
+      if (!this.manager || !this.manager.cacheManager) {
         throw new Error(`no cache manager`)
       }
+
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+      await this.manager.cacheManager.setContact(phone, contactPayload)
+      return phone
     }
   }
 
@@ -398,15 +400,17 @@ export class PuppetPadplus extends Puppet {
     }
 
     const searchContact: GrpcSearchContact = await this.manager.searchContact(weixin, true)
+    if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+      return searchContact.v1
+    }
 
-    const contactPayload = convertSearchContactToContact(searchContact)
-
-    if (this.manager && this.manager.cacheManager) {
-      await this.manager.cacheManager.setContact(weixin, contactPayload)
-      return weixin
-    } else {
+    if (!this.manager || !this.manager.cacheManager) {
       throw new Error(`no cache manager`)
     }
+
+    const contactPayload = convertSearchContactToContact(searchContact)
+    await this.manager.cacheManager.setContact(weixin, contactPayload)
+    return weixin
   }
 
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
