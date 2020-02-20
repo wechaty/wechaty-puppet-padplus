@@ -1,10 +1,10 @@
 import util from 'util'
 import path from 'path'
-import FileBox from 'file-box'
 import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
+  FileBox,
   FriendshipPayload,
   FriendshipPayloadReceive,
   FriendshipType,
