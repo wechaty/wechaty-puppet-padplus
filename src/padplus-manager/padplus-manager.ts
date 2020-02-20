@@ -5,12 +5,11 @@ import {
 import { StateSwitch }        from 'state-switch'
 import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
 import { MemoryCard } from 'memory-card'
-import FileBox from 'file-box'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
