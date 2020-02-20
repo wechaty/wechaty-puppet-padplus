@@ -376,10 +376,8 @@ export class PuppetPadplus extends Puppet {
       log.error(PRE, `Some wrong with your phone number, please check it again.`)
       return null
     } else {
-      const searchContact: GrpcSearchContact | null = await this.manager.searchContact(phone, true)
-      if (searchContact === null) {
-        return null
-      }
+      const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
+
       const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
 
       if (this.manager && this.manager.cacheManager) {
@@ -398,10 +396,8 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(weixin, true)
-    if (searchContact === null) {
-      return null
-    }
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(weixin, true)
+
     const contactPayload = convertSearchContactToContact(searchContact)
 
     if (this.manager && this.manager.cacheManager) {
@@ -526,6 +522,9 @@ export class PuppetPadplus extends Puppet {
    *      MESSAGE SECTION
    * ========================
    */
+  public async messageImage (messageId: string): Promise<FileBox> {
+    throw new Error(`not support`)
+  }
 
   public async messageFile (messageId: string): Promise<FileBox> {
     log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)

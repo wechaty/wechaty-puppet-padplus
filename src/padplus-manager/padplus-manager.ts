@@ -1094,7 +1094,7 @@ export class PadplusManager extends EventEmitter {
   public async searchContact (
     contactId: string,
     save?: boolean,
-  ): Promise<GrpcSearchContact | null> {
+  ): Promise<GrpcSearchContact> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
@@ -1105,8 +1105,7 @@ export class PadplusManager extends EventEmitter {
       payload = await this.padplusContact.searchContact(contactId)
 
       if (!payload || payload.status !== '0') {
-        log.error(PRE, 'Can not find payload for contactId ' + contactId)
-        return null
+        throw new Error(`Can not search contact by ${contactId}, status: ${payload.status} reason: ${payload.message}`)
       } else if (save) {
         this.cachePadplusSearchContactPayload.set(contactId, payload)
       }
