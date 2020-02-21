@@ -5,12 +5,11 @@ import {
 import { StateSwitch }        from 'state-switch'
 import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
 import { MemoryCard } from 'memory-card'
-import FileBox from 'file-box'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -1094,7 +1093,7 @@ export class PadplusManager extends EventEmitter {
   public async searchContact (
     contactId: string,
     save?: boolean,
-  ): Promise<GrpcSearchContact | null> {
+  ): Promise<GrpcSearchContact> {
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
@@ -1105,8 +1104,7 @@ export class PadplusManager extends EventEmitter {
       payload = await this.padplusContact.searchContact(contactId)
 
       if (!payload || payload.status !== '0') {
-        log.error(PRE, 'Can not find payload for contactId ' + contactId)
-        return null
+        throw new Error(`Can not search contact by ${contactId}, status: ${payload.status} reason: ${payload.message}`)
       } else if (save) {
         this.cachePadplusSearchContactPayload.set(contactId, payload)
       }

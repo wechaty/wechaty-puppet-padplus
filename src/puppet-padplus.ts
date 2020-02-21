@@ -1,13 +1,14 @@
 import util from 'util'
 import path from 'path'
-import FileBox from 'file-box'
 import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
+  FileBox,
   FriendshipPayload,
   FriendshipPayloadReceive,
   FriendshipType,
+  ImageType,
   MessagePayload,
   MessageType,
   MiniProgramPayload,
@@ -376,18 +377,18 @@ export class PuppetPadplus extends Puppet {
       log.error(PRE, `Some wrong with your phone number, please check it again.`)
       return null
     } else {
-      const searchContact: GrpcSearchContact | null = await this.manager.searchContact(phone, true)
-      if (searchContact === null) {
-        return null
+      const searchContact: GrpcSearchContact = await this.manager.searchContact(phone, true)
+      if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+        return searchContact.v1
       }
-      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
 
-      if (this.manager && this.manager.cacheManager) {
-        await this.manager.cacheManager.setContact(phone, contactPayload)
-        return phone
-      } else {
+      if (!this.manager || !this.manager.cacheManager) {
         throw new Error(`no cache manager`)
       }
+
+      const contactPayload = convertSearchContactToContact(searchContact, isPhoneNumber)
+      await this.manager.cacheManager.setContact(phone, contactPayload)
+      return phone
     }
   }
 
@@ -398,18 +399,18 @@ export class PuppetPadplus extends Puppet {
       throw new Error('no padplus manager')
     }
 
-    const searchContact: GrpcSearchContact | null = await this.manager.searchContact(weixin, true)
-    if (searchContact === null) {
-      return null
+    const searchContact: GrpcSearchContact = await this.manager.searchContact(weixin, true)
+    if (!isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
+      return searchContact.v1
     }
-    const contactPayload = convertSearchContactToContact(searchContact)
 
-    if (this.manager && this.manager.cacheManager) {
-      await this.manager.cacheManager.setContact(weixin, contactPayload)
-      return weixin
-    } else {
+    if (!this.manager || !this.manager.cacheManager) {
       throw new Error(`no cache manager`)
     }
+
+    const contactPayload = convertSearchContactToContact(searchContact)
+    await this.manager.cacheManager.setContact(weixin, contactPayload)
+    return weixin
   }
 
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
@@ -523,10 +524,60 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
+   *     MESSAGE IMAGE SECTION
+   * ========================
+   */
+  public async messageImage (messageId: string, type: ImageType): Promise<FileBox> {
+    log.silly(PRE, `messageImage(${messageId})`)
+    const rawPayload = await this.messageRawPayload(messageId)
+
+    if (!rawPayload || !rawPayload.url) {
+      throw new Error(`can not find message raw payload by id : ${messageId}`)
+    }
+
+    switch (type) {
+      case ImageType.Thumbnail:
+        return FileBox.fromUrl(rawPayload.url)
+      case ImageType.HD:
+        throw new Error(`HD not support!`)
+      case ImageType.Artwork:
+        let content = rawPayload.content
+        const mediaData: PadplusRichMediaData = {
+          appMsgType: 0,
+          content,
+          contentType: 'img',
+          createTime: rawPayload.createTime,
+          fileName: rawPayload.fileName || '',
+          fromUserName: rawPayload.fromUserName,
+          msgId: rawPayload.msgId,
+          msgType: rawPayload.msgType,
+          src: rawPayload.url,
+          toUserName: rawPayload.toUserName,
+        }
+        const data = await RequestQueue.exec(() => this.manager.loadRichMediaData(mediaData))
+
+        if (data && data.src) {
+          const name = this.getNameFromUrl(data.src)
+          let src: string
+          if (escape(data.src).indexOf('%u') === -1) {
+            src = data.src
+          } else {
+            src = encodeURI(data.src)
+          }
+          return FileBox.fromUrl(src, name)
+        } else {
+          throw new Error(`Can not get media data url by this message id: ${messageId}`)
+        }
+      default:
+        throw new Error(`this type : ${type} is wrong.`)
+    }
+  }
+
+  /**
+   * ========================
    *      MESSAGE SECTION
    * ========================
    */
-
   public async messageFile (messageId: string): Promise<FileBox> {
     log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
     const rawPayload = await this.messageRawPayload(messageId)
@@ -729,13 +780,13 @@ export class PuppetPadplus extends Puppet {
     }
     if (msgData.success) {
       const msgPayload: PadplusMessagePayload = {
-        content: text + ((mentionIdList && mentionIdList.length > 0) ? mentionIdList!.toString() : ''),
+        content: text,
         createTime: msgData.timestamp,
         fromUserName: this.selfId(),
         imgStatus: 0,
         l1MsgType: 0,
         msgId: msgData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(mentionIdList),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(msgData.msgId),
@@ -755,10 +806,18 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.Text
     payload.content = text
     if (atUserList) {
-      payload.msgSource = `<msgsource>\n\t<atuserlist>${atUserList.join(',')}</atuserlist>\n</msgsource>\n`
+      payload.msgSource = this.generateMsgSource(atUserList)
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
     this.emit('message', payload.msgId)
+  }
+
+  protected generateMsgSource (mentionIdList?: string[]) {
+    if (mentionIdList && mentionIdList.length > 0) {
+      return `<msgsource>\n\t<atuserlist>${mentionIdList.join(',')}</atuserlist>\n</msgsource>\n`
+    } else {
+      return '<msgsource>\n</msgsource>'
+    }
   }
 
   public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
@@ -774,7 +833,7 @@ export class PuppetPadplus extends Puppet {
         imgStatus: 0,
         l1MsgType: 0,
         msgId: voiceMessageData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(voiceMessageData.msgId),
@@ -811,7 +870,7 @@ export class PuppetPadplus extends Puppet {
           imgStatus: 0,
           l1MsgType: 0,
           msgId: contactData.msgId,
-          msgSource: '<msgsource>\n</msgsource>',
+          msgSource: this.generateMsgSource(),
           msgSourceCd: 0,
           msgType: PadplusMessageType.Text,
           newMsgId: Number(contactData.msgId),
@@ -870,7 +929,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: picData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(picData.msgId),
@@ -897,7 +956,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: videoData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(videoData.msgId),
@@ -925,7 +984,7 @@ export class PuppetPadplus extends Puppet {
             imgStatus: 0,
             l1MsgType: 0,
             msgId: docData.msgId,
-            msgSource: '<msgsource>\n</msgsource>',
+            msgSource: this.generateMsgSource(),
             msgSourceCd: 0,
             msgType: PadplusMessageType.Text,
             newMsgId: Number(docData.msgId),
@@ -985,7 +1044,7 @@ export class PuppetPadplus extends Puppet {
         imgStatus: 0,
         l1MsgType: 0,
         msgId: urlLinkData.msgId,
-        msgSource: '<msgsource>\n</msgsource>',
+        msgSource: this.generateMsgSource(),
         msgSourceCd: 0,
         msgType: PadplusMessageType.Text,
         newMsgId: Number(urlLinkData.msgId),
@@ -1009,7 +1068,7 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', payload.msgId)
   }
 
-  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<void | string> {
+  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
     log.silly(PRE, `messageSendMiniProgram() receiver : ${conversationId}, miniProgramPayload: ${miniProgramPayload}`)
     throw new Error('Method not implemented.')
   }
@@ -1200,7 +1259,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', rawPayload)
+    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
@@ -1209,7 +1268,6 @@ export class PuppetPadplus extends Puppet {
 
     if (roomInviteEvent) {
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-
       this.emit('room-invite', roomInviteEvent.msgId)
     } else {
       this.emit('message', rawPayload.msgId)
@@ -1238,7 +1296,7 @@ export class PuppetPadplus extends Puppet {
     const payload: RoomInvitationPayload = {
       avatar: '',
       id: rawPayload.id,
-      invitation: '',
+      invitation: rawPayload.url,
       inviterId: rawPayload.fromUser,
       memberCount: 0,
       memberIdList: [],

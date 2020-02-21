@@ -48,7 +48,12 @@ export class PadplusFriendship {
     if (result) {
       const addFriendStr = result.getData()
       if (addFriendStr) {
-        return JSON.parse(addFriendStr)
+        const addFriend = JSON.parse(addFriendStr)
+        if (addFriend && addFriend.status !== '0') {
+          throw new Error(`Can not add friend, status: ${addFriend.status}, reason: ${addFriend.message || 'unknow'}`)
+        } else {
+          return addFriend
+        }
       } else {
         throw new Error(`can not parse data`)
       }
