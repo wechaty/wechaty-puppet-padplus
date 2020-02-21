@@ -60,7 +60,7 @@
     "shx": "^0.3.1",
     "ts-protoc-gen": "^0.12.0",
     "tstest": "^0.4.1",
-    "wechaty-puppet": "^0.19.17"
+    "wechaty-puppet": "^0.20.0"
   },
   "peerDependencies": {
     "memory-card": "^0.6.13",
