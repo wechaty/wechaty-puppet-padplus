@@ -57,7 +57,6 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheWXID?    : FlashStore<string, string>
   private cacheContactRawPayload?    : FlashStore<string, PadplusContactPayload>
   private cacheRoomMemberRawPayload? : FlashStore<string, {
     [contactId: string]: PadplusRoomMemberPayload,
@@ -67,30 +66,6 @@ export class CacheManager {
   private cacheFriendshipRawPayload? : FlashStore<string, FriendshipPayload>
 
   private compactCacheTimer?: NodeJS.Timeout
-
-  /**
-   * -------------------------------
-   * Account-WXID Section
-   * --------------------------------
-   */
-  public async getAccountWXID (
-    account: string,
-  ): Promise<string | undefined> {
-    if (!this.cacheWXID) {
-      throw new Error(`${PRE} getWXID() has no cache.`)
-    }
-    return this.cacheWXID.get(account)
-  }
-
-  public async setAccountWXID (
-    account: string,
-    wxid: string,
-  ): Promise<void> {
-    if (!this.cacheWXID) {
-      throw new Error(`${PRE} setWXID() has no cache.`)
-    }
-    await this.cacheWXID.set(account, wxid)
-  }
 
   /**
    * -------------------------------
@@ -339,7 +314,6 @@ export class CacheManager {
       await fs.mkdirp(baseDir)
     }
 
-    this.cacheWXID                     = new FlashStore(path.join(baseDir, 'accound-wxid'))
     this.cacheContactRawPayload        = new FlashStore(path.join(baseDir, 'contact-raw-payload'))
     this.cacheRoomMemberRawPayload     = new FlashStore(path.join(baseDir, 'room-member-raw-payload'))
     this.cacheRoomRawPayload           = new FlashStore(path.join(baseDir, 'room-raw-payload'))
