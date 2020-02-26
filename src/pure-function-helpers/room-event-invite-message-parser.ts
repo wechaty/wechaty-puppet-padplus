@@ -77,7 +77,7 @@ export const roomInviteEventMessageParser = async (
     return null
   }
 
-  const { content, msgId, createTime, fromUserName } = rawPayload
+  const { content, msgId, createTime, fromUserName, toUserName } = rawPayload
   const tryXmlText = content.replace(/^[^\n]+\n/, '')
   interface XmlSchema {
     msg: {
@@ -141,6 +141,7 @@ export const roomInviteEventMessageParser = async (
   return {
     fromUser: fromUserName,
     msgId,
+    receiver: toUserName,
     roomName: matchInviteEvent![2],
     timestamp: createTime,
     url: jsonPayload.msg.appmsg.url,
