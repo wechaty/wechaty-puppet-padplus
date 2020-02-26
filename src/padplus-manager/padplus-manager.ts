@@ -379,8 +379,8 @@ export class PadplusManager extends EventEmitter {
 
             const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBox.toQRCode()
-            this.emit('scan', qrcodeUrl, ScanStatus.Cancel)
-            this.qrcodeStatus = ScanStatus.Cancel
+            this.qrcodeStatus = ScanStatus.Waiting
+            this.emit('scan', qrcodeUrl, this.qrcodeStatus)
           }
           break
 
@@ -397,15 +397,15 @@ export class PadplusManager extends EventEmitter {
             grpcGatewayEmitter.setQrcodeId(scanData.user_name)
             switch (scanData.status as QrcodeStatus) {
               case QrcodeStatus.Scanned:
-                if (this.qrcodeStatus !== ScanStatus.Waiting) {
-                  this.qrcodeStatus = ScanStatus.Waiting
+                if (this.qrcodeStatus !== ScanStatus.Scanned) {
+                  this.qrcodeStatus = ScanStatus.Scanned
                   this.emit('scan', '', this.qrcodeStatus)
                 }
                 break
 
               case QrcodeStatus.Confirmed:
-                if (this.qrcodeStatus !== ScanStatus.Scanned) {
-                  this.qrcodeStatus = ScanStatus.Scanned
+                if (this.qrcodeStatus !== ScanStatus.Confirmed) {
+                  this.qrcodeStatus = ScanStatus.Confirmed
                   this.emit('scan', '', this.qrcodeStatus)
                 }
                 break
@@ -418,7 +418,13 @@ export class PadplusManager extends EventEmitter {
                   uin,
                   wxid,
                 }
-                this.emit('scan', '', scanData.status)
+
+                if (scanData.status === QrcodeStatus.Expired) {
+                  this.qrcodeStatus = ScanStatus.Timeout
+                } else {
+                  this.qrcodeStatus = ScanStatus.Cancel
+                }
+                this.emit('scan', '', this.qrcodeStatus)
 
                 if (this.padplusUser) {
                   await this.padplusUser.getWeChatQRCode(data)
