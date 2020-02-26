@@ -87,7 +87,11 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
-      await super.login(loginData.userName)
+      try {
+        await super.login(loginData.userName)
+      } catch (error) {
+        log.silly(`already login, wxid: ${this.selfId()}`)
+      }
       await this.manager.syncContacts()
     })
 
