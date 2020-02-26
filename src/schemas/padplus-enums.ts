@@ -1,3 +1,8 @@
+/**
+ * XXX: Huan(202002)
+ *  Why do not import `ScanStatus` from wechaty-puppet?
+ *  We should reuse everything as possible as we can.
+ */
 export enum QrcodeStatus {
   Waiting = 0,
   Scanned = 1,
