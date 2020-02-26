@@ -4,7 +4,7 @@
 [![NPM Version](https://badge.fury.io/js/wechaty-puppet-padplus.svg)](https://www.npmjs.com/package/wechaty-puppet-padplus)
 [![npm (tag)](https://img.shields.io/npm/v/wechaty-puppet-padplus/next.svg)](https://www.npmjs.com/package/wechaty-puppet-padplus?activeTab=versions)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
-[![Linux/Mac Build Status](https://travis-ci.com/botorange/wechaty-puppet-padplus.svg?branch=master)](https://travis-ci.com/botorange/wechaty-puppet-padplus) [![Greenkeeper badge](https://badges.greenkeeper.io/wechaty/wechaty-puppet-padplus.svg)](https://greenkeeper.io/)
+[![Linux/Mac Build Status](https://travis-ci.com/wechaty/wechaty-puppet-padplus.svg?branch=master)](https://travis-ci.com/wechaty/wechaty-puppet-padplus) [![Greenkeeper badge](https://badges.greenkeeper.io/wechaty/wechaty-puppet-padplus.svg)](https://greenkeeper.io/)
 
 ## Notice
 
@@ -19,6 +19,7 @@ See more: <https://github.com/wechaty/wechaty/wiki/Support-Developers>
 ## Install
 
 ### 1. Init
+
 > check your `Node` version first
 
 ```js
