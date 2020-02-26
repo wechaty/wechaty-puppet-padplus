@@ -1301,6 +1301,7 @@ export class PuppetPadplus extends Puppet {
       inviterId: rawPayload.fromUser,
       memberCount: 0,
       memberIdList: [],
+      receiverId: rawPayload.receiver,
       timestamp: rawPayload.timestamp,
       topic: rawPayload.roomName,
     }
