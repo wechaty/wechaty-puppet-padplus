@@ -80,6 +80,7 @@ export interface GrpcRoomPayload {
 export interface PadplusRoomInvitationPayload {
   id       : string,
   fromUser : string,
+  receiver : string,
   roomName : string,
   timestamp: number,
   url      : string,
@@ -88,6 +89,7 @@ export interface PadplusRoomInvitationPayload {
 export interface PadplusRoomInviteEvent {
   fromUser: string,
   msgId: string,
+  receiver: string,
   roomName: string,
   timestamp: number,
   url: string,
