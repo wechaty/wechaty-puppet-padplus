@@ -87,11 +87,8 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
       log.silly(PRE, `login success : ${util.inspect(loginData)}`)
-      try {
-        await super.login(loginData.userName)
-      } catch (error) {
-        log.silly(`already login, wxid: ${this.selfId()}`)
-      }
+
+      await super.login(loginData.userName)
       await this.manager.syncContacts()
     })
 
@@ -133,9 +130,9 @@ export class PuppetPadplus extends Puppet {
     }
 
     this.state.off('pending')
-
+    await this.logout(true, 'logout in wechaty')
     await this.manager.stop()
-    await this.manager.removeAllListeners()
+    this.manager.removeAllListeners()
 
     this.state.off(true)
     log.verbose(PRE, `stop() finished`)
