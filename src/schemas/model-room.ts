@@ -82,6 +82,7 @@ export interface PadplusRoomInvitationPayload {
   fromUser : string,
   receiver : string,
   roomName : string,
+  thumbUrl : string,
   timestamp: number,
   url      : string,
 }
@@ -92,6 +93,7 @@ export interface PadplusRoomInviteEvent {
   receiver: string,
   roomName: string,
   timestamp: number,
+  thumbUrl: string,
   url: string,
 }
 

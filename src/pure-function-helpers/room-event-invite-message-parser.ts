@@ -143,6 +143,7 @@ export const roomInviteEventMessageParser = async (
     msgId,
     receiver: toUserName,
     roomName: matchInviteEvent![2],
+    thumbUrl: jsonPayload.msg.appmsg.thumburl,
     timestamp: createTime,
     url: jsonPayload.msg.appmsg.url,
   }

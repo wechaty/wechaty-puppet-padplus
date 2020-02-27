@@ -1313,7 +1313,7 @@ export class PadplusManager extends EventEmitter {
 
   public async saveRoomInvitationRawPayload (roomInvitation: PadplusRoomInviteEvent): Promise<void> {
     log.verbose(PRE, `saveRoomInvitationRawPayload(${JSON.stringify(roomInvitation)})`)
-    const { msgId, roomName, url, fromUser, receiver, timestamp } = roomInvitation
+    const { msgId, roomName, url, fromUser, receiver, thumbUrl, timestamp } = roomInvitation
 
     if (!this.cacheManager) {
       throw new Error(`${PRE} saveRoomInvitationRawPayload() has no cache.`)
@@ -1323,6 +1323,7 @@ export class PadplusManager extends EventEmitter {
       id: msgId,
       receiver,
       roomName,
+      thumbUrl,
       timestamp,
       url,
     })
