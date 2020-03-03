@@ -1082,9 +1082,13 @@ export class PuppetPadplus extends Puppet {
   public async messageRawPayload (messageId: string): Promise<PadplusMessagePayload> {
     log.verbose(PRE, 'messageRawPayload(%s)', messageId)
 
-    const rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
+    let rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
+    if (rawPayload) {
+      return rawPayload
+    }
+    rawPayload = await this.manager.cacheManager?.getMessage(messageId)
     if (!rawPayload) {
-      throw new Error('no message rawPayload')
+      throw new Error('no message rawPayload for image')
     }
     return rawPayload
   }
