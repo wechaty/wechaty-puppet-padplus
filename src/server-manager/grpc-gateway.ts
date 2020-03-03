@@ -404,8 +404,9 @@ export class GrpcGateway extends EventEmitter {
       } else {
         log.info(PRE, `
         =====================================================================
-                   DUPLICATE CONNECTED, THIS THREAD WILL EXIT NOW
+                  DUPLICATE CONNECTED, THIS THREAD WILL EXIT NOW!
         =====================================================================
+        See related issue: https://github.com/wechaty/wechaty-puppet-padplus/issues/169
         `)
         process.exit()
       }
