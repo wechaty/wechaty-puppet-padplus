@@ -914,6 +914,12 @@ export class PadplusManager extends EventEmitter {
   private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
     const payload: PadplusMessagePayload = await convertMessageFromGrpcToPadplus(rawMessage)
     this.cachePadplusMessagePayload.set(payload.msgId, payload)
+    if (payload.msgType === PadplusMessageType.Image) {
+      if (!this.cacheManager) {
+        throw new Error(`no cache manager`)
+      }
+      await this.cacheManager.setMessage(payload.msgId, payload)
+    }
     return payload
   }
 
