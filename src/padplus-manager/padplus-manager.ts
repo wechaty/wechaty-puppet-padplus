@@ -915,7 +915,10 @@ export class PadplusManager extends EventEmitter {
     const payload: PadplusMessagePayload = await convertMessageFromGrpcToPadplus(rawMessage)
     this.cachePadplusMessagePayload.set(payload.msgId, payload)
     if (payload.msgType === PadplusMessageType.Image) {
-      await this.cacheManager?.setMessage(payload.msgId, payload)
+      if (!this.cacheManager) {
+        throw new Error(`no cache manager`)
+      }
+      await this.cacheManager.setMessage(payload.msgId, payload)
     }
     return payload
   }
