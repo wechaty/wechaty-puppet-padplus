@@ -140,8 +140,15 @@ export class PuppetPadplus extends Puppet {
 
   public async logout (force?: boolean, reason?: string): Promise<void> {
     log.verbose(PRE, `logout(${reason})`)
+
+    if (!this.id) {
+      log.verbose(PRE, 'logout() this.id not exist')
+      return
+    }
+
     if (!force) {
       await this.manager.logout(this.selfId())
+      reason = '主动下线成功'
     }
     this.emit('logout', this.selfId(), reason)
     this.id = undefined
