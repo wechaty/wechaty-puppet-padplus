@@ -140,8 +140,15 @@ export class PuppetPadplus extends Puppet {
 
   public async logout (force?: boolean, reason?: string): Promise<void> {
     log.verbose(PRE, `logout(${reason})`)
+
+    if (!this.id) {
+      log.verbose(PRE, 'logout() this.id not exist')
+      return
+    }
+
     if (!force) {
       await this.manager.logout(this.selfId())
+      reason = '主动下线成功'
     }
     this.emit('logout', this.selfId(), reason)
     this.id = undefined
@@ -900,7 +907,12 @@ export class PuppetPadplus extends Puppet {
   public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
     log.verbose(PRE, 'messageSendFile(%s, %s)', conversationId, file)
 
-    const fileUrl = await this.manager.generatorFileUrl(file)
+    let fileUrl = ''
+    if ((file as any).remoteUrl) {
+      fileUrl = (file as any).remoteUrl
+    } else {
+      fileUrl = await this.manager.generatorFileUrl(file)
+    }
     const fileSize = (await file.toBuffer()).length
     log.silly(PRE, `file url : ${util.inspect(fileUrl)}`)
     // this needs to run before mimeType is available
@@ -1077,9 +1089,22 @@ export class PuppetPadplus extends Puppet {
   public async messageRawPayload (messageId: string): Promise<PadplusMessagePayload> {
     log.verbose(PRE, 'messageRawPayload(%s)', messageId)
 
-    const rawPayload = await this.manager.cachePadplusMessagePayload.get(messageId)
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+
+    let rawPayload = this.manager.cachePadplusMessagePayload.get(messageId)
+
+    if (rawPayload) {
+      return rawPayload
+    }
+
+    if (!this.manager.cacheManager) {
+      throw new Error(`no cache manager`)
+    }
+    rawPayload = await this.manager.cacheManager.getMessage(messageId)
     if (!rawPayload) {
-      throw new Error('no message rawPayload')
+      throw new Error('no message rawPayload for image')
     }
     return rawPayload
   }
