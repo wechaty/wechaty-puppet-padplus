@@ -11,6 +11,7 @@ import {
   PadplusRoomInvitationPayload,
   PadplusRoomMemberPayload,
   PadplusRoomMemberMap,
+  PadplusMessagePayload,
 } from '../schemas'
 import { FriendshipPayload } from 'wechaty-puppet'
 
@@ -57,39 +58,39 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheWXID?    : FlashStore<string, string>
-  private cacheContactRawPayload?    : FlashStore<string, PadplusContactPayload>
-  private cacheRoomMemberRawPayload? : FlashStore<string, {
+  private cacheImageMessageRawPayload? : FlashStore<string, PadplusMessagePayload>
+  private cacheContactRawPayload?     : FlashStore<string, PadplusContactPayload>
+  private cacheRoomMemberRawPayload?  : FlashStore<string, {
     [contactId: string]: PadplusRoomMemberPayload,
   }>
-  private cacheRoomRawPayload?       : FlashStore<string, PadplusRoomPayload>
+  private cacheRoomRawPayload?        : FlashStore<string, PadplusRoomPayload>
   private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
-  private cacheFriendshipRawPayload? : FlashStore<string, FriendshipPayload>
+  private cacheFriendshipRawPayload?  : FlashStore<string, FriendshipPayload>
 
-  private compactCacheTimer?: NodeJS.Timeout
+  private compactCacheTimer?          : NodeJS.Timeout
 
   /**
    * -------------------------------
-   * Account-WXID Section
+   * Message Section
    * --------------------------------
    */
-  public async getAccountWXID (
-    account: string,
-  ): Promise<string | undefined> {
-    if (!this.cacheWXID) {
-      throw new Error(`${PRE} getWXID() has no cache.`)
+  public async getMessage (
+    messageId: string,
+  ): Promise<PadplusMessagePayload | undefined> {
+    if (!this.cacheImageMessageRawPayload) {
+      throw new Error(`${PRE} getMessage() has no cache.`)
     }
-    return this.cacheWXID.get(account)
+    return this.cacheImageMessageRawPayload.get(messageId)
   }
 
-  public async setAccountWXID (
-    account: string,
-    wxid: string,
+  public async setMessage (
+    contactId: string,
+    payload: PadplusMessagePayload
   ): Promise<void> {
-    if (!this.cacheWXID) {
-      throw new Error(`${PRE} setWXID() has no cache.`)
+    if (!this.cacheImageMessageRawPayload || !contactId) {
+      throw new Error(`${PRE} setMessage() has no cache.`)
     }
-    await this.cacheWXID.set(account, wxid)
+    await this.cacheImageMessageRawPayload.set(contactId, payload)
   }
 
   /**
@@ -339,7 +340,7 @@ export class CacheManager {
       await fs.mkdirp(baseDir)
     }
 
-    this.cacheWXID                     = new FlashStore(path.join(baseDir, 'accound-wxid'))
+    this.cacheImageMessageRawPayload    = new FlashStore(path.join(baseDir, 'message-raw-payload'))
     this.cacheContactRawPayload        = new FlashStore(path.join(baseDir, 'contact-raw-payload'))
     this.cacheRoomMemberRawPayload     = new FlashStore(path.join(baseDir, 'room-member-raw-payload'))
     this.cacheRoomRawPayload           = new FlashStore(path.join(baseDir, 'room-raw-payload'))
@@ -360,6 +361,7 @@ export class CacheManager {
         && this.cacheRoomRawPayload
         && this.cacheFriendshipRawPayload
         && this.cacheRoomInvitationRawPayload
+        && this.cacheImageMessageRawPayload
     ) {
       log.silly(PRE, 'releaseCache() closing caches ...')
 
@@ -374,6 +376,7 @@ export class CacheManager {
         this.cacheRoomRawPayload.close(),
         this.cacheFriendshipRawPayload.close(),
         this.cacheRoomInvitationRawPayload.close(),
+        this.cacheImageMessageRawPayload.close(),
       ])
 
       this.cacheContactRawPayload    = undefined
@@ -381,6 +384,7 @@ export class CacheManager {
       this.cacheRoomRawPayload       = undefined
       this.cacheFriendshipRawPayload = undefined
       this.cacheRoomInvitationRawPayload = undefined
+      this.cacheImageMessageRawPayload = undefined
 
       log.silly(PRE, 'releaseCache() cache closed.')
     } else {
@@ -400,7 +404,9 @@ export class CacheManager {
         && this.cacheRoomRawPayload
         && this.cacheFriendshipRawPayload
         && this.cacheRoomInvitationRawPayload
+        && this.cacheImageMessageRawPayload
       ) {
+        await this.compactDB(this.cacheImageMessageRawPayload, 'message-raw-payload')
         await this.compactDB(this.cacheContactRawPayload, 'contact-raw-payload')
         await this.compactDB(this.cacheRoomMemberRawPayload, 'room-member-raw-payload')
         await this.compactDB(this.cacheRoomRawPayload, 'room-raw-payload')
