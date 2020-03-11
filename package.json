@@ -78,7 +78,7 @@
     "lru-cache": "^5.1.1",
     "promise-retry": "^1.1.1",
     "rx-queue": "^0.8.5",
-    "state-switch": "^0.6.2",
+    "state-switch": "^0.7.2",
     "uuid": "^7.0.0",
     "watchdog": "^0.8.10",
     "xml2js": "^0.4.22"
