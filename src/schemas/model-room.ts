@@ -13,12 +13,13 @@ export interface PadplusMemberBrief {
 }
 
 export interface GrpcRoomMemberPayload {
-  UserName: string,
-  HeadImgUrl: string,
   DisplayName: string,
-  RemarkName: string,
+  HeadImgUrl: string,
+  InvitedBy: string,
+  MemberContactFlag: number,
   NickName: string,
-  isOwner?: string,
+  RemarkName: string,
+  UserName: string,
 }
 
 export interface GrpcRoomMemberList {
