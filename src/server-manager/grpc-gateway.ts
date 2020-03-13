@@ -25,6 +25,14 @@ export interface ResultObject {
 }
 
 const PRE = 'GRPC_GATEWAY'
+
+const NO_LOG_API_LIST: ResponseType[] = [
+  ResponseType.LOGIN_QRCODE,
+  ResponseType.ROOM_QRCODE,
+  ResponseType.CONTACT_SELF_QRCODE_GET,
+  ResponseType.LOGIN_DEVICE_INFO,
+]
+
 const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.SEND_MESSAGE,
   ApiType.SEND_FILE,
@@ -47,6 +55,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.LOGOUT,
   ApiType.REVOKE_MESSAGE,
   ApiType.ACCEPT_ROOM_INVITATION,
+  ApiType.LOGIN_DEVICE,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
@@ -421,7 +430,7 @@ export class GrpcGateway extends EventEmitter {
     stream.on('data', async (data: StreamResponse) => {
       const traceId = data.getTraceid()
       const responseType = data.getResponsetype()
-      if (responseType !== ResponseType.LOGIN_QRCODE && responseType !== ResponseType.ROOM_QRCODE && responseType !== ResponseType.CONTACT_SELF_QRCODE_GET) {
+      if (responseType && !NO_LOG_API_LIST.includes(responseType)) {
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
         log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
