@@ -186,6 +186,31 @@ export interface GrpcGetCdnDnsPayload {
   clientVersion: number,
 }
 
+export interface GrpcLoginDeviceInfo {
+  loginer: string,
+  uin: string,
+  userName: string,
+  nickName: string,
+  headImgUrl: string,
+  wechatUserId: string,
+  deviceInfo: any,
+  token: string,
+  loginType: string,
+  childId: string,
+}
+
+export interface LoginDeviceInfo {
+  uin: string,
+  userName: string,
+  nickName: string,
+  headImgUrl: string,
+  wechatUserId: string,
+  deviceName: string,
+  token: string,
+  loginType: string,
+  childId: string,
+}
+
 export enum GRPC_CODE {
   OK = 0,
   CANCELLED = 1,

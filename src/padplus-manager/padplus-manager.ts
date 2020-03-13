@@ -41,6 +41,7 @@ import {
   GetContactSelfInfoGrpcResponse,
   TagPayload,
   PadplusRoomInviteEvent,
+  LoginDeviceInfo,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { CacheManager } from '../server-manager/cache-manager'
@@ -294,6 +295,20 @@ export class PadplusManager extends EventEmitter {
 
   public setMemory (memory: MemoryCard) {
     this.memory = memory
+  }
+
+  public async reconnect (): Promise<void> {
+    if (!this.padplusUser) {
+      throw new Error(`no padplus user`)
+    }
+    await this.padplusUser.reconnect()
+  }
+
+  public async loginDevice (): Promise<LoginDeviceInfo> {
+    if (!this.padplusUser) {
+      throw new Error(`no padplus user`)
+    }
+    return this.padplusUser.loginDevice()
   }
 
   public async setContactAndRoomData () {
