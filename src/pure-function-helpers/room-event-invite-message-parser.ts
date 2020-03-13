@@ -3,6 +3,7 @@ import { xmlToJson } from './xml-to-json'
 import {
   PadplusMessagePayload,
   PadplusRoomInviteEvent,
+  RoomInviteEvent,
 }                         from '../schemas'
 import { isPayload } from './is-type'
 
@@ -138,7 +139,7 @@ export const roomInviteEventMessageParser = async (
     return null
   }
 
-  return {
+  const roomInviteEvent: RoomInviteEvent = {
     fromUser: fromUserName,
     msgId,
     receiver: toUserName,
@@ -147,4 +148,6 @@ export const roomInviteEventMessageParser = async (
     timestamp: createTime,
     url: jsonPayload.msg.appmsg.url,
   }
+
+  return roomInviteEvent
 }

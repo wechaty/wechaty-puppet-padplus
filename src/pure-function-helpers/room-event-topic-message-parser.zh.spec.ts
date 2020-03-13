@@ -6,12 +6,11 @@
 import test  from 'blue-tape'
 
 import {
-  PuppetRoomTopicEvent,
   YOU,
 }                               from 'wechaty-puppet'
 
 import {
-  PadplusMessagePayload,
+  PadplusMessagePayload, RoomTopicEvent,
 }                               from '../schemas'
 
 import { roomTopicEventMessageParser }  from './room-event-topic-message-parser'
@@ -35,7 +34,7 @@ test('roomTopicEventMessageParser() ZH-bot-modify-topic', async t => {
     uin: '2963338780',
     wechatUserName: 'wxid_zovb9ol86m7l22',
   }
-  const EXPECTED_EVENT: PuppetRoomTopicEvent = {
+  const EXPECTED_EVENT: RoomTopicEvent = {
     changerName: '高原ོ',
     roomId: '18295482296@chatroom',
     timestamp: 1568208243261,
@@ -65,7 +64,7 @@ test('roomTopicEventMessageParser() ZH-other-modify-topic', async t => {
     uin: '2963338780',
     wechatUserName: 'wxid_zovb9ol86m7l22',
   }
-  const EXPECTED_EVENT: PuppetRoomTopicEvent = {
+  const EXPECTED_EVENT: RoomTopicEvent = {
     changerName: YOU,
     roomId: '18295482296@chatroom',
     timestamp: 1568208437265,

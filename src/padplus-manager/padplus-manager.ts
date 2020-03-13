@@ -230,7 +230,6 @@ export class PadplusManager extends EventEmitter {
     if (this.memory) {
       const slot = await this.memory.get(MEMORY_SLOT_NAME)
       if (slot && slot.uin) {
-        log.silly(PRE, `uin : ${slot.uin}`)
         emitter.setUIN(slot.uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
