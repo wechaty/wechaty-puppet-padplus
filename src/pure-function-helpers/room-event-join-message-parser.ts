@@ -117,7 +117,7 @@ export async function roomJoinEventMessageParser (
     interface XmlSchema {
       sysmsg: {
         $: {
-          type: 'revokemsg' | 'delchatroommember' | 'multivoip',
+          type: 'revokemsg' | 'delchatroommember' | 'multivoip' | 'banner',
         },
         delchatroommember?: {
           plain : string,
@@ -138,6 +138,8 @@ export async function roomJoinEventMessageParser (
       } else if (jsonPayload.sysmsg.$.type === 'revokemsg') {
         content = jsonPayload.sysmsg.revokemsg!.replacemsg
       } else if (jsonPayload.sysmsg.$.type === 'multivoip') {
+        return null
+      } else if (jsonPayload.sysmsg.$.type === 'banner') {
         return null
       } else {
         throw new Error('unknown jsonPayload sysmsg type: ' + jsonPayload.sysmsg.$.type)
