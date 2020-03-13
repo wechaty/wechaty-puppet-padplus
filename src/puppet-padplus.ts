@@ -31,7 +31,7 @@ import {
 
 import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse, LoginDeviceInfo } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -1470,6 +1470,29 @@ export class PuppetPadplus extends Puppet {
     } else {
       return this.manager.setAnnouncement(roomId, text)
     }
+  }
+
+  /**
+   * External method
+   */
+  public async reconnect (): Promise<void> {
+    log.silly(PRE, `reconnect()`)
+
+    if (!this.manager) {
+      throw new Error('no manager')
+    }
+
+    await this.manager.reconnect()
+  }
+
+  public async loginDevice (): Promise<LoginDeviceInfo> {
+    log.silly(PRE, `loginDevice()`)
+
+    if (!this.manager) {
+      throw new Error('no manager')
+    }
+
+    return this.manager.loginDevice()
   }
 
   public ding (data?: string): void {
