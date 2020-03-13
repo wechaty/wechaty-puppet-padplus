@@ -719,7 +719,7 @@ export class PadplusManager extends EventEmitter {
                     country: '',
                     nickName: member.NickName,
                     province: '',
-                    remark: '',
+                    remark: member.RemarkName,
                     sex: ContactGender.Unknown,
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
