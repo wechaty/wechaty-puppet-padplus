@@ -1,7 +1,7 @@
 import { RequestClient } from './request'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { LogoutGrpcResponse } from '../../schemas'
+import { LogoutGrpcResponse, GrpcLoginDeviceInfo, LoginDeviceInfo } from '../../schemas'
 
 const PRE = 'PadplusUser'
 export class PadplusUser {
@@ -27,6 +27,38 @@ export class PadplusUser {
     await this.requestClient.request({
       apiType: ApiType.RECONNECT,
     })
+  }
+
+  public async loginDevice (): Promise<LoginDeviceInfo> {
+    log.silly(PRE, `loginDevice()`)
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.LOGIN_DEVICE,
+    })
+
+    if (!res) {
+      throw new Error(`can not get callback result of LOGIN_DEVICE`)
+    } else {
+      const resultStr = res.getData()
+      if (resultStr) {
+        const result: GrpcLoginDeviceInfo = JSON.parse(resultStr)
+        const loginDeviceInfo: LoginDeviceInfo = {
+          childId: result.childId,
+          deviceName: result.deviceInfo.deviceName,
+          headImgUrl: result.headImgUrl,
+          loginType: result.loginType,
+          nickName: result.nickName,
+          serverId: result.serverId,
+          token: result.token,
+          uin: result.uin,
+          userName: result.userName,
+          wechatUserId: result.wechatUserId,
+        }
+        return loginDeviceInfo
+      } else {
+        throw new Error(`can not parse result of LOGIN_DEVICE`)
+      }
+    }
   }
 
   // logout WeChat

@@ -47,6 +47,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.LOGOUT,
   ApiType.REVOKE_MESSAGE,
   ApiType.ACCEPT_ROOM_INVITATION,
+  ApiType.LOGIN_DEVICE,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
