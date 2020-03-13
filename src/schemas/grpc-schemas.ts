@@ -196,7 +196,6 @@ export interface GrpcLoginDeviceInfo {
   deviceInfo: any,
   token: string,
   loginType: string,
-  serverId: string,
   childId: string,
 }
 
@@ -209,7 +208,6 @@ export interface LoginDeviceInfo {
   deviceName: string,
   token: string,
   loginType: string,
-  serverId: string,
   childId: string,
 }
 

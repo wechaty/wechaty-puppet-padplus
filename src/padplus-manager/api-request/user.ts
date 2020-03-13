@@ -48,7 +48,6 @@ export class PadplusUser {
           headImgUrl: result.headImgUrl,
           loginType: result.loginType,
           nickName: result.nickName,
-          serverId: result.serverId,
           token: result.token,
           uin: result.uin,
           userName: result.userName,
