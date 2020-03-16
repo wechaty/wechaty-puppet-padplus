@@ -82,7 +82,7 @@ export class PuppetPadplus extends Puppet {
   private async startManager (manager: PadplusManager) {
     manager.on('scan', async (url: string, status: ScanStatus) => {
       log.silly(PRE, `scan : ${url}, status: ${status}`)
-      this.emit('scan', url, status)
+      this.emit('scan', { qrcode: url, status })
     })
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
@@ -96,10 +96,10 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('message', msg => this.onMessage(msg))
 
-    manager.on('ready', () => this.emit('ready'))
+    manager.on('ready', () => this.emit('ready', { data: 'padplus' }))
 
     manager.on('reset', (reason: string) => {
-      this.emit('reset', reason)
+      this.emit('reset', { data: reason })
     })
 
     manager.on('heartbeat', (data: string) => {
@@ -111,7 +111,7 @@ export class PuppetPadplus extends Puppet {
     manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
-      this.emit('error', err)
+      this.emit('error', { data: (err && err.message) || '' })
     })
     await manager.start()
   }
@@ -150,9 +150,9 @@ export class PuppetPadplus extends Puppet {
       await this.manager.logout(this.selfId())
       reason = '主动下线成功'
     }
-    this.emit('logout', this.selfId(), reason)
+    this.emit('logout', { contactId: this.selfId(), data: reason || '' })
     this.id = undefined
-    this.emit('reset', 'padplus reset')
+    this.emit('reset', { data: 'padplus reset' })
   }
 
   async onMessage (message: PadplusMessagePayload) {
@@ -177,12 +177,12 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         break
       case PadplusMessageType.Recalled:
-        this.emit('message', message.msgId)
+        this.emit('message', { messageId: message.msgId })
         await this.onRoomJoinEvent(message)
         break
       case PadplusMessageType.Text:
         await this.onFriendshipEvent(message)
-        this.emit('message', message.msgId)
+        this.emit('message', { messageId: message.msgId })
         break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
@@ -207,7 +207,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:
-        this.emit('message', message.msgId)
+        this.emit('message', { messageId: message.msgId })
         break
     }
   }
@@ -369,7 +369,7 @@ export class PuppetPadplus extends Puppet {
       }
       const { msgId } = message
       await this.manager.saveFriendship(msgId, friendship)
-      this.emit('friendship', msgId)
+      this.emit('friendship', { friendshipId: msgId })
     }
   }
 
@@ -817,7 +817,7 @@ export class PuppetPadplus extends Puppet {
       payload.msgSource = this.generateMsgSource(atUserList)
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    this.emit('message', { messageId: payload.msgId })
   }
 
   protected generateMsgSource (mentionIdList?: string[]) {
@@ -901,7 +901,7 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.ShareCard
     payload.content = content
     log.silly(PRE, 'replayContactMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    this.emit('message', { messageId: payload.msgId })
   }
 
   public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
@@ -1019,7 +1019,7 @@ export class PuppetPadplus extends Puppet {
     payload.content = `<msg>${url}</msg>`
     payload.url = url
     log.silly(PRE, 'replayImageMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    this.emit('message', { messageId: payload.msgId })
   }
 
   private replayAppMsg (msgId: string, to: string, content: string): void {
@@ -1027,7 +1027,7 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = `<msg>${content}</msg>`
     log.silly(PRE, 'replayAppMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    this.emit('message', { messageId: payload.msgId })
   }
 
   public async messageSendUrl (conversationId: string, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
@@ -1078,7 +1078,7 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = content
     log.silly(PRE, 'replayUrlLinkMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    this.emit('message', { messageId: payload.msgId })
   }
 
   messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
@@ -1142,9 +1142,9 @@ export class PuppetPadplus extends Puppet {
     const joinEvent = await roomJoinEventMessageParser(message)
     if (joinEvent) {
       log.silly(PRE, `receive join event : ${util.inspect(joinEvent)}`)
-      const inviteeNameList = joinEvent.inviteeNameList
+      const inviteeNameList = joinEvent.inviteeNameList as string[]   // Huan(200303): no typing???
       const inviterName     = joinEvent.inviterName
-      const roomId          = joinEvent.roomId
+      const roomId          = joinEvent.roomId as string   // Huan(200303): no typing???
       const timestamp       = joinEvent.timestamp
 
       const inviteeIdList = await retry(async (retryException, attempt) => {
@@ -1199,7 +1199,7 @@ export class PuppetPadplus extends Puppet {
       await this.roomMemberPayloadDirty(roomId)
       await this.roomPayloadDirty(roomId)
 
-      this.emit('room-join', roomId, inviteeIdList,  inviterId, timestamp)
+      this.emit('room-join', { inviteeIdList, inviterId, roomId, timestamp })
     }
   }
 
@@ -1210,17 +1210,17 @@ export class PuppetPadplus extends Puppet {
 
     if (leaveEvent) {
       log.silly(PRE, `receive remove event : ${util.inspect(leaveEvent)}`)
-      const leaverNameList = leaveEvent.leaverNameList
+      const leaverNameList = leaveEvent.leaverNameList as string[]     // Huan(200303): no typing???
       const removerName    = leaveEvent.removerName
       const roomId         = leaveEvent.roomId
       const timestamp      = leaveEvent.timestamp
 
-      const leaverIdList = flatten(
+      const removeeIdList = flatten(
         await Promise.all(
           leaverNameList.map(
             leaverName => this.roomMemberSearch(roomId, leaverName),
           ),
-        ),
+        )
       )
       const removerIdList = await this.roomMemberSearch(roomId, removerName)
       if (removerIdList.length < 1) {
@@ -1243,7 +1243,7 @@ export class PuppetPadplus extends Puppet {
       // await this.roomMemberPayloadDirty(roomId)
       // await this.roomPayloadDirty(roomId)
 
-      this.emit('room-leave', roomId, leaverIdList, removerId, timestamp)
+      this.emit('room-leave', { removeeIdList, removerId, roomId, timestamp })
     }
   }
 
@@ -1280,7 +1280,7 @@ export class PuppetPadplus extends Puppet {
       if (this.manager && this.manager.cacheManager) {
         await this.manager.cacheManager.deleteRoom(roomId)
       }
-      this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
+      this.emit('room-topic', { changerId, newTopic, oldTopic, roomId, timestamp })
     }
   }
 
@@ -1294,9 +1294,9 @@ export class PuppetPadplus extends Puppet {
 
     if (roomInviteEvent) {
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-      this.emit('room-invite', roomInviteEvent.msgId)
+      this.emit('room-invite', { roomInvitationId: roomInviteEvent.msgId })
     } else {
-      this.emit('message', rawPayload.msgId)
+      this.emit('message', { messageId: rawPayload.msgId })
     }
   }
 
@@ -1495,9 +1495,9 @@ export class PuppetPadplus extends Puppet {
     return this.manager.loginDevice()
   }
 
-  public ding (data?: string): void {
+  public ding (data: string): void {
     log.silly(PRE, 'ding(%s)', data || '')
-    this.emit('dong', data)
+    this.emit('dong', { data })
   }
 
 }
