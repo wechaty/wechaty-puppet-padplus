@@ -429,6 +429,10 @@ export class CacheManager {
       log.warn(`Failed to to flash-store check before compact for ${storeName} DB.`)
       return
     }
+    if (!(flashStore as any).levelDb || !(flashStore as any).levelDb.db || !(flashStore as any).levelDb.db.db || !(flashStore as any).levelDb.db.db.db) {
+      return
+    }
+    log.info(`storeName: ${storeName}`)
     const db = (flashStore as any).levelDb.db.db.db
     await new Promise((resolve) => {
       db.compact((err: any) => {

@@ -1,16 +1,13 @@
 import {
-  PuppetRoomTopicEvent,
-  YOU,
-}                         from 'wechaty-puppet'
-
-import {
   PadplusMessagePayload,
+  RoomTopicEvent,
 }                         from '../schemas'
 
 import {
   isPayload,
   isRoomId,
 }               from './is-type'
+import { YOU } from 'wechaty-puppet'
 
 /**
  *
@@ -29,7 +26,7 @@ const ROOM_TOPIC_YOU_REGEX_LIST = [
 
 export function roomTopicEventMessageParser (
   rawPayload: PadplusMessagePayload,
-): null | PuppetRoomTopicEvent {
+): null | RoomTopicEvent {
 
   if (!isPayload(rawPayload)) {
     return null
@@ -63,7 +60,7 @@ export function roomTopicEventMessageParser (
     changerName = YOU
   }
 
-  const roomTopicEvent: PuppetRoomTopicEvent = {
+  const roomTopicEvent: RoomTopicEvent = {
     changerName,
     roomId,
     timestamp,

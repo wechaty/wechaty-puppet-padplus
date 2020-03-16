@@ -41,6 +41,7 @@ import {
   GetContactSelfInfoGrpcResponse,
   TagPayload,
   PadplusRoomInviteEvent,
+  LoginDeviceInfo,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { CacheManager } from '../server-manager/cache-manager'
@@ -230,7 +231,6 @@ export class PadplusManager extends EventEmitter {
     if (this.memory) {
       const slot = await this.memory.get(MEMORY_SLOT_NAME)
       if (slot && slot.uin) {
-        log.silly(PRE, `uin : ${slot.uin}`)
         emitter.setUIN(slot.uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
@@ -294,6 +294,20 @@ export class PadplusManager extends EventEmitter {
 
   public setMemory (memory: MemoryCard) {
     this.memory = memory
+  }
+
+  public async reconnect (): Promise<void> {
+    if (!this.padplusUser) {
+      throw new Error(`no padplus user`)
+    }
+    await this.padplusUser.reconnect()
+  }
+
+  public async loginDevice (): Promise<LoginDeviceInfo> {
+    if (!this.padplusUser) {
+      throw new Error(`no padplus user`)
+    }
+    return this.padplusUser.loginDevice()
   }
 
   public async setContactAndRoomData () {
@@ -704,7 +718,7 @@ export class PadplusManager extends EventEmitter {
                     country: '',
                     nickName: member.NickName,
                     province: '',
-                    remark: '',
+                    remark: member.RemarkName,
                     sex: ContactGender.Unknown,
                     signature: '',
                     smallHeadUrl: member.HeadImgUrl,
