@@ -1155,7 +1155,11 @@ export class PuppetPadplus extends Puppet {
     }
     rawPayload = await this.manager.cacheManager.getMessage(messageId)
     if (!rawPayload) {
-      throw new Error('no message rawPayload for image')
+      log.error('PuppetPadplus', 'messageRawPayload(%s) manager.cacheManager.getMessage(%s) return nothing.',
+        messageId,
+        messageId,
+      )
+      throw new Error('no message rawPayload for message id ' + messageId)
     }
     return rawPayload
   }
