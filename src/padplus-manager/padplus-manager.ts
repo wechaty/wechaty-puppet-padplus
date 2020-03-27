@@ -653,8 +653,19 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
-                // No need to clear this room cache when the bot been removed.
-                // TODO: add a flag for the removed room
+                const roomRawPayload = await this.cacheManager.getRoom(deleteUserName)
+                if (!roomRawPayload) {
+                  throw new Error(`can not find room raw payload from cache by id : ${deleteUserName}`)
+                }
+                roomRawPayload.members = roomRawPayload.members.filter(member => member.UserName !== contactData.userName)
+                await this.cacheManager.setRoom(deleteUserName, roomRawPayload)
+
+                const roomMemberRawPayload = await this.cacheManager.getRoomMember(deleteUserName)
+                if (!roomMemberRawPayload) {
+                  throw new Error(`can not find room member raw payload from cache by id : ${deleteUserName}`)
+                }
+                delete roomMemberRawPayload[contactData.userName]
+                await this.cacheManager.setRoomMember(deleteUserName, roomMemberRawPayload)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
