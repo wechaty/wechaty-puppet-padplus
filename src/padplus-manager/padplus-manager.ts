@@ -997,8 +997,8 @@ export class PadplusManager extends EventEmitter {
     }
 
     const contact = await this.cacheManager.getContact(contactId)
-    if (!contact || !contact.tagList) {
-      throw new Error(`can not get contact or tagList of contact by this contactId: ${contactId}`)
+    if (!contact) {
+      throw new Error(`can not get contact by this contactId: ${contactId}`)
     }
     const contactTagIdList = contact.tagList
 
