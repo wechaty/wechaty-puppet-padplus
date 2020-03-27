@@ -5,7 +5,7 @@ import {
 export interface PadplusContactPayload {
   alias            : string,
   contactType      : number,
-  tagList       : string,
+  tagList          : string,
   bigHeadUrl       : string,                     // "http://wx.qlogo.cn/mmhead/ver_1/xfCMmibHH74xGLoyeDFJadrZXX3eOEznPefiaCa3iczxZGMwPtDuSbRQKx3Xdm18un303mf0NFia3USY2nO2VEYILw/0",
   city             : string,                     // 'Haidian'
   country          : string,                     // "CN"
