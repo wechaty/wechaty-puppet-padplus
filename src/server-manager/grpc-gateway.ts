@@ -34,6 +34,7 @@ const NO_LOG_API_LIST: ResponseType[] = [
 ]
 
 const NEED_CALLBACK_API_LIST: ApiType[] = [
+  ApiType.INIT,
   ApiType.SEND_MESSAGE,
   ApiType.SEND_FILE,
   ApiType.GET_MESSAGE_MEDIA,

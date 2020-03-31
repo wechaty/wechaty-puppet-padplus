@@ -14,11 +14,18 @@ export class PadplusUser {
   }
 
   // init
-  public async initInstance () {
+  public async initInstance (): Promise<void> {
     log.silly(PRE, `initInstance()`)
-    await this.requestClient.request({
+    const res = await this.requestClient.request({
       apiType: ApiType.INIT,
     })
+    if (!res) {
+      throw new Error(`can not get callback result of INIT`)
+    }
+    const resultStr = res.getData()
+    if (resultStr !== 'success') {
+      log.silly(PRE, `init success`)
+    }
   }
 
   // grpc server reconnect
