@@ -95,6 +95,7 @@ BROLOG_LEVEL=silly node index.js
 ## Example
 
 ```js
+// bot.js
 import { Wechaty       } from 'wechaty'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
 import QrcodeTerminal from 'qrcode-terminal'
@@ -124,7 +125,15 @@ bot
   .start()
 ```
 
-## Puppet Comparision
+## How to emit the message that you sent
+
+Please use environment variable `PADPLUS_REPLAY_MESSAGE` to activate this function.
+
+```shell
+PADPLUS_REPLAY_MESSAGE=true node index.js
+```
+
+## Puppet Comparison
 
 功能 | padpro | padplus | macpro
 ---|---|---|---
