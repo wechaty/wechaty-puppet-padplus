@@ -174,3 +174,11 @@ export interface PadplusRecallData {
     ErrMsg: string,
   },
 }
+
+export interface VideoContent {
+  cdnthumbheight: number,
+  cdnthumbwidth: number,
+  playlength: number,
+  thumb: string,
+  url: string,
+}

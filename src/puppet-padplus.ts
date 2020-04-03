@@ -999,7 +999,7 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendVideo(this.selfId(), conversationId, fileUrl)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, conversationId, fileUrl)
         }
