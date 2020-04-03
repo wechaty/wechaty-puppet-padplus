@@ -53,6 +53,7 @@ import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
+import { videoPreProcess } from '../pure-function-helpers/video-process'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -861,6 +862,23 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplus message`)
     }
     const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
+  }
+
+  public async sendVideo (selfId: string, receiver: string, url: string) {
+    log.silly(PRE, `sendVideo(${selfId}, ${receiver}, ${url})`)
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+    if (!this.requestClient) {
+      throw new Error(`no request client`)
+    }
+    const content = await videoPreProcess(this.requestClient, url)
+
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
     if (!messageResponse.msgId) {
       throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
     }

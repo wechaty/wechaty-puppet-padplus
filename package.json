@@ -71,6 +71,8 @@
     "aws-sdk": "^2.510.0",
     "axios": "^0.19.2",
     "brolog": "^1.6.5",
+    "ffmpeg-extract-frames": "^2.0.2",
+    "ffmpeg-probe": "^1.0.6",
     "flash-store": "^0.18.14",
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",
