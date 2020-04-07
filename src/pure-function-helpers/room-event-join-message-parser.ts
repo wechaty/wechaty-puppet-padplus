@@ -138,6 +138,8 @@ export async function roomJoinEventMessageParser (
         return null
       } else if (jsonPayload.sysmsg.$.type === 'banner') {
         return null
+      } else if (jsonPayload.sysmsg.$.type === 'roomtoolstips') {
+        return null
       } else {
         throw new Error('unknown jsonPayload sysmsg type: ' + jsonPayload.sysmsg.$.type)
       }
