@@ -217,6 +217,9 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         this.emit('message', eventMessagePayload)
         break
+      case PadplusMessageType.App:
+        await this.onRoomInvitation(message)
+        break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
@@ -227,9 +230,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Video:
       case PadplusMessageType.Emoticon:
       case PadplusMessageType.Location:
-      case PadplusMessageType.App:
-        await this.onRoomInvitation(message)
-        break
       case PadplusMessageType.VoipMsg:
       case PadplusMessageType.StatusNotify:
       case PadplusMessageType.VoipNotify:
@@ -999,7 +999,7 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendVideo(this.selfId(), conversationId, fileUrl)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, conversationId, fileUrl)
         }
@@ -1358,7 +1358,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
+    log.verbose(PRE, 'onRoomInvitation()')
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {

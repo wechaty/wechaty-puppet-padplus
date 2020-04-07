@@ -95,6 +95,7 @@ BROLOG_LEVEL=silly node index.js
 ## Example
 
 ```js
+// bot.js
 import { Wechaty       } from 'wechaty'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
 import QrcodeTerminal from 'qrcode-terminal'
@@ -124,7 +125,15 @@ bot
   .start()
 ```
 
-## Puppet Comparision
+## How to emit the message that you sent
+
+Please use environment variable `PADPLUS_REPLAY_MESSAGE` to activate this function.
+
+```shell
+PADPLUS_REPLAY_MESSAGE=true node index.js
+```
+
+## Puppet Comparison
 
 功能 | padpro | padplus | macpro
 ---|---|---|---
@@ -134,7 +143,7 @@ bot
  收发图文链接| ✅ |✅ |✅
  发送图片、文件| ✅ | ✅（对内容有大小限制，20M以下） |✅
  接收图片、文件| ✅ | ✅（对内容有大小限制，25M以下） |✅
- 发送视频| ✅ | ✅（视频以链接形式发送） | ✅
+ 发送视频| ✅ | ✅ | ✅
  接收视频| ✅ | ✅ | ✅
  发送小程序| ❌ | ❌ | ✅
  接收动图| ❌ | ✅ | ✅
