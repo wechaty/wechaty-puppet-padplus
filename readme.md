@@ -114,10 +114,12 @@ const bot = new Wechaty({
 })
 
 bot
-  .on('scan', (qrcode) => {
-    QrcodeTerminal.generate(qrcode, {
-      small: true
-    })
+  .on('scan', (qrcode, status) => {
+    if (status === 2) {
+      QrcodeTerminal.generate(qrcode, {
+        small: true
+      })
+    }
   })
   .on('message', msg => {
     console.log(`msg : ${msg}`)
