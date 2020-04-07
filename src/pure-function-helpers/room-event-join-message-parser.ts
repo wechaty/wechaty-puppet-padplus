@@ -15,7 +15,7 @@ import {
   splitChineseNameList,
   splitEnglishNameList,
 }                         from './split-name'
-import { YOU } from 'wechaty-puppet'
+import { YOU, log } from 'wechaty-puppet'
 
 /**
  *
@@ -134,14 +134,13 @@ export async function roomJoinEventMessageParser (
         content = jsonPayload.sysmsg.delchatroommember!.plain
       } else if (jsonPayload.sysmsg.$.type === 'revokemsg') {
         content = jsonPayload.sysmsg.revokemsg!.replacemsg
-      } else if (jsonPayload.sysmsg.$.type === 'multivoip') {
-        return null
-      } else if (jsonPayload.sysmsg.$.type === 'banner') {
-        return null
-      } else if (jsonPayload.sysmsg.$.type === 'roomtoolstips') {
+      } else if (jsonPayload.sysmsg.$.type === 'banner'
+      || jsonPayload.sysmsg.$.type === 'multivoip'
+      || jsonPayload.sysmsg.$.type === 'roomtoolstips'
+      || jsonPayload.sysmsg.$.type === 'sysmsgtemplate') {
         return null
       } else {
-        throw new Error('unknown jsonPayload sysmsg type: ' + jsonPayload.sysmsg.$.type)
+        log.warn('RoomJoinEventMessageParser', `unkonw type: ${jsonPayload.sysmsg.$.type} jsonPayload: ${JSON.stringify(jsonPayload)}`)
       }
     } catch (e) {
       console.error(e)
