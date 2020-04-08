@@ -96,7 +96,8 @@ BROLOG_LEVEL=silly node index.js
 
 ```js
 // bot.js
-import { Wechaty       } from 'wechaty'
+import { Wechaty } from 'wechaty'
+import { ScanStatus } from 'wechaty-puppet'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
 import QrcodeTerminal from 'qrcode-terminal'
 
@@ -114,10 +115,12 @@ const bot = new Wechaty({
 })
 
 bot
-  .on('scan', (qrcode) => {
-    QrcodeTerminal.generate(qrcode, {
-      small: true
-    })
+  .on('scan', (qrcode, status) => {
+    if (status === ScanStatus.Waiting) {
+      QrcodeTerminal.generate(qrcode, {
+        small: true
+      })
+    }
   })
   .on('message', msg => {
     console.log(`msg : ${msg}`)
