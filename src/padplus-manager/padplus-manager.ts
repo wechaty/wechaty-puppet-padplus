@@ -53,6 +53,7 @@ import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
+import { videoPreProcess } from '../pure-function-helpers/video-process'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -231,7 +232,6 @@ export class PadplusManager extends EventEmitter {
     if (this.memory) {
       const slot = await this.memory.get(MEMORY_SLOT_NAME)
       if (slot && slot.uin) {
-        log.silly(PRE, `uin : ${slot.uin}`)
         emitter.setUIN(slot.uin)
         await new Promise((resolve) => setTimeout(resolve, 500))
         await this.padplusUser.initInstance()
@@ -654,8 +654,19 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
-                // No need to clear this room cache when the bot been removed.
-                // TODO: add a flag for the removed room
+                const roomRawPayload = await this.cacheManager.getRoom(deleteUserName)
+                if (!roomRawPayload) {
+                  throw new Error(`can not find room raw payload from cache by id : ${deleteUserName}`)
+                }
+                roomRawPayload.members = roomRawPayload.members.filter(member => member.UserName !== contactData.userName)
+                await this.cacheManager.setRoom(deleteUserName, roomRawPayload)
+
+                const roomMemberRawPayload = await this.cacheManager.getRoomMember(deleteUserName)
+                if (!roomMemberRawPayload) {
+                  throw new Error(`can not find room member raw payload from cache by id : ${deleteUserName}`)
+                }
+                delete roomMemberRawPayload[contactData.userName]
+                await this.cacheManager.setRoomMember(deleteUserName, roomMemberRawPayload)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else {
@@ -857,6 +868,23 @@ export class PadplusManager extends EventEmitter {
     return messageResponse
   }
 
+  public async sendVideo (selfId: string, receiver: string, url: string) {
+    log.silly(PRE, `sendVideo(${selfId}, ${receiver}, ${url})`)
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+    if (!this.requestClient) {
+      throw new Error(`no request client`)
+    }
+    const content = await videoPreProcess(this.requestClient, url)
+
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
+  }
+
   public async sendVoice (selfId: string, receiver: string, url: string, fileSize: string) {
     log.silly(PRE, `selfId : ${selfId},receiver : ${receiver}`)
     if (!this.cacheManager) {
@@ -987,8 +1015,8 @@ export class PadplusManager extends EventEmitter {
     }
 
     const contact = await this.cacheManager.getContact(contactId)
-    if (!contact || !contact.tagList) {
-      throw new Error(`can not get contact or tagList of contact by this contactId: ${contactId}`)
+    if (!contact) {
+      throw new Error(`can not get contact by this contactId: ${contactId}`)
     }
     const contactTagIdList = contact.tagList
 

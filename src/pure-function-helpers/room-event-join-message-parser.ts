@@ -1,13 +1,9 @@
 import { xmlToJson } from './xml-to-json'
 
 import {
-  PuppetRoomJoinEvent,
-  YOU,
-}                         from 'wechaty-puppet'
-
-import {
   PadplusMessagePayload,
   PadplusMessageType,
+  RoomJoinEvent,
 }                         from '../schemas'
 
 import {
@@ -19,6 +15,7 @@ import {
   splitChineseNameList,
   splitEnglishNameList,
 }                         from './split-name'
+import { YOU } from 'wechaty-puppet'
 
 /**
  *
@@ -82,7 +79,7 @@ const ROOM_JOIN_OTHER_INVITE_OTHER_QRCODE_REGEX_LIST_EN = [
 
 export async function roomJoinEventMessageParser (
   rawPayload: PadplusMessagePayload,
-): Promise<null | PuppetRoomJoinEvent> {
+): Promise<null | RoomJoinEvent> {
 
   if (!isPayload(rawPayload)) {
     return null
@@ -140,6 +137,8 @@ export async function roomJoinEventMessageParser (
       } else if (jsonPayload.sysmsg.$.type === 'multivoip') {
         return null
       } else if (jsonPayload.sysmsg.$.type === 'banner') {
+        return null
+      } else if (jsonPayload.sysmsg.$.type === 'roomtoolstips') {
         return null
       } else {
         throw new Error('unknown jsonPayload sysmsg type: ' + jsonPayload.sysmsg.$.type)
@@ -232,7 +231,7 @@ export async function roomJoinEventMessageParser (
     }
 
     const inviterName: string | YOU = YOU
-    const joinEvent: PuppetRoomJoinEvent = {
+    const joinEvent: RoomJoinEvent = {
       inviteeNameList,
       inviterName,
       roomId,
@@ -260,7 +259,7 @@ export async function roomJoinEventMessageParser (
       inviteeNameList = inviteeNameList.concat(nameList)
     }
 
-    const joinEvent: PuppetRoomJoinEvent = {
+    const joinEvent: RoomJoinEvent = {
       inviteeNameList,
       inviterName,
       roomId,
@@ -289,7 +288,7 @@ export async function roomJoinEventMessageParser (
       throw new Error('neither English nor Chinese')
     }
 
-    const joinEvent: PuppetRoomJoinEvent = {
+    const joinEvent: RoomJoinEvent = {
       inviteeNameList,
       inviterName,
       roomId,
@@ -316,7 +315,7 @@ export async function roomJoinEventMessageParser (
       throw new Error('neither English nor Chinese')
     }
 
-    const joinEvent: PuppetRoomJoinEvent = {
+    const joinEvent: RoomJoinEvent = {
       inviteeNameList,
       inviterName,
       roomId,

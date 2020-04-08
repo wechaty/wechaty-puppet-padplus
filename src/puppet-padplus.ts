@@ -19,6 +19,20 @@ import {
   RoomPayload,
   ScanStatus,
   UrlLinkPayload,
+
+  EventDongPayload,
+  EventErrorPayload,
+  EventFriendshipPayload,
+  EventLogoutPayload,
+  EventMessagePayload,
+  EventResetPayload,
+  EventRoomJoinPayload,
+  EventRoomLeavePayload,
+  EventRoomTopicPayload,
+  EventRoomInvitePayload,
+  EventScanPayload,
+  EventReadyPayload,
+  EventWatchdogPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -81,8 +95,11 @@ export class PuppetPadplus extends Puppet {
 
   private async startManager (manager: PadplusManager) {
     manager.on('scan', async (url: string, status: ScanStatus) => {
-      log.silly(PRE, `scan : ${url}, status: ${status}`)
-      this.emit('scan', url, status)
+      const eventScanPayload: EventScanPayload = {
+        qrcode: url,
+        status,
+      }
+      this.emit('scan', eventScanPayload)
     })
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
@@ -96,22 +113,29 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('message', msg => this.onMessage(msg))
 
-    manager.on('ready', () => this.emit('ready'))
+    manager.on('ready', () => this.emit('ready', { data: 'ready' } as EventReadyPayload))
 
     manager.on('reset', (reason: string) => {
-      this.emit('reset', reason)
+      const eventResetPayload: EventResetPayload = {
+        data: reason,
+      }
+      this.emit('reset', eventResetPayload)
     })
 
     manager.on('heartbeat', (data: string) => {
-      this.emit('watchdog', {
+      const eventWatchdogPayload: EventWatchdogPayload = {
         data,
-      })
+      }
+      this.emit('watchdog', eventWatchdogPayload)
     })
 
     manager.on('logout', (reason?: string) => this.logout(true, reason))
 
     manager.on('error', (err: Error) => {
-      this.emit('error', err)
+      const eventErrorPayload: EventErrorPayload = {
+        data: err.toString(),
+      }
+      this.emit('error', eventErrorPayload)
     })
     await manager.start()
   }
@@ -150,9 +174,16 @@ export class PuppetPadplus extends Puppet {
       await this.manager.logout(this.selfId())
       reason = '主动下线成功'
     }
-    this.emit('logout', this.selfId(), reason)
+    const eventLogoutPayload: EventLogoutPayload = {
+      contactId: this.selfId(),
+      data: reason ? reason! : 'unknow reason',
+    }
+    this.emit('logout', eventLogoutPayload)
     this.id = undefined
-    this.emit('reset', 'padplus reset')
+    const eventResetPayload: EventResetPayload = {
+      data: 'padplus reset',
+    }
+    this.emit('reset', eventResetPayload)
   }
 
   async onMessage (message: PadplusMessagePayload) {
@@ -163,7 +194,9 @@ export class PuppetPadplus extends Puppet {
     } else {
       await this.contactRawPayload(message.fromUserName)
     }
-
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: message.msgId,
+    }
     switch (messageType) {
       case PadplusMessageType.Sys:
         await Promise.all([
@@ -177,12 +210,15 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         break
       case PadplusMessageType.Recalled:
-        this.emit('message', message.msgId)
+        this.emit('message', eventMessagePayload)
         await this.onRoomJoinEvent(message)
         break
       case PadplusMessageType.Text:
         await this.onFriendshipEvent(message)
-        this.emit('message', message.msgId)
+        this.emit('message', eventMessagePayload)
+        break
+      case PadplusMessageType.App:
+        await this.onRoomInvitation(message)
         break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
@@ -194,9 +230,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Video:
       case PadplusMessageType.Emoticon:
       case PadplusMessageType.Location:
-      case PadplusMessageType.App:
-        await this.onRoomInvitation(message)
-        break
       case PadplusMessageType.VoipMsg:
       case PadplusMessageType.StatusNotify:
       case PadplusMessageType.VoipNotify:
@@ -207,7 +240,7 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.N11_2048:
       case PadplusMessageType.N15_32768:
       default:
-        this.emit('message', message.msgId)
+        this.emit('message', eventMessagePayload)
         break
     }
   }
@@ -369,7 +402,10 @@ export class PuppetPadplus extends Puppet {
       }
       const { msgId } = message
       await this.manager.saveFriendship(msgId, friendship)
-      this.emit('friendship', msgId)
+      const eventFriendshipPayload: EventFriendshipPayload = {
+        friendshipId: msgId,
+      }
+      this.emit('friendship', eventFriendshipPayload)
     }
   }
 
@@ -817,7 +853,10 @@ export class PuppetPadplus extends Puppet {
       payload.msgSource = this.generateMsgSource(atUserList)
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: payload.msgId,
+    }
+    this.emit('message', eventMessagePayload)
   }
 
   protected generateMsgSource (mentionIdList?: string[]) {
@@ -901,7 +940,10 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.ShareCard
     payload.content = content
     log.silly(PRE, 'replayContactMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: payload.msgId,
+    }
+    this.emit('message', eventMessagePayload)
   }
 
   public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
@@ -957,7 +999,7 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'video')
+        const videoData = await this.manager.sendVideo(this.selfId(), conversationId, fileUrl)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, conversationId, fileUrl)
         }
@@ -1019,7 +1061,10 @@ export class PuppetPadplus extends Puppet {
     payload.content = `<msg>${url}</msg>`
     payload.url = url
     log.silly(PRE, 'replayImageMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: payload.msgId,
+    }
+    this.emit('message', eventMessagePayload)
   }
 
   private replayAppMsg (msgId: string, to: string, content: string): void {
@@ -1027,7 +1072,10 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = `<msg>${content}</msg>`
     log.silly(PRE, 'replayAppMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: payload.msgId,
+    }
+    this.emit('message', eventMessagePayload)
   }
 
   public async messageSendUrl (conversationId: string, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
@@ -1078,7 +1126,10 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = content
     log.silly(PRE, 'replayUrlLinkMsg replaying message: %s', JSON.stringify(payload))
-    this.emit('message', payload.msgId)
+    const eventMessagePayload: EventMessagePayload = {
+      messageId: payload.msgId,
+    }
+    this.emit('message', eventMessagePayload)
   }
 
   messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
@@ -1104,7 +1155,11 @@ export class PuppetPadplus extends Puppet {
     }
     rawPayload = await this.manager.cacheManager.getMessage(messageId)
     if (!rawPayload) {
-      throw new Error('no message rawPayload for image')
+      log.error('PuppetPadplus', 'messageRawPayload(%s) manager.cacheManager.getMessage(%s) return nothing.',
+        messageId,
+        messageId,
+      )
+      throw new Error('no message rawPayload for message id ' + messageId)
     }
     return rawPayload
   }
@@ -1199,7 +1254,13 @@ export class PuppetPadplus extends Puppet {
       await this.roomMemberPayloadDirty(roomId)
       await this.roomPayloadDirty(roomId)
 
-      this.emit('room-join', roomId, inviteeIdList,  inviterId, timestamp)
+      const eventRoomJoinPayload: EventRoomJoinPayload = {
+        inviteeIdList,
+        inviterId,
+        roomId,
+        timestamp,
+      }
+      this.emit('room-join', eventRoomJoinPayload)
     }
   }
 
@@ -1242,8 +1303,13 @@ export class PuppetPadplus extends Puppet {
        */
       // await this.roomMemberPayloadDirty(roomId)
       // await this.roomPayloadDirty(roomId)
-
-      this.emit('room-leave', roomId, leaverIdList, removerId, timestamp)
+      const eventRoomLeavePayload: EventRoomLeavePayload = {
+        removeeIdList: leaverIdList,
+        removerId,
+        roomId,
+        timestamp,
+      }
+      this.emit('room-leave', eventRoomLeavePayload)
     }
   }
 
@@ -1280,12 +1346,19 @@ export class PuppetPadplus extends Puppet {
       if (this.manager && this.manager.cacheManager) {
         await this.manager.cacheManager.deleteRoom(roomId)
       }
-      this.emit('room-topic', roomId, newTopic, oldTopic, changerId, timestamp)
+      const eventRoomTopicPayload: EventRoomTopicPayload = {
+        changerId,
+        newTopic,
+        oldTopic,
+        roomId,
+        timestamp,
+      }
+      this.emit('room-topic', eventRoomTopicPayload)
     }
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
+    log.verbose(PRE, 'onRoomInvitation()')
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
@@ -1294,9 +1367,15 @@ export class PuppetPadplus extends Puppet {
 
     if (roomInviteEvent) {
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-      this.emit('room-invite', roomInviteEvent.msgId)
+      const eventRoomInvitePayload: EventRoomInvitePayload = {
+        roomInvitationId: roomInviteEvent.msgId,
+      }
+      this.emit('room-invite', eventRoomInvitePayload)
     } else {
-      this.emit('message', rawPayload.msgId)
+      const eventMessagePayload: EventMessagePayload = {
+        messageId: rawPayload.msgId,
+      }
+      this.emit('message', eventMessagePayload)
     }
   }
 
@@ -1497,7 +1576,10 @@ export class PuppetPadplus extends Puppet {
 
   public ding (data?: string): void {
     log.silly(PRE, 'ding(%s)', data || '')
-    this.emit('dong', data)
+    const eventDongPayload: EventDongPayload = {
+      data: data ? data! : 'ding-dong',
+    }
+    this.emit('dong', eventDongPayload)
   }
 
 }

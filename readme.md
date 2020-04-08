@@ -12,60 +12,90 @@ Our Mission: Make it easy to build a WeChat Chatbot for developers.
 
 We provide a **free** token for the developers who have a strong will and ability to build a valuable chatbot for users.
 
-Any developers can send info following the [template](https://github.com/wechaty/wechaty/wiki/Request-For-Free-Token-Template) to dev@juzi.bot
-
-See more: <https://github.com/wechaty/wechaty/wiki/Support-Developers>
+See more: [Token Support](https://github.com/juzibot/Welcome/wiki/Support-Developers), [Everything about wechaty](https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty)
 
 ## Install
 
 ### 1. Init
 
-> check your `Node` version first
+#### 1.1. Check your `Node` version first
 
 ```js
 node --version // v10.16.0 (BTW v10.0.0 < version < v11.0.0 is better)
 ```
 
+> for windows system
+
+To make sure you could install `wechaty-puppet-padplus` successfully, you have to start PowerShell as Administrator and run these commands:
+
+```js
+npm install -g windows-build-tools
+
+npm install -g node-gyp
+```
+
+#### 1.2. Create your bot folder and do some init config
+
 ```js
 mkdir my-padplus-bot && cd my-padplus-bot
 
 npm init -y
+
+npm install ts-node typescript -g
+
+tsc --init
 ```
 
-### 2. Install the latest wechaty
+### 2. Install the bot dependency
 
 ```js
-npm install wechaty@next
-```
+npm install wechaty@latest
 
-### 3. Install wechaty-puppet-padplus
-
-> Notice: wechaty-puppet-padplus still in alpha test period, so we keep updating the package, you should install the latest packge by using `@latest` until we release the stable package.
-
-```js
 npm install wechaty-puppet-padplus@latest
 ```
 
-### 4. Install other dependency
+Or some new features developing version:
+
+```js
+npm install wechaty@next
+
+npm install wechaty-puppet-padplus@next
+```
+
+### 3. Install other dependency
 
 > There's no need to install `wechaty-puppet` in my-padplus-bot
 
 ```js
 npm install qrcode-terminal
+...
 ```
 
-### 5. Re-Install all related package
+### 4. Other Tips
 
-> If step 1~4 can not help you install successfully, please try this suggestion, otherwise just skip it please.
+> If step 1~3 can not help you install successfully, please try this suggestion, otherwise just skip it please.
 
 ```js
 rm -rf node_modules package-lock.json
 npm install
 ```
 
+> If you want to see detail logs about your bot, just run:
+
+```js
+BROLOG_LEVEL=silly ts-node index.ts
+```
+
+or
+
+```js
+BROLOG_LEVEL=silly node index.js
+```
+
 ## Example
 
 ```js
+// bot.js
 import { Wechaty       } from 'wechaty'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
 import QrcodeTerminal from 'qrcode-terminal'
@@ -84,7 +114,7 @@ const bot = new Wechaty({
 })
 
 bot
-  .on('scan', (qrcode, status) => {
+  .on('scan', (qrcode) => {
     QrcodeTerminal.generate(qrcode, {
       small: true
     })
@@ -95,7 +125,15 @@ bot
   .start()
 ```
 
-## Puppet Comparision
+## How to emit the message that you sent
+
+Please use environment variable `PADPLUS_REPLAY_MESSAGE` to activate this function.
+
+```shell
+PADPLUS_REPLAY_MESSAGE=true node index.js
+```
+
+## Puppet Comparison
 
 功能 | padpro | padplus | macpro
 ---|---|---|---
@@ -105,7 +143,7 @@ bot
  收发图文链接| ✅ |✅ |✅
  发送图片、文件| ✅ | ✅（对内容有大小限制，20M以下） |✅
  接收图片、文件| ✅ | ✅（对内容有大小限制，25M以下） |✅
- 发送视频| ✅ | ✅（视频以链接形式发送） | ✅
+ 发送视频| ✅ | ✅ | ✅
  接收视频| ✅ | ✅ | ✅
  发送小程序| ❌ | ❌ | ✅
  接收动图| ❌ | ✅ | ✅
