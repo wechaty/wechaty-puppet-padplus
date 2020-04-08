@@ -60,11 +60,11 @@
     "shx": "^0.3.1",
     "ts-protoc-gen": "^0.12.0",
     "tstest": "^0.4.1",
-    "wechaty-puppet": "^0.21.12"
+    "wechaty-puppet": "^0.23.9"
   },
   "peerDependencies": {
     "memory-card": "^0.6.13",
-    "wechaty-puppet": "^0.21.12"
+    "wechaty-puppet": "^0.23.9"
   },
   "dependencies": {
     "array-flatten": "^3.0.0",
