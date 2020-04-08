@@ -15,7 +15,7 @@ import {
   splitChineseNameList,
   splitEnglishNameList,
 }                         from './split-name'
-import { YOU } from 'wechaty-puppet'
+import { YOU, log } from 'wechaty-puppet'
 
 /**
  *
@@ -114,7 +114,7 @@ export async function roomJoinEventMessageParser (
     interface XmlSchema {
       sysmsg: {
         $: {
-          type: 'revokemsg' | 'delchatroommember' | 'multivoip' | 'banner',
+          type: string,
         },
         delchatroommember?: {
           plain : string,
@@ -130,18 +130,23 @@ export async function roomJoinEventMessageParser (
     }
     const jsonPayload: XmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as XmlSchema
     try {
-      if (jsonPayload.sysmsg.$.type === 'delchatroommember') {
-        content = jsonPayload.sysmsg.delchatroommember!.plain
-      } else if (jsonPayload.sysmsg.$.type === 'revokemsg') {
-        content = jsonPayload.sysmsg.revokemsg!.replacemsg
-      } else if (jsonPayload.sysmsg.$.type === 'multivoip') {
-        return null
-      } else if (jsonPayload.sysmsg.$.type === 'banner') {
-        return null
-      } else if (jsonPayload.sysmsg.$.type === 'roomtoolstips') {
-        return null
-      } else {
-        throw new Error('unknown jsonPayload sysmsg type: ' + jsonPayload.sysmsg.$.type)
+      const type = jsonPayload.sysmsg.$.type
+      switch (type) {
+        case 'delchatroommember':
+          content = jsonPayload.sysmsg.delchatroommember!.plain
+          break
+        case 'revokemsg':
+          content = jsonPayload.sysmsg.revokemsg!.replacemsg
+          break
+        case 'banner':
+        case 'multivoip':
+        case 'roomtoolstips':
+        case 'NewXmlDisableChatRoomAccessVerifyApplication':
+        case 'sysmsgtemplate':
+          return null
+        default:
+          log.warn('XmlSchema', `unkonw type: ${type} jsonPayload: ${JSON.stringify(jsonPayload)}`)
+          break
       }
     } catch (e) {
       console.error(e)

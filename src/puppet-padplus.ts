@@ -32,7 +32,7 @@ import {
   EventRoomInvitePayload,
   EventScanPayload,
   EventReadyPayload,
-  EventWatchdogPayload,
+  EventHeartbeatPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -123,10 +123,10 @@ export class PuppetPadplus extends Puppet {
     })
 
     manager.on('heartbeat', (data: string) => {
-      const eventWatchdogPayload: EventWatchdogPayload = {
+      const eventWatchdogPayload: EventHeartbeatPayload = {
         data,
       }
-      this.emit('watchdog', eventWatchdogPayload)
+      this.emit('heartbeat', eventWatchdogPayload)
     })
 
     manager.on('logout', (reason?: string) => this.logout(true, reason))
