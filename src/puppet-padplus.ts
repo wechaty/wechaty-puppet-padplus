@@ -32,7 +32,7 @@ import {
   EventRoomInvitePayload,
   EventScanPayload,
   EventReadyPayload,
-  EventWatchdogPayload,
+  EventHeartbeatPayload,
 }                           from 'wechaty-puppet'
 
 import {
@@ -123,10 +123,10 @@ export class PuppetPadplus extends Puppet {
     })
 
     manager.on('heartbeat', (data: string) => {
-      const eventWatchdogPayload: EventWatchdogPayload = {
+      const eventWatchdogPayload: EventHeartbeatPayload = {
         data,
       }
-      this.emit('watchdog', eventWatchdogPayload)
+      this.emit('heartbeat', eventWatchdogPayload)
     })
 
     manager.on('logout', (reason?: string) => this.logout(true, reason))
@@ -217,6 +217,9 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         this.emit('message', eventMessagePayload)
         break
+      case PadplusMessageType.App:
+        await this.onRoomInvitation(message)
+        break
       case PadplusMessageType.Contact:
       case PadplusMessageType.Image:
       case PadplusMessageType.Deleted:
@@ -227,9 +230,6 @@ export class PuppetPadplus extends Puppet {
       case PadplusMessageType.Video:
       case PadplusMessageType.Emoticon:
       case PadplusMessageType.Location:
-      case PadplusMessageType.App:
-        await this.onRoomInvitation(message)
-        break
       case PadplusMessageType.VoipMsg:
       case PadplusMessageType.StatusNotify:
       case PadplusMessageType.VoipNotify:
@@ -1358,7 +1358,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation(%s)', JSON.stringify(rawPayload))
+    log.verbose(PRE, 'onRoomInvitation()')
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
