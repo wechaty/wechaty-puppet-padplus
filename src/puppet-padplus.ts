@@ -1362,7 +1362,7 @@ export class PuppetPadplus extends Puppet {
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
     if (!this.manager) {
-      throw new Error('no padpro manager')
+      throw new Error('no manager')
     }
 
     if (roomInviteEvent) {
@@ -1382,7 +1382,7 @@ export class PuppetPadplus extends Puppet {
   public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
     log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
     if (!this.manager) {
-      throw new Error('no padpro manager')
+      throw new Error('no manager')
     }
     await this.manager.roomInvitationAccept(roomInvitationId)
   }
