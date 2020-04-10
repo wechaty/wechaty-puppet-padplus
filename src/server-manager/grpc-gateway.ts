@@ -18,6 +18,7 @@ import { EventEmitter } from 'events'
 import { GrpcEventEmitter } from './grpc-event-emitter'
 import { DebounceQueue, ThrottleQueue } from 'rx-queue'
 import { Subscription } from 'rxjs'
+import { ApiTypeDic, ResponseTypeDic } from '../utils/util'
 
 export interface ResultObject {
   code: number,
@@ -222,7 +223,7 @@ export class GrpcGateway extends EventEmitter {
   public async request (apiType: ApiType, uin: string, data?: any): Promise<StreamResponse | null> {
     const request = new RequestObject()
     const requestId = uuid()
-    log.silly(PRE, `GRPC Request ApiType: ${apiType}`)
+    log.silly(PRE, `GRPC Request ApiType: ${ApiTypeDic[apiType]}`)
     request.setToken(this.token)
     if (uin !== '') {
       request.setUin(uin)
@@ -433,7 +434,7 @@ export class GrpcGateway extends EventEmitter {
       const responseType = data.getResponsetype()
       if (responseType && !NO_LOG_API_LIST.includes(responseType)) {
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==`)
-        log.silly(PRE, `responseType: ${responseType}, data : ${data.getData()}`)
+        log.silly(PRE, `responseType: ${ResponseTypeDic[responseType]}, data : ${data.getData()}`)
         log.silly(`==P==A==D==P==L==U==S==<GRPC DATA>==P==A==D==P==L==U==S==\n`)
       }
       if (this.debounceQueue && this.throttleQueue) {
