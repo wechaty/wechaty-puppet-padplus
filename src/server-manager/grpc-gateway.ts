@@ -280,6 +280,7 @@ export class GrpcGateway extends EventEmitter {
         })
       }
     } catch (err) {
+      log.silly(PRE, `GRPC Request ApiType: ${ApiTypeDic[apiType]} catch error.`)
       await new Promise(resolve => setTimeout(resolve, 5000))
       this.isAlive = false
       this.client.close()
@@ -389,6 +390,7 @@ export class GrpcGateway extends EventEmitter {
       =====================================================================
       `)
       if (err.code === 14 || err.code === 13 || err.code === 2) {
+        log.silly(PRE, `err code is : ${err.code}, ready to reconnect`)
         await new Promise(resolve => setTimeout(resolve, 5000))
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {
@@ -447,7 +449,7 @@ export class GrpcGateway extends EventEmitter {
         try {
           message = JSON.parse(_data).message
         } catch (error) {
-          log.error(PRE, `can not parse data`)
+          log.error(PRE, `The grpc data is not JSON format, can not parse it.`)
         }
       }
       if (message && message === 'Another instance connected, disconnected the current one.') {

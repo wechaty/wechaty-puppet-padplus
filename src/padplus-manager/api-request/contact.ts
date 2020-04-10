@@ -184,7 +184,7 @@ export class PadplusContact {
       if (contactStr) {
         return JSON.parse(contactStr)
       } else {
-        throw new Error(`can not parse data`)
+        throw new Error(`searchContact can not parse data`)
       }
     } else {
       throw new Error(`can not get callback result of SEARCH_CONTACT`)
@@ -238,7 +238,7 @@ export class PadplusContact {
           throw new Error(`Can not get contact self qrcode buffer.`)
         }
       } else {
-        throw new Error(`can not parse data`)
+        throw new Error(`contactSelfQrcode can not parse data`)
       }
     } else {
       throw new Error(`can not get callback result of GET_CONTACT_SELF_QRCODE`)
@@ -263,7 +263,7 @@ export class PadplusContact {
           log.silly(PRE, `update info : ${JSON.stringify(setContactSelfInfoGrpcResponse.updateData)}`)
         }
       } else {
-        throw new Error(`can not parse data`)
+        throw new Error(`setContactSelfInfo can not parse data`)
       }
     } else {
       throw new Error(`can not get callback result of SET_CONTACT_SELF_INFO`)
@@ -287,7 +287,7 @@ export class PadplusContact {
           return getContactSelfInfoGrpcResponse
         }
       } else {
-        throw new Error(`can not parse data`)
+        throw new Error(`getContactSelfInfo can not parse data`)
       }
     } else {
       throw new Error(`can not get callback result of GET_CONTACT_SELF_INFO`)

@@ -84,7 +84,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async start (): Promise<void> {
-    log.silly(PRE, `start()`)
+    log.info(PRE, `start()`)
 
     this.state.on('pending')
 
@@ -103,8 +103,6 @@ export class PuppetPadplus extends Puppet {
     })
 
     manager.on('login', async (loginData: GrpcQrCodeLogin) => {
-      log.silly(PRE, `login success : ${util.inspect(loginData)}`)
-
       await super.login(loginData.userName)
       await this.manager.syncContacts()
     })
@@ -141,14 +139,14 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async stop (): Promise<void> {
-    log.verbose(PRE, 'stop()')
+    log.info(PRE, 'stop()')
 
     if (!this.manager) {
       throw new Error('no padplus manager')
     }
 
     if (this.state.off()) {
-      log.verbose(PRE, 'stop() is called on a OFF puppet. await ready(off) and return.')
+      log.silly(PRE, 'stop() is called on a OFF puppet. await ready(off) and return.')
       await this.state.ready('off')
       return
     }
@@ -159,14 +157,14 @@ export class PuppetPadplus extends Puppet {
     this.manager.removeAllListeners()
 
     this.state.off(true)
-    log.verbose(PRE, `stop() finished`)
+    log.silly(PRE, `stop() finished`)
   }
 
   public async logout (force?: boolean, reason?: string): Promise<void> {
-    log.verbose(PRE, `logout(${reason})`)
+    log.info(PRE, `logout(${reason})`)
 
     if (!this.id) {
-      log.verbose(PRE, 'logout() this.id not exist')
+      log.silly(PRE, 'logout() this.id not exist')
       return
     }
 
@@ -250,27 +248,30 @@ export class PuppetPadplus extends Puppet {
    *     TAG SECTION
    * ========================
    */
-
   public async tagContactAdd (name: string, contactId: string) : Promise<void> {
     log.silly(PRE, `tagContactAdd(${name}, ${contactId})`)
+
     const tagId = await this.manager.getOrCreateTag(name)
     return this.manager.addTag(tagId, contactId)
   }
 
   public async tagContactRemove (name: string, contactId: string) : Promise<void> {
-    log.silly(PRE, `tagContactRemove()`)
+    log.silly(PRE, `tagContactRemove(${name}, ${contactId})`)
+
     const tagId = await this.manager.getOrCreateTag(name)
     await this.manager.removeTag(tagId, contactId)
   }
 
   public async tagContactDelete (name: string) : Promise<void> {
-    log.silly(PRE, `tagContactDelete()`)
+    log.silly(PRE, `tagContactDelete(${name})`)
+
     const tagId = await this.manager.getOrCreateTag(name)
     await this.manager.deleteTag(tagId)
   }
 
   public async tagContactList (contactId?: string) : Promise<string[]> {
     log.silly(PRE, `tagContactList()`)
+
     const tags = await this.manager.tags(contactId)
     return tags.map(tag => tag.name)
   }
@@ -280,7 +281,6 @@ export class PuppetPadplus extends Puppet {
    *     CONTACT SECTION
    * ========================
    */
-
   public async contactSelfQRCode (): Promise<string> {
     log.silly(PRE, `contactSelfQrcode()`)
     return this.manager.contactSelfQrcode()
@@ -340,7 +340,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async contactList (): Promise<string[]> {
-    log.verbose(PRE, `contactList()`)
+    log.silly(PRE, `contactList()`)
     if (!this.manager) {
       throw new Error(`no padplus manager.`)
     }
@@ -360,7 +360,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async contactRawPayloadParser (rawPayload: PadplusContactPayload): Promise<ContactPayload> {
-    log.verbose(PRE, `contactRawPayloadParser()`)
+    log.silly(PRE, `contactRawPayloadParser()`)
 
     const payload = contactRawPayloadParser(rawPayload)
     return payload
@@ -371,9 +371,8 @@ export class PuppetPadplus extends Puppet {
    *    FRIENDSHIP SECTION
    * =========================
    */
-
   async onFriendshipEvent (message: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
+    log.silly(PRE, 'onPadplusMessageFriendshipEvent({id=%s})', message.msgId)
     /**
      * 1. Look for friendship confirm event
      */
@@ -410,7 +409,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async friendshipSearchPhone (phone: string): Promise<string | null> {
-    log.verbose(PRE, `friendshipSearchPhone(${phone})`)
+    log.silly(PRE, `friendshipSearchPhone(${phone})`)
 
     if (!this.manager) {
       throw new Error('no padplus manager')
@@ -437,7 +436,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async friendshipSearchWeixin (weixin: string): Promise<string | null> {
-    log.verbose(PRE, `friendshipSearchWeixin(${weixin})`)
+    log.silly(PRE, `friendshipSearchWeixin(${weixin})`)
 
     if (!this.manager) {
       throw new Error('no padplus manager')
@@ -458,7 +457,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async friendshipAdd (contactId: string, hello?: string): Promise<void> {
-    log.verbose(PRE, `friendshipAdd(${contactId}, ${hello})`)
+    log.silly(PRE, `friendshipAdd(${contactId}, ${hello})`)
 
     if (!this.manager) {
       throw new Error('no padplus manager')
@@ -472,7 +471,7 @@ export class PuppetPadplus extends Puppet {
      * If the contact is not stranger, than using WXSearchContact can get userName
      */
     if (searchContact.wxid !== '' && !isStrangerV1(searchContact.v1) && !isStrangerV2(searchContact.v2)) {
-      log.verbose(PRE, `friendshipAdd ${contactId} has been friend with bot, no need to send friend request!`)
+      log.silly(PRE, `friendshipAdd ${contactId} has been friend with bot, no need to send friend request!`)
       return
     }
 
@@ -505,7 +504,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async friendshipAccept (friendshipId: string): Promise<void> {
-    log.verbose(PRE, `friendshipAccept(${friendshipId})`)
+    log.silly(PRE, `friendshipAccept(${friendshipId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -521,7 +521,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {
-    log.silly(PRE, `friendshipId : ${util.inspect(friendshipId)}`)
+    log.silly(PRE, `friendshipRawPayload(${friendshipId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -533,7 +534,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async friendshipRawPayloadParser (rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
-    log.silly(PRE, `friendship rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `friendshipRawPayloadParser(${util.inspect(rawPayload)})`)
+
     return rawPayload as FriendshipPayload
   }
 
@@ -546,7 +548,7 @@ export class PuppetPadplus extends Puppet {
     friendshipId: string,
     friendshipPayload?: FriendshipPayload,
   ): Promise<void | FriendshipPayload> {
-    log.verbose('PadPlus', 'friendshipPayload(%s)',
+    log.silly('PadPlus', 'friendshipPayload(%s)',
       friendshipId,
       friendshipPayload
         ? ',' + JSON.stringify(friendshipPayload)
@@ -567,9 +569,9 @@ export class PuppetPadplus extends Puppet {
   }
 
   /**
-   * ========================
-   *     MESSAGE IMAGE SECTION
-   * ========================
+   * =========================
+   *   MESSAGE IMAGE SECTION
+   * =========================
    */
   public async messageImage (messageId: string, type: ImageType): Promise<FileBox> {
     log.silly(PRE, `messageImage(${messageId})`)
@@ -619,11 +621,12 @@ export class PuppetPadplus extends Puppet {
 
   /**
    * ========================
-   *      MESSAGE SECTION
+   *     MESSAGE SECTION
    * ========================
    */
   public async messageFile (messageId: string): Promise<FileBox> {
-    log.silly(PRE, `messageFile() messageId : ${util.inspect(messageId)}`)
+    log.silly(PRE, `messageFile(${messageId})`)
+
     const rawPayload = await this.messageRawPayload(messageId)
     const payload    = await this.messagePayload(messageId)
 
@@ -707,7 +710,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
-    log.silly(PRE, `messageUrl() messageId : ${util.inspect(messageId)}`)
+    log.silly(PRE, `messageUrl(${messageId})`)
+
     const rawPayload = await this.messageRawPayload(messageId)
     const payload = await this.messagePayload(messageId)
 
@@ -733,12 +737,13 @@ export class PuppetPadplus extends Puppet {
   }
 
   messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
-    log.silly(PRE, `messageMiniProgram() messageId : ${util.inspect(messageId)}`)
+    log.silly(PRE, `messageMiniProgram(${messageId})`)
+
     throw new Error('Method not implemented.')
   }
 
   public async messageForward (conversationId: string, messageId: string): Promise<void> {
-    log.silly(PRE, `messageForward() receiver: ${conversationId}, messageId : ${util.inspect(messageId)}`)
+    log.silly(PRE, `messageForward(${conversationId}, ${messageId})`)
 
     const payload = await this.messagePayload(messageId)
 
@@ -808,7 +813,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageSendText (conversationId: string, text: string, mentionIdList?: string[]): Promise<void | string> {
-    log.silly(PRE, 'messageSend(%s, %s)', JSON.stringify(conversationId), text)
+    log.silly(PRE, `messageSendText(${conversationId}, ${text})`)
 
     let msgData: GrpcResponseMessageData
     if (mentionIdList && mentionIdList.length > 0) {
@@ -868,7 +873,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
-    log.verbose(PRE, `messageSendVoice('%s', %s, %s)`, conversationId, url, fileSize)
+    log.silly(PRE, `messageSendVoice(${conversationId}, ${url}, ${fileSize})`)
 
     const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), conversationId, url, fileSize)
 
@@ -896,7 +901,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageSendContact (conversationId: string, contactId: string): Promise<void | string> {
-    log.verbose(PRE, `messageSend('%s', %s)`, conversationId, contactId)
+    log.silly(PRE, `messageSendContact(${conversationId}, ${contactId})`)
 
     let contact = await this.manager.getContact(contactId)
     if (contact) {
@@ -947,7 +952,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
-    log.verbose(PRE, 'messageSendFile(%s, %s)', conversationId, file)
+    log.silly(PRE, `messageSendFile(${conversationId})`)
 
     let fileUrl = ''
     if ((file as any).remoteUrl) {
@@ -956,8 +961,7 @@ export class PuppetPadplus extends Puppet {
       fileUrl = await this.manager.generatorFileUrl(file)
     }
     const fileSize = (await file.toBuffer()).length
-    log.silly(PRE, `file url : ${util.inspect(fileUrl)}`)
-    // this needs to run before mimeType is available
+    log.silly(PRE, `file url : ${fileUrl}`)
 
     const type = (file.mimeType && file.mimeType !== 'application/octet-stream')
       ? file.mimeType
@@ -1079,10 +1083,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageSendUrl (conversationId: string, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
-    log.verbose(PRE, `messageSendUrl(${conversationId})`,
-      conversationId,
-      JSON.stringify(urlLinkPayload),
-    )
+    log.silly(PRE, `messageSendUrl(${conversationId})`)
 
     const { url, title, thumbnailUrl, description } = urlLinkPayload
 
@@ -1117,7 +1118,7 @@ export class PuppetPadplus extends Puppet {
       }
       this.manager.cachePadplusMessagePayload.set(urlLinkData.msgId, msgPayload)
     }
-    log.silly(PRE, `urlLinkData : ${util.inspect(urlLinkData)}`)
+
     return urlLinkData.msgId
   }
 
@@ -1133,12 +1134,13 @@ export class PuppetPadplus extends Puppet {
   }
 
   messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
-    log.silly(PRE, `messageSendMiniProgram() receiver : ${conversationId}, miniProgramPayload: ${miniProgramPayload}`)
+    log.silly(PRE, `messageSendMiniProgram(${conversationId}, ${miniProgramPayload})`)
+
     throw new Error('Method not implemented.')
   }
 
   public async messageRawPayload (messageId: string): Promise<PadplusMessagePayload> {
-    log.verbose(PRE, 'messageRawPayload(%s)', messageId)
+    log.silly(PRE, `messageRawPayload(${messageId})`)
 
     if (!this.manager) {
       throw new Error(`no manager`)
@@ -1165,7 +1167,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageRawPayloadParser (rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
-    log.verbose(PRE, 'messageRawPayloadParser()')
+    log.silly(PRE, 'messageRawPayloadParser()')
 
     const payload = await messageRawPayloadParser(rawPayload)
 
@@ -1179,6 +1181,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async messageRecall (messageId: string): Promise<boolean> {
+    log.silly(PRE, `messageRecall(${messageId})`)
+
     const payload = await this.messagePayload(messageId)
     const receiverId = payload.roomId || payload.toId
     log.silly(PRE, 'messageRecall(%s, %s)', receiverId, messageId)
@@ -1192,18 +1196,20 @@ export class PuppetPadplus extends Puppet {
    *      ROOM SECTION
    * ========================
    */
+  protected async onRoomJoinEvent (message: PadplusMessagePayload): Promise<void> {
+    log.silly(PRE, `onRoomJoinEvent(${message.msgId})`)
 
-  async onRoomJoinEvent (message: PadplusMessagePayload): Promise<void> {
     const joinEvent = await roomJoinEventMessageParser(message)
+
     if (joinEvent) {
-      log.silly(PRE, `receive join event : ${util.inspect(joinEvent)}`)
+      log.silly(PRE, `receive room-join event : ${util.inspect(joinEvent)}`)
       const inviteeNameList = joinEvent.inviteeNameList
       const inviterName     = joinEvent.inviterName
       const roomId          = joinEvent.roomId
       const timestamp       = joinEvent.timestamp
 
       const inviteeIdList = await retry(async (retryException, attempt) => {
-        log.verbose(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
+        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
 
         const tryIdList = flatten(
           await Promise.all(
@@ -1221,15 +1227,13 @@ export class PuppetPadplus extends Puppet {
           throw new Error('no manager')
         }
 
-        /**
-         * Set Cache Dirty
-         */
+        // Set Cache Dirty
         await this.roomMemberPayloadDirty(roomId)
 
         return retryException(new Error('roomMemberSearch() not found'))
 
       }).catch(e => {
-        log.verbose(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
+        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
         return [] as string[]
       })
 
@@ -1243,14 +1247,12 @@ export class PuppetPadplus extends Puppet {
           throw new Error(`can not get room member`)
         }
       } else if (inviterIdList.length > 1) {
-        log.verbose(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+        log.silly(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
       }
 
       const inviterId = inviterIdList[0]
 
-      /**
-       * Set Cache Dirty
-       */
+      // Set Cache Dirty
       await this.roomMemberPayloadDirty(roomId)
       await this.roomPayloadDirty(roomId)
 
@@ -1264,13 +1266,13 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  async onRoomLeaveEvent (message: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomLeaveEvent({id=%s})', message.msgId)
+  protected async onRoomLeaveEvent (message: PadplusMessagePayload): Promise<void> {
+    log.silly(PRE, `onRoomLeaveEvent(${message.msgId})`)
 
     const leaveEvent = roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
-      log.silly(PRE, `receive remove event : ${util.inspect(leaveEvent)}`)
+      log.silly(PRE, `receive room-leave event : ${util.inspect(leaveEvent)}`)
       const leaverNameList = leaveEvent.leaverNameList
       const removerName    = leaveEvent.removerName
       const roomId         = leaveEvent.roomId
@@ -1287,7 +1289,7 @@ export class PuppetPadplus extends Puppet {
       if (removerIdList.length < 1) {
         throw new Error('no removerId found')
       } else if (removerIdList.length > 1) {
-        log.verbose(PRE, 'onPadplusMessageRoomEventLeave(): removerId found more than 1, use the first one.')
+        log.silly(PRE, 'onPadplusMessageRoomEventLeave(): removerId found more than 1, use the first one.')
       }
       const removerId = removerIdList[0]
 
@@ -1295,14 +1297,6 @@ export class PuppetPadplus extends Puppet {
         throw new Error('no padplusManager')
       }
 
-      /**
-       * // Set Cache Dirty
-       *
-       * Huan(202001): I think where we should comment out is the following two lines
-       *  See: https://github.com/wechaty/wechaty/pull/1833
-       */
-      // await this.roomMemberPayloadDirty(roomId)
-      // await this.roomPayloadDirty(roomId)
       const eventRoomLeavePayload: EventRoomLeavePayload = {
         removeeIdList: leaverIdList,
         removerId,
@@ -1313,13 +1307,13 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  async onRoomTopicEvent (message: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onPadplusMessageRoomEventTopic({id=%s})', message.msgId)
+  protected async onRoomTopicEvent (message: PadplusMessagePayload): Promise<void> {
+    log.silly(PRE, `onRoomTopicEvent(${message.msgId})`)
 
     const topicEvent = roomTopicEventMessageParser(message)
 
     if (topicEvent) {
-      log.silly(PRE, `receive topic event : ${util.inspect(topicEvent)}`)
+      log.silly(PRE, `receive room-topic event : ${util.inspect(topicEvent)}`)
       const changerName = topicEvent.changerName
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
@@ -1332,16 +1326,15 @@ export class PuppetPadplus extends Puppet {
       if (changerIdList.length < 1) {
         throw new Error('no changerId found')
       } else if (changerIdList.length > 1) {
-        log.verbose(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+        log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
       }
       const changerId = changerIdList[0]
 
       if (!this.manager) {
         throw new Error('no padplusManager')
       }
-      /**
-       * Set Cache Dirty
-       */
+
+      // Set Cache Dirty
       await this.roomPayloadDirty(roomId)
       if (this.manager && this.manager.cacheManager) {
         await this.manager.cacheManager.deleteRoom(roomId)
@@ -1358,14 +1351,14 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async onRoomInvitation (rawPayload: PadplusMessagePayload): Promise<void> {
-    log.verbose(PRE, 'onRoomInvitation()')
+    log.silly(PRE, 'onRoomInvitation()')
+
     const roomInviteEvent = await roomInviteEventMessageParser(rawPayload)
 
-    if (!this.manager) {
-      throw new Error('no padpro manager')
-    }
-
     if (roomInviteEvent) {
+      if (!this.manager) {
+        throw new Error('no manager')
+      }
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
       const eventRoomInvitePayload: EventRoomInvitePayload = {
         roomInvitationId: roomInviteEvent.msgId,
@@ -1380,15 +1373,17 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async roomInvitationAccept (roomInvitationId: string): Promise<void> {
-    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
+    log.silly(PRE, `roomInvitationAccept(${roomInvitationId})`)
+
     if (!this.manager) {
-      throw new Error('no padpro manager')
+      throw new Error('no manager')
     }
     await this.manager.roomInvitationAccept(roomInvitationId)
   }
 
   public async roomInvitationRawPayload (roomInvitationId: string): Promise<PadplusRoomInvitationPayload> {
-    log.silly(PRE, `roomInvitationId : ${util.inspect(roomInvitationId)}`)
+    log.silly(PRE, `roomInvitationRawPayload(${roomInvitationId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1396,8 +1391,9 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  protected async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
-    log.silly(PRE, `room invitation rawPayload : ${util.inspect(rawPayload)}`)
+  public async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
+    log.silly(PRE, `roomInvitationRawPayloadParser()`)
+
     const payload: RoomInvitationPayload = {
       avatar: rawPayload.thumbUrl,
       id: rawPayload.id,
@@ -1412,16 +1408,9 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  public async roomAdd (roomId: string, contactId: string): Promise<void> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}, contactId: ${contactId}`)
-    if (!this.manager) {
-      throw new Error(`no manager.`)
-    }
-    await this.manager.roomAddMember(roomId, contactId)
-  }
-
   public async roomAvatar (roomId: string): Promise<FileBox> {
-    log.silly(PRE, `roomAvatar(roomId : ${util.inspect(roomId)})`)
+    log.silly(PRE, `roomAvatar(${roomId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1435,7 +1424,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   public async roomCreate (contactIdList: string[], topic?: string | undefined): Promise<string> {
-    log.silly(PRE, `topic : ${topic}, contactIdList: ${contactIdList.join(',')}`)
+    log.silly(PRE, `roomCreate(${contactIdList}, ${topic})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1443,19 +1433,29 @@ export class PuppetPadplus extends Puppet {
     return result
   }
 
+  public async roomAdd (roomId: string, contactId: string): Promise<void> {
+    log.silly(PRE, `roomAdd(${roomId}, ${contactId})`)
+
+    if (!this.manager) {
+      throw new Error(`no manager.`)
+    }
+    await this.manager.roomAddMember(roomId, contactId)
+  }
+
   public async roomDel (roomId: string, contactId: string): Promise<void> {
-    log.verbose(PRE, `roomDel(${roomId}, ${contactId})`)
+    log.silly(PRE, `roomDel(${roomId}, ${contactId})`)
 
     const memberIdList = await this.roomMemberList(roomId)
     if (memberIdList.includes(contactId)) {
       await this.manager.deleteRoomMember(roomId, contactId)
     } else {
-      log.verbose(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+      log.silly(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
     }
   }
 
   public async roomQuit (roomId: string): Promise<void> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomQuit(${roomId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1466,7 +1466,8 @@ export class PuppetPadplus extends Puppet {
   public async roomTopic (roomId: string, topic: string): Promise<void>
   public async roomTopic (roomId: string, topic?: string | undefined): Promise<string | void>
   public async roomTopic (roomId: string, topic?: any): Promise<string | void> {
-    log.silly(PRE, `roomId : ${roomId}, topic: ${topic}`)
+    log.silly(PRE, `roomTopic(${roomId}, ${topic})`)
+
     if (typeof topic === 'undefined') {
       const room = await this.roomPayload(roomId)
       return room && (room.topic || '')
@@ -1481,7 +1482,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   async roomQRCode (roomId: string): Promise<string> {
-    log.silly(PRE, `roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomQRCode(${roomId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1489,16 +1491,17 @@ export class PuppetPadplus extends Puppet {
   }
 
   async roomList (): Promise<string[]> {
-    log.verbose(PRE, `roomList()`)
+    log.silly(PRE, `roomList()`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const roomIds = await this.manager.getRoomIdList()
-    return roomIds
+    return this.manager.getRoomIdList()
   }
 
   async roomMemberList (roomId: string): Promise<string[]> {
-    log.silly(PRE, `roomMemberList(), roomId : ${util.inspect(roomId)}`)
+    log.silly(PRE, `roomMemberList(${roomId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1507,19 +1510,22 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomRawPayload (roomId: string): Promise<PadplusRoomPayload> {
-    log.silly(PRE, `roomRawPayload(), roomId : ${roomId}`)
+    log.silly(PRE, `roomRawPayload(${roomId})`)
+
     const rawRoom = await this.manager.getRoomInfo(roomId)
     return rawRoom
   }
 
   protected async roomRawPayloadParser (rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
     log.silly(PRE, `roomRawPayloadParser()`)
+
     const room = roomRawPayloadParser(rawPayload)
     return room
   }
 
   protected async roomMemberRawPayload (roomId: string, contactId: string): Promise<PadplusRoomMemberPayload> {
-    log.silly(PRE, `roomId : ${roomId}, contactId: ${contactId}`)
+    log.silly(PRE, `roomMemberRawPayload(${roomId}, ${contactId})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1532,7 +1538,8 @@ export class PuppetPadplus extends Puppet {
   }
 
   protected async roomMemberRawPayloadParser (rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
-    log.silly(PRE, `room member rawPayload : ${util.inspect(rawPayload)}`)
+    log.silly(PRE, `roomMemberRawPayloadParser()`)
+
     const member = convertToPuppetRoomMember(rawPayload)
     return member
   }
@@ -1540,7 +1547,8 @@ export class PuppetPadplus extends Puppet {
   roomAnnounce (roomId: string): Promise<string>
   roomAnnounce (roomId: string, text: string): Promise<void>
   async roomAnnounce (roomId: any, text?: any): Promise<string | void> {
-    log.silly(PRE, `roomId : ${roomId}, text: ${typeof text === 'undefined' ? 'text is undefined' : text}`)
+    log.silly(PRE, `roomAnnounce(${roomId}, ${typeof text === 'undefined' ? 'text is undefined' : text})`)
+
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
@@ -1575,7 +1583,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   public ding (data?: string): void {
-    log.silly(PRE, 'ding(%s)', data || '')
+    log.silly(PRE, `ding(${data})`)
     const eventDongPayload: EventDongPayload = {
       data: data ? data! : 'ding-dong',
     }
