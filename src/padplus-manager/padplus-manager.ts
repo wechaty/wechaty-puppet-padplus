@@ -9,7 +9,7 @@ import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload, EventRoomLeavePayload } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -71,7 +71,7 @@ export interface ManagerOptions {
 
 const PRE = 'PadplusManager'
 
-export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset' | 'heartbeat' | 'EXPIRED_TOKEN' | 'INVALID_TOKEN'
+export type PadplusManagerEvent = 'error' | 'scan' | 'login' | 'logout' | 'contact-list' | 'contact-modify' | 'contact-delete' | 'message' | 'room-member-list' | 'room-member-modify' | 'status-notify' | 'ready' | 'reset' | 'heartbeat' | 'EXPIRED_TOKEN' | 'INVALID_TOKEN' | 'room-leave'
 
 export class PadplusManager extends EventEmitter {
 
@@ -162,6 +162,7 @@ export class PadplusManager extends EventEmitter {
   public emit (event: 'contact-delete', data: string): boolean
   public emit (event: 'message', msg: PadplusMessagePayload): boolean
   public emit (event: 'room-member-list', data: string): boolean
+  public emit (event: 'room-leave', data: EventRoomLeavePayload): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
   public emit (event: 'ready'): boolean
@@ -186,6 +187,7 @@ export class PadplusManager extends EventEmitter {
   public on (event: 'reset', listener: ((this: PadplusManager, reason: string) => void)): this
   public on (event: 'heartbeat', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'error', listener: ((this: PadplusManager, error: Error) => void)): this
+  public on (event: 'room-leave', listener: ((this: PadplusManager, data: EventRoomLeavePayload) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -707,54 +709,63 @@ export class PadplusManager extends EventEmitter {
         case ResponseType.ROOM_MEMBER_LIST :
           const roomMembersStr = data.getData()
           if (roomMembersStr) {
-            if (this.cacheManager) {
-              const roomMemberList: GrpcRoomMemberList = JSON.parse(roomMembersStr)
-              const roomId = roomMemberList.roomId
-              const membersStr = roomMemberList.membersJson
-              const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
-              const members = roomMemberParser(membersList)
-              await this.cacheManager.setRoomMember(roomId, members)
-
-              await Promise.all(membersList.map(async member => {
-                if (!this.cacheManager) {
-                  throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
-                }
-                const contact = await this.cacheManager.getContact(member.UserName)
-                if (!contact) {
-                  const newContact: PadplusContactPayload = {
-                    alias: '',
-                    bigHeadUrl: member.HeadImgUrl,
-                    city: '',
-                    contactFlag: 0,
-                    contactType: 0,
-                    country: '',
-                    nickName: member.NickName,
-                    province: '',
-                    remark: member.RemarkName,
-                    sex: ContactGender.Unknown,
-                    signature: '',
-                    smallHeadUrl: member.HeadImgUrl,
-                    stranger: '',
-                    tagList: '',
-                    ticket: '',
-                    userName: member.UserName,
-                    verifyFlag: 0,
-                  }
-                  await this.cacheManager.setContact(newContact.userName, newContact)
-                } else {
-                  const newContact: PadplusContactPayload = Object.assign({}, contact, {
-                    bigHeadUrl: member.HeadImgUrl,
-                    nickName: member.NickName,
-                    smallHeadUrl: member.HeadImgUrl,
-                    userName: member.UserName,
-                  })
-                  await this.cacheManager.setContact(newContact.userName, newContact)
-                }
-                CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
-              }))
-            } else {
-              throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
+            if (!this.cacheManager) {
+              throw new Error('no manager')
             }
+            const roomMemberList: GrpcRoomMemberList = JSON.parse(roomMembersStr)
+            const roomId = roomMemberList.roomId
+            const membersStr = roomMemberList.membersJson
+            const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
+            if (!this.cacheManager) {
+              throw new Error(`no manager`)
+            }
+            const oldMembers = await this.cacheManager.getRoomMember(roomId)
+            if (!oldMembers) {
+              throw new Error(`no members of this room id : ${roomId}`)
+            }
+
+            const members = roomMemberParser(membersList)
+            await this.cacheManager.setRoomMember(roomId, members)
+
+            await Promise.all(membersList.map(async member => {
+              if (!this.cacheManager) {
+                throw new PadplusError(PadplusErrorType.NO_CACHE, 'roomMemberList')
+              }
+              const contact = await this.cacheManager.getContact(member.UserName)
+              if (!contact) {
+                const newContact: PadplusContactPayload = {
+                  alias: '',
+                  bigHeadUrl: member.HeadImgUrl,
+                  city: '',
+                  contactFlag: 0,
+                  contactType: 0,
+                  country: '',
+                  nickName: member.NickName,
+                  province: '',
+                  remark: member.RemarkName,
+                  sex: ContactGender.Unknown,
+                  signature: '',
+                  smallHeadUrl: member.HeadImgUrl,
+                  stranger: '',
+                  tagList: '',
+                  ticket: '',
+                  userName: member.UserName,
+                  verifyFlag: 0,
+                }
+                await this.cacheManager.setContact(newContact.userName, newContact)
+              } else {
+                const newContact: PadplusContactPayload = Object.assign({}, contact, {
+                  bigHeadUrl: member.HeadImgUrl,
+                  nickName: member.NickName,
+                  smallHeadUrl: member.HeadImgUrl,
+                  userName: member.UserName,
+                })
+                await this.cacheManager.setContact(newContact.userName, newContact)
+              }
+              CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
+            }))
+
+            await this.generateLeaveEvent(membersList, oldMembers, roomId)
           } else {
             throw new Error(`can not get receive room member data from server`)
           }
@@ -1467,5 +1478,33 @@ export class PadplusManager extends EventEmitter {
     return isSuccess
   }
 
+  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<void> {
+    log.silly(PRE, `generateLeaveEvent()`)
+
+    const newLength = newMembers.length
+
+    const oldLength = Object.keys(oldMembers).length
+    if (newLength < oldLength) {
+      log.silly(PRE, `prepare leave event`)
+      newMembers.map(member => {
+        const exist = oldMembers[member.UserName]
+        if (exist) {
+          delete oldMembers[member.UserName]
+        }
+      })
+      if (Object.values(oldMembers).length === 1) {
+
+        const eventRoomLeavePayload: EventRoomLeavePayload = {
+          removeeIdList : Object.keys(oldMembers),
+          removerId: Object.keys(oldMembers)[0],
+          roomId,
+          timestamp: Date.now(),
+        }
+        this.emit('room-leave', eventRoomLeavePayload)
+      }
+    }
+  }
+
 }
+
 export default PadplusManager
