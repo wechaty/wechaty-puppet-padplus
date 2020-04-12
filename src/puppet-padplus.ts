@@ -63,6 +63,7 @@ const PRE = 'PuppetPadplus'
 export class PuppetPadplus extends Puppet {
 
   private manager: PadplusManager
+  private leaveEventKey: string = ''
 
   constructor (
     public options: PuppetOptions = {},
@@ -128,6 +129,10 @@ export class PuppetPadplus extends Puppet {
     })
 
     manager.on('logout', (reason?: string) => this.logout(true, reason))
+
+    manager.on('room-leave', (data: EventRoomLeavePayload) => {
+      this.deduplicateRoomLeaveEvent(data)
+    })
 
     manager.on('error', (err: Error) => {
       const eventErrorPayload: EventErrorPayload = {
@@ -1303,7 +1308,7 @@ export class PuppetPadplus extends Puppet {
         roomId,
         timestamp,
       }
-      this.emit('room-leave', eventRoomLeavePayload)
+      this.deduplicateRoomLeaveEvent(eventRoomLeavePayload)
     }
   }
 
@@ -1588,6 +1593,20 @@ export class PuppetPadplus extends Puppet {
       data: data ? data! : 'ding-dong',
     }
     this.emit('dong', eventDongPayload)
+  }
+
+  private deduplicateRoomLeaveEvent (data: EventRoomLeavePayload) {
+    const key = `${data.removeeIdList[0]}_${data.roomId}`
+    if (data.removerId !== data.removeeIdList[0]) {
+      this.leaveEventKey = key
+      this.emit('room-leave', data)
+    } else {
+      if (this.leaveEventKey && this.leaveEventKey === key) {
+        this.leaveEventKey = ''
+      } else {
+        this.emit('room-leave', data)
+      }
+    }
   }
 
 }
