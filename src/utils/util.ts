@@ -1,4 +1,5 @@
 import { log } from '../config'
+import { ApiType, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
 
 const phonesRegArray = [{
   location: 'ar_DZ',
@@ -117,4 +118,74 @@ export default function checkNumber (phone: string): boolean {
     return phone.match(reg.regex) !== null
   })
 
+}
+
+export const ApiTypeDic = {
+  [ApiType.ACCEPT_CONTACT]: 'ACCEPT_CONTACT',
+  [ApiType.ACCEPT_ROOM_INVITATION]: 'ACCEPT_ROOM_INVITATION',
+  [ApiType.ADD_CHATROOM_CONTACT]: 'ADD_CHATROOM_CONTACT',
+  [ApiType.ADD_CONTACT]: 'ADD_CONTACT',
+  [ApiType.ADD_TAG]: 'ADD_TAG',
+  [ApiType.CLOSE]: 'CLOSE',
+  [ApiType.CONTACT_ALIAS]: 'CONTACT_ALIAS',
+  [ApiType.CREATE_ROOM]: 'CREATE_ROOM',
+  [ApiType.CREATE_TAG]: 'CREATE_TAG',
+  [ApiType.DELETE_TAG]: 'DELETE_TAG',
+  [ApiType.GET_ALL_TAG]: 'GET_ALL_TAG',
+  [ApiType.GET_CONTACT]: 'GET_CONTACT',
+  [ApiType.GET_CONTACT_SELF_INFO]: 'GET_CONTACT_SELF_INFO',
+  [ApiType.GET_CONTACT_SELF_QRCODE]: 'GET_CONTACT_SELF_QRCODE',
+  [ApiType.GET_MESSAGE_MEDIA]: 'GET_MESSAGE_MEDIA',
+  [ApiType.GET_QRCODE]: 'GET_QRCODE',
+  [ApiType.GET_ROOM_ANNOUNCEMENT]: 'GET_ROOM_ANNOUNCEMENT',
+  [ApiType.GET_ROOM_MEMBER]: 'GET_ROOM_MEMBER',
+  [ApiType.GET_ROOM_QRCODE]: 'GET_ROOM_QRCODE',
+  [ApiType.HEARTBEAT]: 'HEARTBEAT',
+  [ApiType.INIT]: 'INIT',
+  [ApiType.LOGIN_DEVICE]: 'LOGIN_DEVICE',
+  [ApiType.LOGOUT]: 'LOGOUT',
+  [ApiType.MODIFY_TAG]: 'MODIFY_TAG',
+  [ApiType.RECONNECT]: 'RECONNECT',
+  [ApiType.REVOKE_MESSAGE]: 'REVOKE_MESSAGE',
+  [ApiType.ROOM_OPERATION]: 'ROOM_OPERATION',
+  [ApiType.SEARCH_CONTACT]: 'SEARCH_CONTACT',
+  [ApiType.SEND_FILE]: 'SEND_FILE',
+  [ApiType.SEND_MESSAGE]: 'SEND_MESSAGE',
+  [ApiType.SET_CONTACT_SELF_INFO]: 'SET_CONTACT_SELF_INFO',
+  [ApiType.SET_ROOM_ANNOUNCEMENT]: 'SET_ROOM_ANNOUNCEMENT',
+  [ApiType.STOP]: 'STOP',
+  [ApiType.SYNC_CONTACT]: 'SYNC_CONTACT',
+}
+
+export const ResponseTypeDic = {
+  [ResponseType.REQUEST_RESPONSE]: 'REQUEST_RESPONSE',
+  [ResponseType.DISCONNECT]: 'DISCONNECT',
+  [ResponseType.INVALID_TOKEN]: 'INVALID_TOKEN',
+  [ResponseType.LOGIN_DEVICE_INFO]: 'LOGIN_DEVICE_INFO',
+  [ResponseType.LOGIN_QRCODE]: 'LOGIN_QRCODE',
+  [ResponseType.QRCODE_SCAN]: 'QRCODE_SCAN',
+  [ResponseType.ACCOUNT_LOGIN]: 'ACCOUNT_LOGIN',
+  [ResponseType.ACCOUNT_LOGOUT]: 'ACCOUNT_LOGOUT',
+  [ResponseType.QRCODE_LOGIN]: 'QRCODE_LOGIN',
+  [ResponseType.AUTO_LOGIN]: 'AUTO_LOGIN',
+  [ResponseType.CONTACT_SELF_INFO_GET]: 'CONTACT_SELF_INFO_GET',
+  [ResponseType.CONTACT_SELF_INFO_SET]: 'CONTACT_SELF_INFO_SET',
+  [ResponseType.CONTACT_SELF_QRCODE_GET]: 'CONTACT_SELF_QRCODE_GET',
+  [ResponseType.CONTACT_LIST]: 'CONTACT_LIST',
+  [ResponseType.CONTACT_MODIFY]: 'CONTACT_MODIFY',
+  [ResponseType.CONTACT_DELETE]: 'CONTACT_DELETE',
+  [ResponseType.ROOM_MEMBER_LIST]: 'ROOM_MEMBER_LIST',
+  [ResponseType.ROOM_MEMBER_MODIFY]: 'ROOM_MEMBER_MODIFY',
+  [ResponseType.CONTACT_SEARCH]: 'CONTACT_SEARCH',
+  [ResponseType.CONTACT_ADD]: 'CONTACT_ADD',
+  [ResponseType.ROOM_QRCODE]: 'ROOM_QRCODE',
+  [ResponseType.MESSAGE_RECEIVE]: 'MESSAGE_RECEIVE',
+  [ResponseType.STATUS_NOTIFY]: 'STATUS_NOTIFY',
+  [ResponseType.MESSAGE_MEDIA_SRC]: 'MESSAGE_MEDIA_SRC',
+  [ResponseType.MESSAGE_REVOKE]: 'MESSAGE_REVOKE',
+  [ResponseType.TAG_LIST]: 'TAG_LIST',
+  [ResponseType.TAG_CREATE]: 'TAG_CREATE',
+  [ResponseType.TAG_ADD]: 'TAG_ADD',
+  [ResponseType.TAG_MODIFY]: 'TAG_MODIFY',
+  [ResponseType.TAG_DELETE]: 'TAG_DELETE',
 }
