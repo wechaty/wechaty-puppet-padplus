@@ -719,10 +719,12 @@ export class PadplusManager extends EventEmitter {
               throw new Error(`no manager`)
             }
             const oldMembers = await this.cacheManager.getRoomMember(roomId)
-            if (!oldMembers) {
-              throw new Error(`no members of this room id : ${roomId}`)
+            if (oldMembers) {
+              const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
+              if (eventRoomLeavePayload) {
+                this.emit('room-leave', eventRoomLeavePayload)
+              }
             }
-
             const members = roomMemberParser(membersList)
             await this.cacheManager.setRoomMember(roomId, members)
 
@@ -763,8 +765,6 @@ export class PadplusManager extends EventEmitter {
               }
               CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
             }))
-
-            await this.generateLeaveEvent(membersList, oldMembers, roomId)
           } else {
             throw new Error(`can not get receive room member data from server`)
           }
@@ -1505,31 +1505,32 @@ export class PadplusManager extends EventEmitter {
     return isSuccess
   }
 
-  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<void> {
+  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<EventRoomLeavePayload | undefined> {
     log.silly(PRE, `generateLeaveEvent()`)
 
     const newLength = newMembers.length
 
     const oldLength = Object.keys(oldMembers).length
-    if (newLength < oldLength) {
-      log.silly(PRE, `prepare leave event`)
-      newMembers.map(member => {
-        const exist = oldMembers[member.UserName]
-        if (exist) {
-          delete oldMembers[member.UserName]
-        }
-      })
-      if (Object.values(oldMembers).length === 1) {
-
-        const eventRoomLeavePayload: EventRoomLeavePayload = {
-          removeeIdList : Object.keys(oldMembers),
-          removerId: Object.keys(oldMembers)[0],
-          roomId,
-          timestamp: Date.now(),
-        }
-        this.emit('room-leave', eventRoomLeavePayload)
-      }
+    if (newLength > oldLength) {
+      return undefined
     }
+
+    newMembers.map(member => {
+      const exist = oldMembers[member.UserName]
+      if (exist) {
+        delete oldMembers[member.UserName]
+      }
+    })
+    if (Object.values(oldMembers).length !== 1) {
+      return undefined
+    }
+    const eventRoomLeavePayload: EventRoomLeavePayload = {
+      removeeIdList : Object.keys(oldMembers),
+      removerId: Object.keys(oldMembers)[0],
+      roomId,
+      timestamp: Date.now(),
+    }
+    return eventRoomLeavePayload
   }
 
 }
