@@ -283,7 +283,6 @@ export class GrpcGateway extends EventEmitter {
       log.silly(PRE, `GRPC Request ApiType: ${ApiTypeDic[apiType]} catch error.`)
       await new Promise(resolve => setTimeout(resolve, 5000))
       this.isAlive = false
-      this.client.close()
       Object.values(this.eventEmitterMap).map(emitter => {
         emitter.emit('reconnect')
       })
