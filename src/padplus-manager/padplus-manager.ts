@@ -719,12 +719,11 @@ export class PadplusManager extends EventEmitter {
               throw new Error(`no manager`)
             }
             const oldMembers = await this.cacheManager.getRoomMember(roomId)
-            if (!oldMembers) {
-              throw new Error(`no members of this room id : ${roomId}`)
-            }
-            const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
-            if (eventRoomLeavePayload) {
-              this.emit('room-leave', eventRoomLeavePayload)
+            if (oldMembers) {
+              const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
+              if (eventRoomLeavePayload) {
+                this.emit('room-leave', eventRoomLeavePayload)
+              }
             }
             const members = roomMemberParser(membersList)
             await this.cacheManager.setRoomMember(roomId, members)
