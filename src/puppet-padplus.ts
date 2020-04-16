@@ -165,8 +165,16 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `stop() finished`)
   }
 
+  /**
+   * Three type for logout case:
+   *   - case 1: logout by WeChat App, need reset
+   *   - case 2: logout by call API, need reset
+   *   - case 3: logout by call reset, no need reset
+   * @param force case 1: true, case 2: false, case 3: true
+   * @param reason
+   */
   public async logout (force?: boolean, reason?: string): Promise<void> {
-    log.info(PRE, `logout(${reason})`)
+    log.info(PRE, `logout(${force}, ${reason})`)
 
     if (!this.id) {
       log.silly(PRE, 'logout() this.id not exist')
@@ -175,7 +183,7 @@ export class PuppetPadplus extends Puppet {
 
     if (!force) {
       await this.manager.logout(this.selfId())
-      reason = '主动下线成功'
+      reason = 'logout by call logout() method'
     }
     const eventLogoutPayload: EventLogoutPayload = {
       contactId: this.selfId(),
@@ -183,10 +191,13 @@ export class PuppetPadplus extends Puppet {
     }
     this.emit('logout', eventLogoutPayload)
     this.id = undefined
-    const eventResetPayload: EventResetPayload = {
-      data: 'padplus reset',
+
+    if (reason !== 'logout in wechaty') {
+      const eventResetPayload: EventResetPayload = {
+        data: 'padplus reset',
+      }
+      this.emit('reset', eventResetPayload)
     }
-    this.emit('reset', eventResetPayload)
   }
 
   async onMessage (message: PadplusMessagePayload) {

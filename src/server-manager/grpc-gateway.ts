@@ -82,6 +82,8 @@ export class GrpcGateway extends EventEmitter {
     endpoint: string,
     name: string,
   ): Promise<GrpcEventEmitter> {
+    log.silly(PRE, `init()`)
+
     if (!this._instance) {
       const instance = new GrpcGateway(token, endpoint)
       await instance.initSelf()
@@ -141,6 +143,8 @@ export class GrpcGateway extends EventEmitter {
   }
 
   private async initSelf () {
+    log.silly(PRE, `initSelf()`)
+
     this.debounceQueue = new DebounceQueue(30 * 1000)
     this.debounceQueueSubscription = this.debounceQueue.subscribe(async () => {
       try {
@@ -355,6 +359,7 @@ export class GrpcGateway extends EventEmitter {
 
   public async initGrpcGateway () {
     log.silly(PRE, `initGrpcGateway()`)
+
     const initConfig = new InitConfig()
     initConfig.setToken(this.token)
 
