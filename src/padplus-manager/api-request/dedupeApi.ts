@@ -1,6 +1,7 @@
 import { DelayQueueExecutor } from 'rx-queue'
 import { log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
+import { ApiTypeDic } from '../../utils/util'
 
 // Expire time for api call data that persist in the pool
 // Number of seconds
@@ -56,7 +57,7 @@ export class DedupeApi {
     forceCall?: boolean,
   ): Promise<any> {
     if (DEDUPE_API.indexOf(apiName) === -1) {
-      log.silly(PRE, `dedupe() no need to dedupe api ${apiName}.`)
+      log.silly(PRE, `dedupe() no need to dedupe api ${ApiTypeDic[apiName]}.`)
       return func(apiName, uin, params)
     }
     log.silly(PRE, `dedupeApi(${apiName}, ${uin}, ${params ? JSON.stringify(params) : ''})`)
