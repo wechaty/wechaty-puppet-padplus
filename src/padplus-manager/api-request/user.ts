@@ -24,7 +24,8 @@ export class PadplusUser {
       return false
     }
     const resultStr = res.getData()
-    if (resultStr !== 'success') {
+    const result = JSON.parse(resultStr)
+    if (result && result.message !== 'success') {
       return false
     }
     log.silly(PRE, `init success`)
