@@ -189,9 +189,9 @@ export class PuppetPadplus extends Puppet {
       contactId: this.selfId(),
       data: reason ? reason! : 'unknow reason',
     }
+    this.emit('logout', eventLogoutPayload)
     this.id = undefined
 
-    this.emit('logout', eventLogoutPayload)
     if (reason !== 'logout in wechaty') {
       const eventResetPayload: EventResetPayload = {
         data: 'padplus reset',
