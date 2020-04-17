@@ -63,6 +63,12 @@ export const COMPACT_CACHE_FIRST_START = 1000 * 60 * 15
 
 export const COMPACT_CACHE_INTERVAL = 1000 * 60 * 60
 
+const logLevel = process.env.PADPLUS_LOG || process.env.WECHATY_LOG
+if (logLevel) {
+  log.level(logLevel.toLowerCase() as any)
+  log.silly('Config', 'PADPLUS_LOG set level to %s', logLevel)
+}
+
 export {
   log,
 }
