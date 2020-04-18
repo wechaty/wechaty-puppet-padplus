@@ -73,7 +73,7 @@
     "brolog": "^1.6.5",
     "ffmpeg-extract-frames": "^2.0.2",
     "ffmpeg-probe": "^1.0.6",
-    "flash-store": "^0.14.5",
+    "flash-store": "^0.18.32",
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",
     "grpc": "^1.22.0",
