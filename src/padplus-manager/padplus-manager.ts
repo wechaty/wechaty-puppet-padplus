@@ -899,6 +899,19 @@ export class PadplusManager extends EventEmitter {
     return messageResponse
   }
 
+  public async sendMiniProgram (selfId: string, receiver: string, content: string) {
+    log.silly(PRE, `sendMiniProgram(${selfId}, ${receiver}, ${content})`)
+
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, content, PadplusMessageType.App)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
+  }
+
   public async sendVoice (selfId: string, receiver: string, url: string, fileSize: string) {
     log.silly(PRE, `sendVoice(${selfId}, ${receiver}, ${url}, ${fileSize})`)
 
