@@ -265,7 +265,7 @@ export class GrpcGateway extends EventEmitter {
             if (apiType !== ApiType.HEARTBEAT) {
               await this.checkTimeout(uin)
             }
-            log.error(PRE, `ApiType: ${apiType} request timeout, traceId: ${traceId}`)
+            log.error(PRE, `ApiType: ${ApiTypeDic[apiType]} request timeout, traceId: ${traceId}`)
             resolve(null)
           }, timeoutMs)
           CallbackPool.Instance.pushCallbackToPool(traceId, (data: StreamResponse) => {
