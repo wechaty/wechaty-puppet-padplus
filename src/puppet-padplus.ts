@@ -57,6 +57,7 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 import checkNumber from './utils/util'
+import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
 
 const PRE = 'PuppetPadplus'
 
@@ -752,10 +753,16 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`not implement`)
   }
 
-  messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
+  public async messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
     log.silly(PRE, `messageMiniProgram(${messageId})`)
 
-    throw new Error('Method not implemented.')
+    const messageRawPayload = await this.messageRawPayload(messageId)
+    log.silly(`messageRawPayload : ${messageRawPayload.content}`)
+    const miniProgramPayload = await miniProgramMessageParser(messageRawPayload)
+    if (!miniProgramPayload) {
+      throw new Error(`Can not abstract mini program data from the wrong xml structure.`)
+    }
+    return miniProgramPayload
   }
 
   public async messageForward (conversationId: string, messageId: string): Promise<void> {
