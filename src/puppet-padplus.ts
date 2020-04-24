@@ -1000,9 +1000,9 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.selfId(), conversationId, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayImageMsg(picData.msgId, conversationId, decodeURIComponent(fileUrl))
+          this.replayImageMsg(picData.msgId, conversationId, fileUrl)
         }
         if (picData.success) {
           const msgPayload: PadplusMessagePayload = {
