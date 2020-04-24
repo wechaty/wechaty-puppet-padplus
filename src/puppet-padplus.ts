@@ -758,7 +758,7 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `messageMiniProgram(${messageId})`)
 
     const messageRawPayload = await this.messageRawPayload(messageId)
-    log.silly(`messageRawPayload : ${messageRawPayload.content}`)
+
     const miniProgramPayload = await miniProgramMessageParser(messageRawPayload)
     if (!miniProgramPayload) {
       throw new Error(`Can not abstract mini program data from the wrong xml structure.`)
