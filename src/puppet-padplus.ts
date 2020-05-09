@@ -57,6 +57,8 @@ import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-pay
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
 import checkNumber from './utils/util'
+import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
+import { convertMiniProgramPayloadToParams, convertMiniProgramPayloadToMessage } from './convert-manager/message-convertor'
 
 const PRE = 'PuppetPadplus'
 
@@ -752,10 +754,16 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`not implement`)
   }
 
-  messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
+  public async messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
     log.silly(PRE, `messageMiniProgram(${messageId})`)
 
-    throw new Error('Method not implemented.')
+    const messageRawPayload = await this.messageRawPayload(messageId)
+
+    const miniProgramPayload = await miniProgramMessageParser(messageRawPayload)
+    if (!miniProgramPayload) {
+      throw new Error(`Can not abstract mini program data from the wrong xml structure.`)
+    }
+    return miniProgramPayload
   }
 
   public async messageForward (conversationId: string, messageId: string): Promise<void> {
@@ -992,9 +1000,9 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.selfId(), conversationId, decodeURIComponent(fileUrl), file.name, 'pic')
+        const picData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
-          this.replayImageMsg(picData.msgId, conversationId, decodeURIComponent(fileUrl))
+          this.replayImageMsg(picData.msgId, conversationId, fileUrl)
         }
         if (picData.success) {
           const msgPayload: PadplusMessagePayload = {
@@ -1149,10 +1157,24 @@ export class PuppetPadplus extends Puppet {
     this.emit('message', eventMessagePayload)
   }
 
-  messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
+  public async messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
     log.silly(PRE, `messageSendMiniProgram(${conversationId}, ${miniProgramPayload})`)
 
-    throw new Error('Method not implemented.')
+    if (!this.manager) {
+      throw new Error(`no manager`)
+    }
+    const content = convertMiniProgramPayloadToParams(miniProgramPayload)
+    const miniProgramData = await this.manager.sendMiniProgram(this.selfId(), conversationId, JSON.stringify(content))
+    if (PADPLUS_REPLAY_MESSAGE) {
+      this.replayUrlLinkMsg(miniProgramData.msgId, conversationId, JSON.stringify(content))
+    }
+    if (miniProgramData.success) {
+      const source = this.generateMsgSource()
+      const msgPayload = convertMiniProgramPayloadToMessage(this.selfId(), conversationId, source, content, miniProgramData)
+      this.manager.cachePadplusMessagePayload.set(miniProgramData.msgId, msgPayload)
+    }
+
+    return miniProgramData.msgId
   }
 
   public async messageRawPayload (messageId: string): Promise<PadplusMessagePayload> {

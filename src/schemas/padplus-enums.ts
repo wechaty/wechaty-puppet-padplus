@@ -110,6 +110,7 @@ export enum WechatAppMessageType {
   ChatHistory           = 19,
   MiniProgram           = 33,
   MiniProgramApp        = 36,  // this is forwardable mini program
+  GroupNote             = 53,
   Transfers             = 2000,
   RedEnvelopes          = 2001,
   ReaderType            = 100001,
