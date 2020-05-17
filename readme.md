@@ -20,7 +20,7 @@ See more: [Token Support](https://github.com/juzibot/Welcome/wiki/Support-Develo
 
 #### 1.1. Check your `Node` version first
 
-```js
+```shell
 node --version // v10.16.0
 ```
 
@@ -28,7 +28,7 @@ node --version // v10.16.0
 
 To make sure you could install `wechaty-puppet-padplus` successfully, you have to start PowerShell as Administrator and run these commands:
 
-```js
+```shell
 npm install -g windows-build-tools
 
 npm install -g node-gyp
@@ -36,7 +36,7 @@ npm install -g node-gyp
 
 #### 1.2. Create your bot folder and do some init config
 
-```js
+```shell
 mkdir my-padplus-bot && cd my-padplus-bot
 
 npm init -y
@@ -45,12 +45,12 @@ npm install ts-node typescript -g
 
 tsc --init --target ES6
 
-touch index.ts // copy the example code to it
+touch bot.ts // copy the example code to it
 ```
 
 ### 2. Install Wechaty Dependencies
 
-```js
+```shell
 npm install wechaty@latest
 
 npm install wechaty-puppet-padplus@latest
@@ -58,7 +58,7 @@ npm install wechaty-puppet-padplus@latest
 
 Or some new features developing version:
 
-```js
+```shell
 npm install wechaty@next
 
 npm install wechaty-puppet-padplus@next
@@ -68,7 +68,7 @@ npm install wechaty-puppet-padplus@next
 
 > There's no need to install `wechaty-puppet` in my-padplus-bot
 
-```js
+```shell
 npm install qrcode-terminal
 ...
 ```
@@ -77,29 +77,36 @@ npm install qrcode-terminal
 
 > If you want to see detail logs about your bot, just run:
 
-```js
-BROLOG_LEVEL=silly ts-node index.ts
+```shell
+BROLOG_LEVEL=silly ts-node bot.ts
 ```
 
 or
 
-```js
-BROLOG_LEVEL=silly node index.js
+```shell
+BROLOG_LEVEL=silly node bot.js
 ```
 
 ### 5. Other Tips
 
+> Set environment in windows
+
+```shell
+$Env:BROLOG_LEVEL='silly'
+ts-node bot.ts
+```
+
 > If step 1~3 can not help you install successfully, please try this suggestion, otherwise just skip it please.
 
-```js
+```shell
 rm -rf node_modules package-lock.json
 npm install
 ```
 
 ## Example
 
-```js
-// bot.js
+```ts
+// bot.ts
 import { Contact, Message, Wechaty } from 'wechaty'
 import { ScanStatus } from 'wechaty-puppet'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
@@ -143,7 +150,7 @@ bot
 Please use environment variable `PADPLUS_REPLAY_MESSAGE` to activate this function.
 
 ```shell
-PADPLUS_REPLAY_MESSAGE=true node index.js
+PADPLUS_REPLAY_MESSAGE=true node bot.js
 ```
 
 ## Puppet Comparison
