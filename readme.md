@@ -20,15 +20,15 @@ See more: [Token Support](https://github.com/juzibot/Welcome/wiki/Support-Develo
 
 #### 1.1. Check your `Node` version first
 
-```js
-node --version // v10.16.0 (BTW v10.0.0 < version < v11.0.0 is better)
+```shell
+node --version // v10.16.0
 ```
 
 > for windows system
 
 To make sure you could install `wechaty-puppet-padplus` successfully, you have to start PowerShell as Administrator and run these commands:
 
-```js
+```shell
 npm install -g windows-build-tools
 
 npm install -g node-gyp
@@ -36,19 +36,21 @@ npm install -g node-gyp
 
 #### 1.2. Create your bot folder and do some init config
 
-```js
+```shell
 mkdir my-padplus-bot && cd my-padplus-bot
 
 npm init -y
 
 npm install ts-node typescript -g
 
-tsc --init
+tsc --init --target ES6
+
+touch bot.ts // copy the example code to it
 ```
 
-### 2. Install the bot dependency
+### 2. Install Wechaty Dependencies
 
-```js
+```shell
 npm install wechaty@latest
 
 npm install wechaty-puppet-padplus@latest
@@ -56,47 +58,56 @@ npm install wechaty-puppet-padplus@latest
 
 Or some new features developing version:
 
-```js
+```shell
 npm install wechaty@next
 
 npm install wechaty-puppet-padplus@next
 ```
 
-### 3. Install other dependency
+### 3. Install Other Dependencies
 
 > There's no need to install `wechaty-puppet` in my-padplus-bot
 
-```js
+```shell
 npm install qrcode-terminal
 ...
 ```
 
-### 4. Other Tips
-
-> If step 1~3 can not help you install successfully, please try this suggestion, otherwise just skip it please.
-
-```js
-rm -rf node_modules package-lock.json
-npm install
-```
+### 4. Run
 
 > If you want to see detail logs about your bot, just run:
 
-```js
-BROLOG_LEVEL=silly ts-node index.ts
+```shell
+BROLOG_LEVEL=silly ts-node bot.ts
 ```
 
 or
 
-```js
-BROLOG_LEVEL=silly node index.js
+```shell
+BROLOG_LEVEL=silly node bot.js
+```
+
+### 5. Other Tips
+
+> Set environment in windows
+
+```shell
+$Env:BROLOG_LEVEL='silly'
+ts-node bot.ts
+```
+
+> If step 1~3 can not help you install successfully, please try this suggestion, otherwise just skip it please.
+
+```shell
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ## Example
 
-```js
-// bot.js
-import { Wechaty } from 'wechaty'
+```ts
+// bot.ts
+import { Contact, Message, Wechaty } from 'wechaty'
 import { ScanStatus } from 'wechaty-puppet'
 import { PuppetPadplus } from 'wechaty-puppet-padplus'
 import QrcodeTerminal from 'qrcode-terminal'
@@ -122,8 +133,14 @@ bot
       })
     }
   })
-  .on('message', msg => {
+  .on('login', (user: Contact) => {
+    console.log(`login success, user: ${user}`)
+  })
+  .on('message', (msg: Message) => {
     console.log(`msg : ${msg}`)
+  })
+  .on('logout', (user: Contact, reason: string) => {
+    console.log(`logout user: ${user}, reason : ${reason}`)
   })
   .start()
 ```
@@ -133,7 +150,7 @@ bot
 Please use environment variable `PADPLUS_REPLAY_MESSAGE` to activate this function.
 
 ```shell
-PADPLUS_REPLAY_MESSAGE=true node index.js
+PADPLUS_REPLAY_MESSAGE=true node bot.js
 ```
 
 ## Puppet Comparison
