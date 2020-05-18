@@ -1,6 +1,6 @@
 {
   "name": "wechaty-puppet-padplus",
-  "version": "0.7.10",
+  "version": "0.7.16",
   "description": "Puppet Padplus for Wechaty",
   "directories": {
     "test": "tests"
@@ -60,11 +60,11 @@
     "shx": "^0.3.1",
     "ts-protoc-gen": "^0.12.0",
     "tstest": "^0.4.1",
-    "wechaty-puppet": "^0.24.0"
+    "wechaty-puppet": "^0.25.2"
   },
   "peerDependencies": {
     "memory-card": "^0.6.13",
-    "wechaty-puppet": "^0.24.0"
+    "wechaty-puppet": "^0.25.2"
   },
   "dependencies": {
     "array-flatten": "^3.0.0",
@@ -73,7 +73,7 @@
     "brolog": "^1.6.5",
     "ffmpeg-extract-frames": "^2.0.2",
     "ffmpeg-probe": "^1.0.6",
-    "flash-store": "^0.14.1",
+    "flash-store": "^0.14.5",
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",
     "grpc": "^1.22.0",

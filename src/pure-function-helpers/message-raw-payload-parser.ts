@@ -257,7 +257,10 @@ export async function messageRawPayloadParser (
         case WechatAppMessageType.RealtimeShareLocation:
           payload.type = MessageType.Location
           break
-
+        case WechatAppMessageType.GroupNote:
+          payload.type = MessageType.GroupNote
+          payload.text = appPayload.title
+          break
         default:
           payload.type = MessageType.Unknown
           break

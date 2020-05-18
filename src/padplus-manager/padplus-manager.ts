@@ -807,7 +807,9 @@ export class PadplusManager extends EventEmitter {
     log.silly(PRE, `contactSelfQrcode()`)
 
     if (this.padplusContact) {
-      return this.padplusContact.contactSelfQrcode()
+      const qrcodeBuf = await this.padplusContact.contactSelfQrcode()
+      const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
+      return fileBox.toQRCode()
     } else {
       throw new Error(`no padplus contact`)
     }
@@ -893,6 +895,19 @@ export class PadplusManager extends EventEmitter {
     const content = await videoPreProcess(this.requestClient, url)
 
     const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
+    if (!messageResponse.msgId) {
+      throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
+    }
+    return messageResponse
+  }
+
+  public async sendMiniProgram (selfId: string, receiver: string, content: string) {
+    log.silly(PRE, `sendMiniProgram(${selfId}, ${receiver}, ${content})`)
+
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
+    }
+    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, content, PadplusMessageType.App)
     if (!messageResponse.msgId) {
       throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
     }
