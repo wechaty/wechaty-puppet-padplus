@@ -807,7 +807,9 @@ export class PadplusManager extends EventEmitter {
     log.silly(PRE, `contactSelfQrcode()`)
 
     if (this.padplusContact) {
-      return this.padplusContact.contactSelfQrcode()
+      const qrcodeBuf = await this.padplusContact.contactSelfQrcode()
+      const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
+      return fileBox.toQRCode()
     } else {
       throw new Error(`no padplus contact`)
     }
