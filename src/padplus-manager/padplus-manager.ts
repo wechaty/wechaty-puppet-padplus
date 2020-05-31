@@ -44,7 +44,7 @@ import {
   LoginDeviceInfo,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { CacheManager } from '../server-manager/cache-manager'
+import { CacheManager, CacheStoreOption } from '../server-manager/cache-manager'
 import { convertFromGrpcContact, convertFromGrpcContactSelf } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
@@ -63,10 +63,12 @@ export interface PadplusMemorySlot {
   userName  : string,
 }
 
+
 export interface ManagerOptions {
   token: string,
   name: unknown,
   endpoint?: string,
+  cacheOption?: CacheStoreOption,
 }
 
 const PRE = 'PadplusManager'
@@ -478,7 +480,7 @@ export class PadplusManager extends EventEmitter {
             }
 
             log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
+            await CacheManager.init(loginData.userName, this.options.cacheOption)
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
@@ -520,7 +522,7 @@ export class PadplusManager extends EventEmitter {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
                 log.verbose(PRE, `init cache manager`)
-                await CacheManager.init(wechatUser.userName)
+                await CacheManager.init(wechatUser.userName, this.options.cacheOption)
                 this.cacheManager = CacheManager.Instance
                 /* if (this.padplusUser) {
                   await this.padplusUser.reconnect()

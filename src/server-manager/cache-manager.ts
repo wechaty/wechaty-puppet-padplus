@@ -2,7 +2,7 @@ import fs     from 'fs-extra'
 import os     from 'os'
 import path   from 'path'
 
-import { FlashStore } from 'flash-store'
+import { JsonCache, AsyncMap } from 'mapped-json-cache';
 
 import { log } from '../config'
 import {
@@ -16,6 +16,17 @@ import {
 import { FriendshipPayload } from 'wechaty-puppet'
 
 const PRE = 'CacheManager'
+
+interface FlashStoreOption {
+  type: 'flashStore',
+  baseDir: string,
+}
+interface MongoStoreOption {
+  type: 'mongo',
+  url: string,
+  option?: any,
+}
+export type CacheStoreOption = FlashStoreOption | MongoStoreOption
 
 export class CacheManager {
 
@@ -33,14 +44,17 @@ export class CacheManager {
     return this._instance
   }
 
-  public static async init (userId: string) {
+  public static async init (
+    userId: string,
+    cacheOption?: CacheStoreOption,
+  ) {
     log.verbose(PRE, `init()`)
     if (this._instance) {
       log.verbose(PRE, `init() CacheManager has been initialized, no need to initialize again.`)
       return
     }
     this._instance = new CacheManager()
-    await this._instance.initCache(userId)
+    await this._instance.initCache(userId, cacheOption)
   }
 
   public static async release () {
@@ -58,14 +72,14 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheImageMessageRawPayload? : FlashStore<string, PadplusMessagePayload>
-  private cacheContactRawPayload?     : FlashStore<string, PadplusContactPayload>
-  private cacheRoomMemberRawPayload?  : FlashStore<string, {
+  private cacheImageMessageRawPayload? : AsyncMap<string, PadplusMessagePayload>
+  private cacheContactRawPayload?     : AsyncMap<string, PadplusContactPayload>
+  private cacheRoomMemberRawPayload?  : AsyncMap<string, {
     [contactId: string]: PadplusRoomMemberPayload,
   }>
-  private cacheRoomRawPayload?        : FlashStore<string, PadplusRoomPayload>
-  private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
-  private cacheFriendshipRawPayload?  : FlashStore<string, FriendshipPayload>
+  private cacheRoomRawPayload?        : AsyncMap<string, PadplusRoomPayload>
+  private cacheRoomInvitationRawPayload? : AsyncMap<string, PadplusRoomInvitationPayload>
+  private cacheFriendshipRawPayload?  : AsyncMap<string, FriendshipPayload>
 
   private compactCacheTimer?          : NodeJS.Timeout
 
@@ -316,8 +330,12 @@ export class CacheManager {
 
   private async initCache (
     userId: string,
+    cacheOption: CacheStoreOption = {
+      type: 'flashStore',
+      baseDir: process.cwd(),
+    },
   ): Promise<void> {
-    log.verbose(PRE, 'initCache(%s)', userId)
+    log.verbose(PRE, 'initCache(%s,%s)', userId, JSON.stringify(cacheOption))
 
     if (this.cacheContactRawPayload) {
       throw new Error('cache exists')
@@ -331,21 +349,28 @@ export class CacheManager {
       path.sep,
       'flash-store-v0.14',
       path.sep,
-      userId,
-    )
+      )
 
-    const baseDirExist = await fs.pathExists(baseDir)
-
-    if (!baseDirExist) {
-      await fs.mkdirp(baseDir)
+    if (cacheOption.type === 'flashStore') {
+      const baseDirExist = await fs.pathExists(baseDir)
+      if (!baseDirExist) {
+        await fs.mkdirp(baseDir)
+      }
+      cacheOption.baseDir = baseDir
     }
+    const jsonCache = new JsonCache({
+      name: userId,
+      storeOptions: cacheOption,
+    });
+    await jsonCache.init();
+    this.cacheContactRawPayload = jsonCache.genClient('message-raw-payload');
 
-    this.cacheImageMessageRawPayload    = new FlashStore(path.join(baseDir, 'message-raw-payload'))
-    this.cacheContactRawPayload        = new FlashStore(path.join(baseDir, 'contact-raw-payload'))
-    this.cacheRoomMemberRawPayload     = new FlashStore(path.join(baseDir, 'room-member-raw-payload'))
-    this.cacheRoomRawPayload           = new FlashStore(path.join(baseDir, 'room-raw-payload'))
-    this.cacheFriendshipRawPayload     = new FlashStore(path.join(baseDir, 'friendship'))
-    this.cacheRoomInvitationRawPayload = new FlashStore(path.join(baseDir, 'room-invitation-raw-payload'))
+    this.cacheImageMessageRawPayload   = jsonCache.genClient('message-raw-payload')
+    this.cacheContactRawPayload        = jsonCache.genClient('contact-raw-payload')
+    this.cacheRoomMemberRawPayload     = jsonCache.genClient('room-member-raw-payload')
+    this.cacheRoomRawPayload           = jsonCache.genClient('room-raw-payload')
+    this.cacheFriendshipRawPayload     = jsonCache.genClient('friendship')
+    this.cacheRoomInvitationRawPayload = jsonCache.genClient('room-invitation-raw-payload')
     const contactTotal = this.cacheContactRawPayload.size
 
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)
