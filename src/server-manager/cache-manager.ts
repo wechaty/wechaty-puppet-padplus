@@ -2,16 +2,17 @@ import fs     from 'fs-extra'
 import os     from 'os'
 import path   from 'path'
 
-import { WechatyCache,
+import { PuppetCache,
   AsyncMap,
-  WechatyCacheMessagePayload,
-  WechatyCacheContactPayload,
-  WechatyCacheRoomMemberPayload,
-  WechatyCacheRoomPayload,
-  WechatyCacheRoomInvitationPayload,
-  WechatyCacheFriendshipPayload,
-  WechatyCacheRoomMemberPayloadMap,
-} from 'wechaty-cache'
+  PuppetCacheMessagePayload,
+  PuppetCacheContactPayload,
+  PuppetCacheRoomMemberPayload,
+  PuppetCacheRoomPayload,
+  PuppetCacheRoomInvitationPayload,
+  PuppetCacheFriendshipPayload,
+  PuppetCacheRoomMemberPayloadMap,
+  PuppetCacheStoreOptions,
+} from 'wechaty-puppet-cache'
 
 import { log } from '../config'
 import {
@@ -38,17 +39,6 @@ import { cacheToPadplusMessagePayload,
 
 const PRE = 'CacheManager'
 
-interface FlashStoreOption {
-  type: 'flashStore',
-  baseDir: string,
-}
-interface MongoStoreOption {
-  type: 'mongo',
-  url: string,
-  option?: any,
-}
-export type CacheStoreOption = FlashStoreOption | MongoStoreOption
-
 export class CacheManager {
 
   /**
@@ -67,7 +57,7 @@ export class CacheManager {
 
   public static async init (
     userId: string,
-    cacheOption?: CacheStoreOption,
+    cacheOption?: PuppetCacheStoreOptions,
   ) {
     log.verbose(PRE, `init()`)
     if (this._instance) {
@@ -93,14 +83,14 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheImageMessageRawPayload?           : AsyncMap<string, WechatyCacheMessagePayload>
-  private cacheContactRawPayload?                : AsyncMap<string, WechatyCacheContactPayload>
+  private cacheImageMessageRawPayload?           : AsyncMap<string, PuppetCacheMessagePayload>
+  private cacheContactRawPayload?                : AsyncMap<string, PuppetCacheContactPayload>
   private cacheRoomMemberRawPayload?             : AsyncMap<string, {
-    [contactId: string]: WechatyCacheRoomMemberPayload,
+    [contactId: string]: PuppetCacheRoomMemberPayload,
   }>
-  private cacheRoomRawPayload?                   : AsyncMap<string, WechatyCacheRoomPayload>
-  private cacheRoomInvitationRawPayload?         : AsyncMap<string, WechatyCacheRoomInvitationPayload>
-  private cacheFriendshipRawPayload?             : AsyncMap<string, WechatyCacheFriendshipPayload>
+  private cacheRoomRawPayload?                   : AsyncMap<string, PuppetCacheRoomPayload>
+  private cacheRoomInvitationRawPayload?         : AsyncMap<string, PuppetCacheRoomInvitationPayload>
+  private cacheFriendshipRawPayload?             : AsyncMap<string, PuppetCacheFriendshipPayload>
 
   private compactCacheTimer?                     : NodeJS.Timeout
 
@@ -290,7 +280,7 @@ export class CacheManager {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
-    const map: WechatyCacheRoomMemberPayloadMap = {}
+    const map: PuppetCacheRoomMemberPayloadMap = {}
     for (const property of Object.keys(payload)) {
       map[property] = padplusToCacheRoomMemberPayload(payload[property])
     }
@@ -373,7 +363,7 @@ export class CacheManager {
 
   private async initCache (
     userId: string,
-    cacheOption: CacheStoreOption = {
+    cacheOption: PuppetCacheStoreOptions = {
       baseDir: process.cwd(),
       type: 'flashStore',
     },
@@ -401,7 +391,7 @@ export class CacheManager {
       }
       cacheOption.baseDir = baseDir
     }
-    const jsonCache = new WechatyCache({
+    const jsonCache = new PuppetCache({
       name: userId,
       storeOptions: cacheOption,
     })
@@ -412,7 +402,7 @@ export class CacheManager {
     this.cacheRoomRawPayload           = jsonCache.genRoomClient()
     this.cacheFriendshipRawPayload     = jsonCache.genFriendshipClient()
     this.cacheRoomInvitationRawPayload = jsonCache.genRoomInvitationClient()
-    const contactTotal = this.cacheContactRawPayload.size
+    const contactTotal = this.cacheContactRawPayload?.size
 
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)
   }

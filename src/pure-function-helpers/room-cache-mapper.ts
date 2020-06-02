@@ -1,8 +1,8 @@
-import { WechatyCacheRoomPayload, WechatyMemberBrief } from 'wechaty-cache'
+import { PuppetCacheRoomPayload, PuppetMemberBrief } from 'wechaty-puppet-cache'
 import { PadplusRoomPayload, PadplusMemberBrief } from '../schemas'
 
 export function cacheToPadplusRoomPayload (
-  cachePayload: WechatyCacheRoomPayload,
+  cachePayload: PuppetCacheRoomPayload,
 ): PadplusRoomPayload {
   if (!cachePayload.chatroomId) {
     throw Error('cannot get chatroomId from cache payload: ' + JSON.stringify(cachePayload))
@@ -26,7 +26,7 @@ export function cacheToPadplusRoomPayload (
 
 export function padplusToCacheRoomPayload (
   padplusPayload: PadplusRoomPayload,
-): WechatyCacheRoomPayload {
+): PuppetCacheRoomPayload {
   if (!padplusPayload.chatroomId) {
     throw Error('cannot get chatroomId from padplus payload: ' + JSON.stringify(padplusPayload))
   }
@@ -45,11 +45,11 @@ export function padplusToCacheRoomPayload (
     stranger                  : padplusPayload.stranger,
     tagList                   : padplusPayload.tagList,
     ticket                    : padplusPayload.ticket,
-  } as WechatyCacheRoomPayload
+  } as PuppetCacheRoomPayload
 }
 
 export function cacheToPadplusMemberBriefPayload (
-  cachePayload: WechatyMemberBrief,
+  cachePayload: PuppetMemberBrief,
 ): PadplusMemberBrief {
   if (!cachePayload.userName) {
     throw Error('cannot get userName from cache payload: ' + JSON.stringify(cachePayload))
@@ -62,7 +62,7 @@ export function cacheToPadplusMemberBriefPayload (
 
 export function padplusToCacheMemberBriefPayload (
   padplusPayload: PadplusMemberBrief,
-): WechatyMemberBrief {
+): PuppetMemberBrief {
   if (!padplusPayload.UserName) {
     throw Error('cannot get UserName from padplus payload: ' + JSON.stringify(padplusPayload))
   }
@@ -71,5 +71,5 @@ export function padplusToCacheMemberBriefPayload (
     inviteBy                   : undefined,
     nickName                   : padplusPayload.NickName,
     userName                   : padplusPayload.UserName,
-  } as WechatyMemberBrief
+  } as PuppetMemberBrief
 }

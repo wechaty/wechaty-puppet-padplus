@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheRoomMemberPayload } from 'wechaty-cache'
+import { PuppetCacheRoomMemberPayload } from 'wechaty-puppet-cache'
 import { PadplusRoomMemberPayload } from '../schemas'
 
 import { cacheToPadplusRoomMemberPayload, padplusToCacheRoomMemberPayload } from './room-member-cache-mapper'
@@ -20,7 +20,7 @@ test('room-member-cache-mapper.spec', async t => {
     smallHeadUrl           : 'smallHeadUrl',
   }
 
-  const EXPECTED_ROOM_MEMBER_PAYLOAD: WechatyCacheRoomMemberPayload = {
+  const EXPECTED_ROOM_MEMBER_PAYLOAD: PuppetCacheRoomMemberPayload = {
     account                : undefined,
     bigHeadUrl             : 'bigHeadUrl',
     contactId              : 'contactId',

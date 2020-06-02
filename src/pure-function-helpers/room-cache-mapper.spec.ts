@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheRoomPayload } from 'wechaty-cache'
+import { PuppetCacheRoomPayload } from 'wechaty-puppet-cache'
 import { PadplusRoomPayload } from '../schemas'
 
 import { cacheToPadplusRoomPayload, padplusToCacheRoomPayload } from './room-cache-mapper'
@@ -36,7 +36,7 @@ test('room-cache-mapper', async t => {
     ticket         : 'ticket',
   }
 
-  const EXPECTED_ROOM_PAYLOAD: WechatyCacheRoomPayload = {
+  const EXPECTED_ROOM_PAYLOAD: PuppetCacheRoomPayload = {
     alias          : 'alias',
     bigHeadUrl     : 'bigHeadUrl',
     chatRoomOwner  : 'chatRoomOwner',
