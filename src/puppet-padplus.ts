@@ -76,12 +76,12 @@ export class PuppetPadplus extends Puppet {
     const token = this.options.token || padplusToken()
     const name = this.options.name
     if (token) {
-      const cacheOption: any = this.options.cacheOption;
-      let cacheStoreOption: CacheStoreOption | undefined = undefined
+      const cacheOption: any = this.options.cacheOption
+      let cacheStoreOption: CacheStoreOption | undefined
       if (cacheOption) {
         const type: string = cacheOption.type
         if (type) {
-          switch(type) {
+          switch (type) {
             case 'mongo':
               const url: string = cacheOption.url
               const option = cacheOption.option
@@ -89,19 +89,19 @@ export class PuppetPadplus extends Puppet {
                 throw new Error(`can not get mongo url from cache option.`)
               }
               cacheStoreOption = {
+                option: option,
                 type: 'mongo',
                 url,
-                option: option,
               }
           }
         }
       }
 
       this.manager = new PadplusManager({
+        cacheOption: cacheStoreOption,
         endpoint: this.options.endpoint || GRPC_ENDPOINT,
         name,
         token,
-        cacheOption: cacheStoreOption,
       })
     } else {
       log.error(PRE, `can not get token info from options for start grpc gateway.`)
