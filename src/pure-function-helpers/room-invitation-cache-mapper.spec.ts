@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheRoomInvitationPayload } from 'wechaty-cache'
+import { PuppetCacheRoomInvitationPayload } from 'wechaty-puppet-cache'
 import { PadplusRoomInvitationPayload } from '../schemas'
 
 import { cacheToPadplusRoomInvitationPayload, padplusToCacheRoomInvitationPayload } from './room-invitation-cache-mapper'
@@ -21,7 +21,7 @@ test('room-invitation-cache-mapper', async t => {
     url                    : 'url',
   }
 
-  const EXPECTED_ROOM_INVITATION_PAYLOAD: WechatyCacheRoomInvitationPayload = {
+  const EXPECTED_ROOM_INVITATION_PAYLOAD: PuppetCacheRoomInvitationPayload = {
     fromUser               : 'fromUser',
     id                     : 'id',
     receiver               : 'receiver',

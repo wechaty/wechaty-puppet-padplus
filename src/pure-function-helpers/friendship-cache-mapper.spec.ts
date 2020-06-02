@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheFriendshipPayload } from 'wechaty-cache'
+import { PuppetCacheFriendshipPayload } from 'wechaty-puppet-cache'
 import { FriendshipPayload } from '../schemas'
 
 import { cacheToPadplusFriendshipPayload, padplusToCacheFriendshipPayload } from './friendship-cache-mapper'
@@ -22,7 +22,7 @@ test('friendship-cache-mapper', async t => {
     type      : FriendshipType.Receive,
   }
 
-  const EXPECTED_FRIENDSHIP_PAYLOAD: WechatyCacheFriendshipPayload = {
+  const EXPECTED_FRIENDSHIP_PAYLOAD: PuppetCacheFriendshipPayload = {
     contactId : 'contactId',
     hello     : 'hello',
     id        : 'id',

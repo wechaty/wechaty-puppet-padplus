@@ -59,7 +59,7 @@ import { convertSearchContactToContact } from './convert-manager/contact-convert
 import checkNumber from './utils/util'
 import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
 import { convertMiniProgramPayloadToParams, convertMiniProgramPayloadToMessage } from './convert-manager/message-convertor'
-import { CacheStoreOption } from './server-manager/cache-manager'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const PRE = 'PuppetPadplus'
 
@@ -77,7 +77,7 @@ export class PuppetPadplus extends Puppet {
     const name = this.options.name
     if (token) {
       const cacheOption: any = this.options.cacheOption
-      let cacheStoreOption: CacheStoreOption | undefined
+      let cacheStoreOption: PuppetCacheStoreOptions | undefined
       if (cacheOption) {
         const type: string = cacheOption.type
         if (type) {

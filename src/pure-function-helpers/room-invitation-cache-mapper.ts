@@ -1,8 +1,8 @@
-import { WechatyCacheRoomInvitationPayload } from 'wechaty-cache'
+import { PuppetCacheRoomInvitationPayload } from 'wechaty-puppet-cache'
 import { PadplusRoomInvitationPayload } from '../schemas'
 
 export function cacheToPadplusRoomInvitationPayload (
-  cachePayload: WechatyCacheRoomInvitationPayload,
+  cachePayload: PuppetCacheRoomInvitationPayload,
 ): PadplusRoomInvitationPayload {
   if (!cachePayload.id) {
     throw Error('cannot get id from cache payload: ' + JSON.stringify(cachePayload))
@@ -20,7 +20,7 @@ export function cacheToPadplusRoomInvitationPayload (
 
 export function padplusToCacheRoomInvitationPayload (
   padplusPayload: PadplusRoomInvitationPayload,
-): WechatyCacheRoomInvitationPayload {
+): PuppetCacheRoomInvitationPayload {
   if (!padplusPayload.id) {
     throw Error('cannot get id from padplus payload: ' + JSON.stringify(padplusPayload))
   }
@@ -32,5 +32,5 @@ export function padplusToCacheRoomInvitationPayload (
     thumbUrl : padplusPayload.thumbUrl,
     timestamp: padplusPayload.timestamp,
     url      : padplusPayload.url,
-  } as WechatyCacheRoomInvitationPayload
+  } as PuppetCacheRoomInvitationPayload
 }

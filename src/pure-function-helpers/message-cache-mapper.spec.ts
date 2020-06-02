@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheMessagePayload, WechatyCacheMessageType } from 'wechaty-cache'
+import { PuppetCacheMessagePayload, PuppetCacheMessageType } from 'wechaty-puppet-cache'
 import { PadplusMessagePayload, PadplusMessageType } from '../schemas'
 
 import { cacheToPadplusMessagePayload, padplusToCacheMessagePayload } from './message-cache-mapper'
@@ -35,7 +35,7 @@ test('message-cache-mapper', async t => {
     wechatUserName                       : 'wechatUserName',
   }
 
-  const EXPECTED_MESSAGE_PAYLOAD: WechatyCacheMessagePayload = {
+  const EXPECTED_MESSAGE_PAYLOAD: PuppetCacheMessagePayload = {
     appMsgType                           : 1,
     atUserList                           : [],
     content                              : 'content',
@@ -50,7 +50,7 @@ test('message-cache-mapper', async t => {
     msgId                                : 'msgId',
     msgSource                            : 'msgSource',
     msgSourceCd                          : 3,
-    msgType                              : WechatyCacheMessageType.Text,
+    msgType                              : PuppetCacheMessageType.Text,
     newMsgId                             : 4,
     path                                 : undefined,
     pushContent                          : 'pushContent',

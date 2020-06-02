@@ -83,7 +83,7 @@
     "state-switch": "^0.9.7",
     "uuid": "^7.0.0",
     "watchdog": "^0.8.10",
-    "wechaty-cache": "^0.1.5",
+    "wechaty-puppet-cache": "^0.1.2",
     "xml2js": "^0.4.22"
   },
   "publishConfig": {

@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { WechatyCacheContactPayload } from 'wechaty-cache'
+import { PuppetCacheContactPayload } from 'wechaty-puppet-cache'
 import { PadplusContactPayload } from '../schemas'
 
 import { cacheToPadplusContactPayload, padplusToCacheContactPayload } from './contact-cache-mapper'
@@ -72,7 +72,7 @@ test('contact-cache-mapper', async t => {
     verifyFlag           : 0,
   }
 
-  const EXPECTED_CONTACT_PAYLOAD_PERSONAL: WechatyCacheContactPayload = {
+  const EXPECTED_CONTACT_PAYLOAD_PERSONAL: PuppetCacheContactPayload = {
     alias              : 'lylezhuifeng',
     bigHeadUrl         : 'http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/132',
     city               : 'Haidian',
@@ -94,7 +94,7 @@ test('contact-cache-mapper', async t => {
     verifyFlag         : 0,
   }
 
-  const EXPECTED_CONTACT_PAYLOAD_OFFICIAL: WechatyCacheContactPayload = {
+  const EXPECTED_CONTACT_PAYLOAD_OFFICIAL: PuppetCacheContactPayload = {
     alias                : 'wxid_v7j3e9kna9l912',
     bigHeadUrl           : 'http://wx.qlogo.cn/mmhead/ver_1/icxUZE0qz1c1HubRfXHscMA1PialA7q3OEIWiaRtUjYmpj2EDFhTNGwlicUFe1NQR67gVGgjhILV1ZTsZ1qO3XTMehhH1k6icF1adbaibUMJXbMWk/132',
     city                 : 'Fengtai',

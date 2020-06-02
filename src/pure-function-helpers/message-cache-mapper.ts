@@ -1,8 +1,8 @@
-import { WechatyCacheMessagePayload, WechatyCacheMessageType } from 'wechaty-cache'
+import { PuppetCacheMessagePayload, PuppetCacheMessageType } from 'wechaty-puppet-cache'
 import { PadplusMessagePayload, PadplusMessageType } from '../schemas'
 
 export function cacheToPadplusMessagePayload (
-  cachePayload: WechatyCacheMessagePayload,
+  cachePayload: PuppetCacheMessagePayload,
 ): PadplusMessagePayload {
   if (!cachePayload.msgId) {
     throw Error('cannot get id from padplus payload: ' + JSON.stringify(cachePayload))
@@ -34,7 +34,7 @@ export function cacheToPadplusMessagePayload (
 
 export function padplusToCacheMessagePayload (
   padplusPayload: PadplusMessagePayload,
-): WechatyCacheMessagePayload {
+): PuppetCacheMessagePayload {
   if (!padplusPayload.msgId) {
     throw Error('cannot get id from cache payload: ' + JSON.stringify(padplusPayload))
   }
@@ -63,57 +63,57 @@ export function padplusToCacheMessagePayload (
     uin                                  : padplusPayload.uin,
     url                                  : padplusPayload.url,
     wechatUserName                       : padplusPayload.wechatUserName,
-  } as WechatyCacheMessagePayload
+  } as PuppetCacheMessagePayload
 }
 
 const padplusMsgTypeMapper: { [cacheMsgType: number]: number } = {}
-padplusMsgTypeMapper[WechatyCacheMessageType.App]                = PadplusMessageType.App
-padplusMsgTypeMapper[WechatyCacheMessageType.Text]               = PadplusMessageType.Text
-padplusMsgTypeMapper[WechatyCacheMessageType.Contact]            = PadplusMessageType.Contact
-padplusMsgTypeMapper[WechatyCacheMessageType.Image]              = PadplusMessageType.Image
-padplusMsgTypeMapper[WechatyCacheMessageType.Deleted]            = PadplusMessageType.Deleted
-padplusMsgTypeMapper[WechatyCacheMessageType.Voice]              = PadplusMessageType.Voice
-padplusMsgTypeMapper[WechatyCacheMessageType.SelfAvatar]         = PadplusMessageType.SelfAvatar
-padplusMsgTypeMapper[WechatyCacheMessageType.VerifyMsg]          = PadplusMessageType.VerifyMsg
-padplusMsgTypeMapper[WechatyCacheMessageType.PossibleFriendMsg]  = PadplusMessageType.PossibleFriendMsg
-padplusMsgTypeMapper[WechatyCacheMessageType.ShareCard]          = PadplusMessageType.ShareCard
-padplusMsgTypeMapper[WechatyCacheMessageType.Video]              = PadplusMessageType.Video
-padplusMsgTypeMapper[WechatyCacheMessageType.Emoticon]           = PadplusMessageType.Emoticon
-padplusMsgTypeMapper[WechatyCacheMessageType.Location]           = PadplusMessageType.Location
-padplusMsgTypeMapper[WechatyCacheMessageType.VoipMsg]            = PadplusMessageType.VoipMsg
-padplusMsgTypeMapper[WechatyCacheMessageType.StatusNotify]       = PadplusMessageType.StatusNotify
-padplusMsgTypeMapper[WechatyCacheMessageType.VoipNotify]         = PadplusMessageType.VoipNotify
-padplusMsgTypeMapper[WechatyCacheMessageType.VoipInvite]         = PadplusMessageType.VoipInvite
-padplusMsgTypeMapper[WechatyCacheMessageType.MicroVideo]         = PadplusMessageType.MicroVideo
-padplusMsgTypeMapper[WechatyCacheMessageType.SelfInfo]           = PadplusMessageType.SelfInfo
-padplusMsgTypeMapper[WechatyCacheMessageType.SysNotice]          = PadplusMessageType.SysNotice
-padplusMsgTypeMapper[WechatyCacheMessageType.Sys]                = PadplusMessageType.Sys
-padplusMsgTypeMapper[WechatyCacheMessageType.Recalled]           = PadplusMessageType.Recalled
-padplusMsgTypeMapper[WechatyCacheMessageType.N11_2048]           = PadplusMessageType.N11_2048
-padplusMsgTypeMapper[WechatyCacheMessageType.N15_32768]          = PadplusMessageType.N15_32768
+padplusMsgTypeMapper[PuppetCacheMessageType.App]                = PadplusMessageType.App
+padplusMsgTypeMapper[PuppetCacheMessageType.Text]               = PadplusMessageType.Text
+padplusMsgTypeMapper[PuppetCacheMessageType.Contact]            = PadplusMessageType.Contact
+padplusMsgTypeMapper[PuppetCacheMessageType.Image]              = PadplusMessageType.Image
+padplusMsgTypeMapper[PuppetCacheMessageType.Deleted]            = PadplusMessageType.Deleted
+padplusMsgTypeMapper[PuppetCacheMessageType.Voice]              = PadplusMessageType.Voice
+padplusMsgTypeMapper[PuppetCacheMessageType.SelfAvatar]         = PadplusMessageType.SelfAvatar
+padplusMsgTypeMapper[PuppetCacheMessageType.VerifyMsg]          = PadplusMessageType.VerifyMsg
+padplusMsgTypeMapper[PuppetCacheMessageType.PossibleFriendMsg]  = PadplusMessageType.PossibleFriendMsg
+padplusMsgTypeMapper[PuppetCacheMessageType.ShareCard]          = PadplusMessageType.ShareCard
+padplusMsgTypeMapper[PuppetCacheMessageType.Video]              = PadplusMessageType.Video
+padplusMsgTypeMapper[PuppetCacheMessageType.Emoticon]           = PadplusMessageType.Emoticon
+padplusMsgTypeMapper[PuppetCacheMessageType.Location]           = PadplusMessageType.Location
+padplusMsgTypeMapper[PuppetCacheMessageType.VoipMsg]            = PadplusMessageType.VoipMsg
+padplusMsgTypeMapper[PuppetCacheMessageType.StatusNotify]       = PadplusMessageType.StatusNotify
+padplusMsgTypeMapper[PuppetCacheMessageType.VoipNotify]         = PadplusMessageType.VoipNotify
+padplusMsgTypeMapper[PuppetCacheMessageType.VoipInvite]         = PadplusMessageType.VoipInvite
+padplusMsgTypeMapper[PuppetCacheMessageType.MicroVideo]         = PadplusMessageType.MicroVideo
+padplusMsgTypeMapper[PuppetCacheMessageType.SelfInfo]           = PadplusMessageType.SelfInfo
+padplusMsgTypeMapper[PuppetCacheMessageType.SysNotice]          = PadplusMessageType.SysNotice
+padplusMsgTypeMapper[PuppetCacheMessageType.Sys]                = PadplusMessageType.Sys
+padplusMsgTypeMapper[PuppetCacheMessageType.Recalled]           = PadplusMessageType.Recalled
+padplusMsgTypeMapper[PuppetCacheMessageType.N11_2048]           = PadplusMessageType.N11_2048
+padplusMsgTypeMapper[PuppetCacheMessageType.N15_32768]          = PadplusMessageType.N15_32768
 
 const cacheMsgTypeMapper: { [cacheMsgType: number]: number } = {}
-cacheMsgTypeMapper[PadplusMessageType.App]                = WechatyCacheMessageType.App
-cacheMsgTypeMapper[PadplusMessageType.Text]               = WechatyCacheMessageType.Text
-cacheMsgTypeMapper[PadplusMessageType.Contact]            = WechatyCacheMessageType.Contact
-cacheMsgTypeMapper[PadplusMessageType.Image]              = WechatyCacheMessageType.Image
-cacheMsgTypeMapper[PadplusMessageType.Deleted]            = WechatyCacheMessageType.Deleted
-cacheMsgTypeMapper[PadplusMessageType.Voice]              = WechatyCacheMessageType.Voice
-cacheMsgTypeMapper[PadplusMessageType.SelfAvatar]         = WechatyCacheMessageType.SelfAvatar
-cacheMsgTypeMapper[PadplusMessageType.VerifyMsg]          = WechatyCacheMessageType.VerifyMsg
-cacheMsgTypeMapper[PadplusMessageType.PossibleFriendMsg]  = WechatyCacheMessageType.PossibleFriendMsg
-cacheMsgTypeMapper[PadplusMessageType.ShareCard]          = WechatyCacheMessageType.ShareCard
-cacheMsgTypeMapper[PadplusMessageType.Video]              = WechatyCacheMessageType.Video
-cacheMsgTypeMapper[PadplusMessageType.Emoticon]           = WechatyCacheMessageType.Emoticon
-cacheMsgTypeMapper[PadplusMessageType.Location]           = WechatyCacheMessageType.Location
-cacheMsgTypeMapper[PadplusMessageType.VoipMsg]            = WechatyCacheMessageType.VoipMsg
-cacheMsgTypeMapper[PadplusMessageType.StatusNotify]       = WechatyCacheMessageType.StatusNotify
-cacheMsgTypeMapper[PadplusMessageType.VoipNotify]         = WechatyCacheMessageType.VoipNotify
-cacheMsgTypeMapper[PadplusMessageType.VoipInvite]         = WechatyCacheMessageType.VoipInvite
-cacheMsgTypeMapper[PadplusMessageType.MicroVideo]         = WechatyCacheMessageType.MicroVideo
-cacheMsgTypeMapper[PadplusMessageType.SelfInfo]           = WechatyCacheMessageType.SelfInfo
-cacheMsgTypeMapper[PadplusMessageType.SysNotice]          = WechatyCacheMessageType.SysNotice
-cacheMsgTypeMapper[PadplusMessageType.Sys]                = WechatyCacheMessageType.Sys
-cacheMsgTypeMapper[PadplusMessageType.Recalled]           = WechatyCacheMessageType.Recalled
-cacheMsgTypeMapper[PadplusMessageType.N11_2048]           = WechatyCacheMessageType.N11_2048
-cacheMsgTypeMapper[PadplusMessageType.N15_32768]          = WechatyCacheMessageType.N15_32768
+cacheMsgTypeMapper[PadplusMessageType.App]                = PuppetCacheMessageType.App
+cacheMsgTypeMapper[PadplusMessageType.Text]               = PuppetCacheMessageType.Text
+cacheMsgTypeMapper[PadplusMessageType.Contact]            = PuppetCacheMessageType.Contact
+cacheMsgTypeMapper[PadplusMessageType.Image]              = PuppetCacheMessageType.Image
+cacheMsgTypeMapper[PadplusMessageType.Deleted]            = PuppetCacheMessageType.Deleted
+cacheMsgTypeMapper[PadplusMessageType.Voice]              = PuppetCacheMessageType.Voice
+cacheMsgTypeMapper[PadplusMessageType.SelfAvatar]         = PuppetCacheMessageType.SelfAvatar
+cacheMsgTypeMapper[PadplusMessageType.VerifyMsg]          = PuppetCacheMessageType.VerifyMsg
+cacheMsgTypeMapper[PadplusMessageType.PossibleFriendMsg]  = PuppetCacheMessageType.PossibleFriendMsg
+cacheMsgTypeMapper[PadplusMessageType.ShareCard]          = PuppetCacheMessageType.ShareCard
+cacheMsgTypeMapper[PadplusMessageType.Video]              = PuppetCacheMessageType.Video
+cacheMsgTypeMapper[PadplusMessageType.Emoticon]           = PuppetCacheMessageType.Emoticon
+cacheMsgTypeMapper[PadplusMessageType.Location]           = PuppetCacheMessageType.Location
+cacheMsgTypeMapper[PadplusMessageType.VoipMsg]            = PuppetCacheMessageType.VoipMsg
+cacheMsgTypeMapper[PadplusMessageType.StatusNotify]       = PuppetCacheMessageType.StatusNotify
+cacheMsgTypeMapper[PadplusMessageType.VoipNotify]         = PuppetCacheMessageType.VoipNotify
+cacheMsgTypeMapper[PadplusMessageType.VoipInvite]         = PuppetCacheMessageType.VoipInvite
+cacheMsgTypeMapper[PadplusMessageType.MicroVideo]         = PuppetCacheMessageType.MicroVideo
+cacheMsgTypeMapper[PadplusMessageType.SelfInfo]           = PuppetCacheMessageType.SelfInfo
+cacheMsgTypeMapper[PadplusMessageType.SysNotice]          = PuppetCacheMessageType.SysNotice
+cacheMsgTypeMapper[PadplusMessageType.Sys]                = PuppetCacheMessageType.Sys
+cacheMsgTypeMapper[PadplusMessageType.Recalled]           = PuppetCacheMessageType.Recalled
+cacheMsgTypeMapper[PadplusMessageType.N11_2048]           = PuppetCacheMessageType.N11_2048
+cacheMsgTypeMapper[PadplusMessageType.N15_32768]          = PuppetCacheMessageType.N15_32768

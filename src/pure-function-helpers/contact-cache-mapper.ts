@@ -1,8 +1,8 @@
-import { WechatyCacheContactPayload } from 'wechaty-cache'
+import { PuppetCacheContactPayload } from 'wechaty-puppet-cache'
 import { PadplusContactPayload } from '../schemas'
 
 export function cacheToPadplusContactPayload (
-  cachePayload: WechatyCacheContactPayload,
+  cachePayload: PuppetCacheContactPayload,
 ): PadplusContactPayload {
   if (!cachePayload.userName) {
     throw Error('cannot get user_name from cache payload: ' + JSON.stringify(cachePayload))
@@ -30,7 +30,7 @@ export function cacheToPadplusContactPayload (
 
 export function padplusToCacheContactPayload (
   padplusPayload: PadplusContactPayload,
-): WechatyCacheContactPayload {
+): PuppetCacheContactPayload {
   if (!padplusPayload.userName) {
     throw Error('cannot get user_name from padplus payload: ' + JSON.stringify(padplusPayload))
   }
@@ -54,5 +54,5 @@ export function padplusToCacheContactPayload (
     ticket           : padplusPayload.ticket,
     userName         : padplusPayload.userName,
     verifyFlag       : padplusPayload.verifyFlag,
-  } as WechatyCacheContactPayload
+  } as PuppetCacheContactPayload
 }

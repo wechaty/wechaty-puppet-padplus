@@ -44,7 +44,7 @@ import {
   LoginDeviceInfo,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
-import { CacheManager, CacheStoreOption } from '../server-manager/cache-manager'
+import { CacheManager } from '../server-manager/cache-manager'
 import { convertFromGrpcContact, convertFromGrpcContactSelf } from '../convert-manager/contact-convertor'
 import { PadplusRoom } from './api-request/room'
 import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
@@ -54,6 +54,7 @@ import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helper
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -67,7 +68,7 @@ export interface ManagerOptions {
   token: string,
   name: unknown,
   endpoint?: string,
-  cacheOption?: CacheStoreOption,
+  cacheOption?: PuppetCacheStoreOptions,
 }
 
 const PRE = 'PadplusManager'
