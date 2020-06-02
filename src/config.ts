@@ -24,8 +24,10 @@ export const INVALID_TOKEN_MESSAGE = `
 ===========================================================================================
 
       The token is invalid, please use an valid token to access padplus
+      See: https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
       你使用的Token是无效的，请使用有效Token
+      更多详情参见：https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
 ============================================================================================
 
@@ -38,8 +40,10 @@ export const EXPIRED_TOKEN_MESSAGE = `
 ===========================================================================================
 
       The token you are using is expired, please renew this token
+      See: https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
       你使用的Token已经过期了，如果你想继续使用wechaty-puppet-padplus，请续费你的Token
+      更多详情参见：https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
 ============================================================================================
 
