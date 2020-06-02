@@ -63,7 +63,6 @@ export interface PadplusMemorySlot {
   userName  : string,
 }
 
-
 export interface ManagerOptions {
   token: string,
   name: unknown,

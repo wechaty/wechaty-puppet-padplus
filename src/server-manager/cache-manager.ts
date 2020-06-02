@@ -2,18 +2,39 @@ import fs     from 'fs-extra'
 import os     from 'os'
 import path   from 'path'
 
-import { JsonCache, AsyncMap } from 'mapped-json-cache';
+import { WechatyCache,
+  AsyncMap,
+  WechatyCacheMessagePayload,
+  WechatyCacheContactPayload,
+  WechatyCacheRoomMemberPayload,
+  WechatyCacheRoomPayload,
+  WechatyCacheRoomInvitationPayload,
+  WechatyCacheFriendshipPayload,
+  WechatyCacheRoomMemberPayloadMap,
+} from 'wechaty-cache'
 
 import { log } from '../config'
 import {
   PadplusContactPayload,
   PadplusRoomPayload,
   PadplusRoomInvitationPayload,
-  PadplusRoomMemberPayload,
   PadplusRoomMemberMap,
   PadplusMessagePayload,
 } from '../schemas'
 import { FriendshipPayload } from 'wechaty-puppet'
+import { cacheToPadplusMessagePayload,
+  padplusToCacheMessagePayload,
+  padplusToCacheContactPayload,
+  cacheToPadplusContactPayload,
+  cacheToPadplusRoomPayload,
+  padplusToCacheRoomPayload,
+  cacheToPadplusRoomMemberPayload,
+  padplusToCacheRoomMemberPayload,
+  cacheToPadplusRoomInvitationPayload,
+  padplusToCacheRoomInvitationPayload,
+  cacheToPadplusFriendshipPayload,
+  padplusToCacheFriendshipPayload,
+} from '../pure-function-helpers'
 
 const PRE = 'CacheManager'
 
@@ -72,16 +93,16 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheImageMessageRawPayload? : AsyncMap<string, PadplusMessagePayload>
-  private cacheContactRawPayload?     : AsyncMap<string, PadplusContactPayload>
-  private cacheRoomMemberRawPayload?  : AsyncMap<string, {
-    [contactId: string]: PadplusRoomMemberPayload,
+  private cacheImageMessageRawPayload?           : AsyncMap<string, WechatyCacheMessagePayload>
+  private cacheContactRawPayload?                : AsyncMap<string, WechatyCacheContactPayload>
+  private cacheRoomMemberRawPayload?             : AsyncMap<string, {
+    [contactId: string]: WechatyCacheRoomMemberPayload,
   }>
-  private cacheRoomRawPayload?        : AsyncMap<string, PadplusRoomPayload>
-  private cacheRoomInvitationRawPayload? : AsyncMap<string, PadplusRoomInvitationPayload>
-  private cacheFriendshipRawPayload?  : AsyncMap<string, FriendshipPayload>
+  private cacheRoomRawPayload?                   : AsyncMap<string, WechatyCacheRoomPayload>
+  private cacheRoomInvitationRawPayload?         : AsyncMap<string, WechatyCacheRoomInvitationPayload>
+  private cacheFriendshipRawPayload?             : AsyncMap<string, WechatyCacheFriendshipPayload>
 
-  private compactCacheTimer?          : NodeJS.Timeout
+  private compactCacheTimer?                     : NodeJS.Timeout
 
   /**
    * -------------------------------
@@ -94,7 +115,8 @@ export class CacheManager {
     if (!this.cacheImageMessageRawPayload) {
       throw new Error(`${PRE} getMessage() has no cache.`)
     }
-    return this.cacheImageMessageRawPayload.get(messageId)
+    const cacheData = await this.cacheImageMessageRawPayload.get(messageId)
+    return cacheData ? cacheToPadplusMessagePayload(cacheData) : undefined
   }
 
   public async setMessage (
@@ -104,7 +126,8 @@ export class CacheManager {
     if (!this.cacheImageMessageRawPayload || !contactId) {
       throw new Error(`${PRE} setMessage() has no cache.`)
     }
-    await this.cacheImageMessageRawPayload.set(contactId, payload)
+    const cacheData = padplusToCacheMessagePayload(payload)
+    await this.cacheImageMessageRawPayload.set(contactId, cacheData)
   }
 
   /**
@@ -118,7 +141,8 @@ export class CacheManager {
     if (!this.cacheContactRawPayload) {
       throw new Error(`${PRE} getContact() has no cache.`)
     }
-    return this.cacheContactRawPayload.get(contactId)
+    const cacheData = await this.cacheContactRawPayload.get(contactId)
+    return cacheData ? cacheToPadplusContactPayload(cacheData) : undefined
   }
 
   public async setContact (
@@ -128,7 +152,8 @@ export class CacheManager {
     if (!this.cacheContactRawPayload || !contactId) {
       throw new Error(`${PRE} setContact() has no cache.`)
     }
-    await this.cacheContactRawPayload.set(contactId, payload)
+    const cacheData = padplusToCacheContactPayload(payload)
+    await this.cacheContactRawPayload.set(contactId, cacheData)
   }
 
   public async deleteContact (
@@ -158,7 +183,7 @@ export class CacheManager {
     }
     const result: PadplusContactPayload[] = []
     for await (const value of this.cacheContactRawPayload.values()) {
-      result.push(value)
+      result.push(cacheToPadplusContactPayload(value))
     }
     return result
   }
@@ -188,7 +213,8 @@ export class CacheManager {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} getRoom() has no cache.`)
     }
-    return this.cacheRoomRawPayload.get(roomId)
+    const cacheData = await this.cacheRoomRawPayload.get(roomId)
+    return cacheData ? cacheToPadplusRoomPayload(cacheData) : undefined
   }
 
   public async setRoom (
@@ -198,7 +224,8 @@ export class CacheManager {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} setRoom() has no cache.`)
     }
-    await this.cacheRoomRawPayload.set(roomId, payload)
+    const cacheData = padplusToCacheRoomPayload(payload)
+    await this.cacheRoomRawPayload.set(roomId, cacheData)
   }
 
   public async deleteRoom (
@@ -245,7 +272,15 @@ export class CacheManager {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} getRoomMember() has no cache.`)
     }
-    return this.cacheRoomMemberRawPayload.get(roomId)
+    const cacheData = await this.cacheRoomMemberRawPayload.get(roomId)
+    if (!cacheData) {
+      return undefined
+    }
+    const map: PadplusRoomMemberMap = {}
+    for (const property of Object.keys(cacheData)) {
+      map[property] = cacheToPadplusRoomMemberPayload(cacheData[property])
+    }
+    return map
   }
 
   public async setRoomMember (
@@ -255,7 +290,11 @@ export class CacheManager {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
-    await this.cacheRoomMemberRawPayload.set(roomId, payload)
+    const map: WechatyCacheRoomMemberPayloadMap = {}
+    for (const property of Object.keys(payload)) {
+      map[property] = padplusToCacheRoomMemberPayload(payload[property])
+    }
+    await this.cacheRoomMemberRawPayload.set(roomId, map)
   }
 
   public async deleteRoomMember (
@@ -278,7 +317,8 @@ export class CacheManager {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} getRoomInvitationRawPayload() has no cache.`)
     }
-    return this.cacheRoomInvitationRawPayload.get(messageId)
+    const cacheData = await this.cacheRoomInvitationRawPayload.get(messageId)
+    return cacheData ? cacheToPadplusRoomInvitationPayload(cacheData) : undefined
   }
 
   public async setRoomInvitation (
@@ -288,7 +328,8 @@ export class CacheManager {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} setRoomInvitationRawPayload() has no cache.`)
     }
-    await this.cacheRoomInvitationRawPayload.set(messageId, payload)
+    const cacheData = padplusToCacheRoomInvitationPayload(payload)
+    await this.cacheRoomInvitationRawPayload.set(messageId, cacheData)
   }
 
   public async deleteRoomInvitation (
@@ -309,7 +350,8 @@ export class CacheManager {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} getFriendshipRawPayload() has no cache.`)
     }
-    return this.cacheFriendshipRawPayload.get(id)
+    const cacheData = await this.cacheFriendshipRawPayload.get(id)
+    return cacheData ? cacheToPadplusFriendshipPayload(cacheData) : undefined
   }
 
   public async setFriendshipRawPayload (
@@ -319,7 +361,8 @@ export class CacheManager {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} setFriendshipRawPayload() has no cache.`)
     }
-    await this.cacheFriendshipRawPayload.set(id, payload)
+    const cacheData = padplusToCacheFriendshipPayload(payload)
+    await this.cacheFriendshipRawPayload.set(id, cacheData)
   }
 
   /**
@@ -331,8 +374,8 @@ export class CacheManager {
   private async initCache (
     userId: string,
     cacheOption: CacheStoreOption = {
-      type: 'flashStore',
       baseDir: process.cwd(),
+      type: 'flashStore',
     },
   ): Promise<void> {
     log.verbose(PRE, 'initCache(%s,%s)', userId, JSON.stringify(cacheOption))
@@ -349,7 +392,7 @@ export class CacheManager {
       path.sep,
       'flash-store-v0.14',
       path.sep,
-      )
+    )
 
     if (cacheOption.type === 'flashStore') {
       const baseDirExist = await fs.pathExists(baseDir)
@@ -358,19 +401,17 @@ export class CacheManager {
       }
       cacheOption.baseDir = baseDir
     }
-    const jsonCache = new JsonCache({
+    const jsonCache = new WechatyCache({
       name: userId,
       storeOptions: cacheOption,
-    });
-    await jsonCache.init();
-    this.cacheContactRawPayload = jsonCache.genClient('message-raw-payload');
-
-    this.cacheImageMessageRawPayload   = jsonCache.genClient('message-raw-payload')
-    this.cacheContactRawPayload        = jsonCache.genClient('contact-raw-payload')
-    this.cacheRoomMemberRawPayload     = jsonCache.genClient('room-member-raw-payload')
-    this.cacheRoomRawPayload           = jsonCache.genClient('room-raw-payload')
-    this.cacheFriendshipRawPayload     = jsonCache.genClient('friendship')
-    this.cacheRoomInvitationRawPayload = jsonCache.genClient('room-invitation-raw-payload')
+    })
+    await jsonCache.init()
+    this.cacheImageMessageRawPayload   = jsonCache.genMessageClient()
+    this.cacheContactRawPayload        = jsonCache.genContactClient()
+    this.cacheRoomMemberRawPayload     = jsonCache.genRoomMemberClient()
+    this.cacheRoomRawPayload           = jsonCache.genRoomClient()
+    this.cacheFriendshipRawPayload     = jsonCache.genFriendshipClient()
+    this.cacheRoomInvitationRawPayload = jsonCache.genRoomInvitationClient()
     const contactTotal = this.cacheContactRawPayload.size
 
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)

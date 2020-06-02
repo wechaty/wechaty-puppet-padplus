@@ -78,12 +78,12 @@
     "google-protobuf": "^3.6.1",
     "grpc": "^1.22.0",
     "lru-cache": "^5.1.1",
-    "mapped-json-cache": "^0.1.1",
     "promise-retry": "^1.1.1",
     "rx-queue": "^0.8.5",
     "state-switch": "^0.9.7",
     "uuid": "^7.0.0",
     "watchdog": "^0.8.10",
+    "wechaty-cache": "^0.1.5",
     "xml2js": "^0.4.22"
   },
   "publishConfig": {
