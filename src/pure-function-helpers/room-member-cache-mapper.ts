@@ -30,7 +30,7 @@ export function padplusToCacheRoomMemberPayload (
     displayName            : padplusPayload.displayName,
     inviterId              : padplusPayload.inviterId,
     nickName               : padplusPayload.nickName,
-    sex                    : 1,
+    sex                    : 0,
     smallHeadUrl           : padplusPayload.smallHeadUrl,
   } as PuppetCacheRoomMemberPayload
 }
