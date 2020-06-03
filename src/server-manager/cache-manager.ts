@@ -6,7 +6,6 @@ import { PuppetCache,
   AsyncMap,
   PuppetCacheMessagePayload,
   PuppetCacheContactPayload,
-  PuppetCacheRoomMemberPayload,
   PuppetCacheRoomPayload,
   PuppetCacheRoomInvitationPayload,
   PuppetCacheFriendshipPayload,
@@ -85,9 +84,7 @@ export class CacheManager {
    */
   private cacheImageMessageRawPayload?           : AsyncMap<string, PuppetCacheMessagePayload>
   private cacheContactRawPayload?                : AsyncMap<string, PuppetCacheContactPayload>
-  private cacheRoomMemberRawPayload?             : AsyncMap<string, {
-    [contactId: string]: PuppetCacheRoomMemberPayload,
-  }>
+  private cacheRoomMemberRawPayload?             : AsyncMap<string, PuppetCacheRoomMemberPayloadMap>
   private cacheRoomRawPayload?                   : AsyncMap<string, PuppetCacheRoomPayload>
   private cacheRoomInvitationRawPayload?         : AsyncMap<string, PuppetCacheRoomInvitationPayload>
   private cacheFriendshipRawPayload?             : AsyncMap<string, PuppetCacheFriendshipPayload>
@@ -267,8 +264,8 @@ export class CacheManager {
       return undefined
     }
     const map: PadplusRoomMemberMap = {}
-    for (const property of Object.keys(cacheData)) {
-      map[property] = cacheToPadplusRoomMemberPayload(cacheData[property])
+    for (const memberId of Object.keys(cacheData)) {
+      map[memberId] = cacheToPadplusRoomMemberPayload(cacheData[memberId])
     }
     return map
   }
@@ -281,8 +278,8 @@ export class CacheManager {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
     const map: PuppetCacheRoomMemberPayloadMap = {}
-    for (const property of Object.keys(payload)) {
-      map[property] = padplusToCacheRoomMemberPayload(payload[property])
+    for (const memberId of Object.keys(payload)) {
+      map[memberId] = padplusToCacheRoomMemberPayload(payload[memberId])
     }
     await this.cacheRoomMemberRawPayload.set(roomId, map)
   }

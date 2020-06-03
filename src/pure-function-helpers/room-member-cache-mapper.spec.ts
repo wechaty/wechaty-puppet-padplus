@@ -27,7 +27,7 @@ test('room-member-cache-mapper.spec', async t => {
     displayName            : 'displayName',
     inviterId              : 'inviterId',
     nickName               : 'nickName',
-    sex                    : 1,
+    sex                    : 0,
     smallHeadUrl           : 'smallHeadUrl',
   }
 
