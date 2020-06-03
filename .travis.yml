@@ -6,9 +6,7 @@ os:
   - linux
 
 cache:
-  directories:
-    - node_modules
-
+  npm: false
 stages:
   - test
   - pack
