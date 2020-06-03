@@ -388,17 +388,17 @@ export class CacheManager {
       }
       cacheOption.baseDir = baseDir
     }
-    const jsonCache = new PuppetCache({
+    const puppetCache = new PuppetCache({
       name: userId,
       storeOptions: cacheOption,
     })
-    await jsonCache.init()
-    this.cacheImageMessageRawPayload   = jsonCache.genMessageClient()
-    this.cacheContactRawPayload        = jsonCache.genContactClient()
-    this.cacheRoomMemberRawPayload     = jsonCache.genRoomMemberClient()
-    this.cacheRoomRawPayload           = jsonCache.genRoomClient()
-    this.cacheFriendshipRawPayload     = jsonCache.genFriendshipClient()
-    this.cacheRoomInvitationRawPayload = jsonCache.genRoomInvitationClient()
+    await puppetCache.init()
+    this.cacheImageMessageRawPayload   = puppetCache.genMessageClient()
+    this.cacheContactRawPayload        = puppetCache.genContactClient()
+    this.cacheRoomMemberRawPayload     = puppetCache.genRoomMemberClient()
+    this.cacheRoomRawPayload           = puppetCache.genRoomClient()
+    this.cacheFriendshipRawPayload     = puppetCache.genFriendshipClient()
+    this.cacheRoomInvitationRawPayload = puppetCache.genRoomInvitationClient()
     const contactTotal = this.cacheContactRawPayload?.size
 
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)
