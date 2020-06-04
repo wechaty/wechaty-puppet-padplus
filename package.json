@@ -63,7 +63,6 @@
     "wechaty-puppet": "^0.25.2"
   },
   "peerDependencies": {
-    "memory-card": "^0.6.13",
     "wechaty-puppet": "^0.25.2"
   },
   "dependencies": {
