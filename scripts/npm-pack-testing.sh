@@ -31,7 +31,7 @@ npm install --production \
   fs-extra \
   hot-import \
   quick-lru \
-  "memory-card@$NPM_TAG" \
+  memory-card \
   rx-queue \
   state-switch \
   "wechaty-puppet@$NPM_TAG" \
