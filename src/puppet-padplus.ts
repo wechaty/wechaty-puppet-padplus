@@ -59,6 +59,7 @@ import { convertSearchContactToContact } from './convert-manager/contact-convert
 import checkNumber from './utils/util'
 import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
 import { convertMiniProgramPayloadToParams, convertMiniProgramPayloadToMessage } from './convert-manager/message-convertor'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const PRE = 'PuppetPadplus'
 
@@ -75,7 +76,29 @@ export class PuppetPadplus extends Puppet {
     const token = this.options.token || padplusToken()
     const name = this.options.name
     if (token) {
+      const cacheOption: any = this.options.cacheOption
+      let cacheStoreOption: PuppetCacheStoreOptions | undefined
+      if (cacheOption) {
+        const type: string = cacheOption.type
+        if (type) {
+          switch (type) {
+            case 'mongo':
+              const url: string = cacheOption.url
+              const option = cacheOption.option
+              if (!url) {
+                throw new Error(`can not get mongo url from cache option.`)
+              }
+              cacheStoreOption = {
+                option: option,
+                type: 'mongo',
+                url,
+              }
+          }
+        }
+      }
+
       this.manager = new PadplusManager({
+        cacheOption: cacheStoreOption,
         endpoint: this.options.endpoint || GRPC_ENDPOINT,
         name,
         token,

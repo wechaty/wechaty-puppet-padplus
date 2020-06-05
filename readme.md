@@ -87,7 +87,28 @@ or
 BROLOG_LEVEL=silly node bot.js
 ```
 
-### 5. Other Tips
+
+### 5. Cache Option
+
+> wechaty-puppet-padplus use flash-store or mongo as cache store
+
+- flash-store[defalut]
+- mongo
+
+> If you want to use mongo as cache sotre, just set the cacheOption, like this:
+
+```ts
+const puppet: Puppet = new PuppetPadplus({
+  token,
+  cacheOption: {
+    type: 'mongo',
+    url: 'mongodb://127.0.0.1:27017/testdb',
+  },
+})
+
+```
+
+### 6. Other Tips
 
 > Set environment in windows
 

@@ -4,12 +4,11 @@ import {
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
 import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
-import { MemoryCard } from 'memory-card'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload, EventRoomLeavePayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload, EventRoomLeavePayload, MemoryCard } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -54,6 +53,7 @@ import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helper
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -67,6 +67,7 @@ export interface ManagerOptions {
   token: string,
   name: unknown,
   endpoint?: string,
+  cacheOption?: PuppetCacheStoreOptions,
 }
 
 const PRE = 'PadplusManager'
@@ -478,7 +479,7 @@ export class PadplusManager extends EventEmitter {
             }
 
             log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
+            await CacheManager.init(loginData.userName, this.options.cacheOption)
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
@@ -520,7 +521,7 @@ export class PadplusManager extends EventEmitter {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
                 log.verbose(PRE, `init cache manager`)
-                await CacheManager.init(wechatUser.userName)
+                await CacheManager.init(wechatUser.userName, this.options.cacheOption)
                 this.cacheManager = CacheManager.Instance
                 /* if (this.padplusUser) {
                   await this.padplusUser.reconnect()
