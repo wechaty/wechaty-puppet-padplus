@@ -108,6 +108,10 @@ const puppet: Puppet = new PuppetPadplus({
 
 ```
 
+#### Caution
+
+*When you use mongo as cache store, wechaty-puppet-cache use some tables which have ```wechaty-cache``` prefix. [detail>>](https://www.npmjs.com/package/wechaty-puppet-cache#4-caution)*
+
 ### 6. Other Tips
 
 > Set environment in windows
