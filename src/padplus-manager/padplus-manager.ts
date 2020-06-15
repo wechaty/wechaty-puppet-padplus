@@ -138,7 +138,7 @@ export class PadplusManager extends EventEmitter {
     this.getRoomMemberQueue = new DelayQueueExecutor(500)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
-      log.info(PRE, 'resetThrottleQueue.subscribe() reason: %s', reason)
+      log.info(PRE, 'ready to restart due to receive event: %s', reason)
 
       if (this.grpcGatewayEmitter) {
         this.grpcGatewayEmitter.removeAllListeners()

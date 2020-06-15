@@ -394,7 +394,7 @@ export class GrpcGateway extends EventEmitter {
       =====================================================================
       `)
       if (err.code === 14 || err.code === 13 || err.code === 2) {
-        log.info(PRE, `err code : ${err.code}, err : ${JSON.stringify(err)}, ready to reconnect`)
+        log.info(PRE, `Failed to reconnect grpc server, error code : ${err.code}, detail info : ${JSON.stringify(err)}, try to reconnect 5 seconds later.`)
         await new Promise(resolve => setTimeout(resolve, 5000))
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {
