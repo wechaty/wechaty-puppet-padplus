@@ -92,7 +92,7 @@ BROLOG_LEVEL=silly node bot.js
 
 > wechaty-puppet-padplus use flash-store or mongo as cache store
 
-- flash-store[defalut]
+- flash-store[default]
 - mongo
 
 > If you want to use mongo as cache sotre, just set the cacheOption, like this:
