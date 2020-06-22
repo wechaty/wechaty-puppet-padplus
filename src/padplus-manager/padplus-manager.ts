@@ -1117,15 +1117,16 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async setContactAlias (
+    selfId: string,
     contactId: string,
     alias: string,
   ): Promise<void> {
-    log.silly(PRE, `setContactAlias(${contactId}, ${alias})`)
+    log.silly(PRE, `setContactAlias(${selfId}, ${contactId}, ${alias})`)
 
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-    await this.padplusContact.setAlias(contactId, alias)
+    await this.padplusContact.setAlias(selfId, contactId, alias)
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('set alias failed since timeout')), 5000)
       CallbackPool.Instance.pushContactAliasCallback(contactId, alias, () => {
