@@ -192,12 +192,13 @@ export class PadplusContact {
   }
 
   // Set alias for contact
-  public setAlias = async (contactId: string, alias: string): Promise<boolean> => {
+  public setAlias = async (selfId: string, contactId: string, alias: string): Promise<boolean> => {
     log.verbose(PRE, `setAlias()`)
 
     const data = {
       newRemarkName: alias,
       userName: contactId,
+      wechatUser: selfId,
     }
 
     await this.requestClient.request({

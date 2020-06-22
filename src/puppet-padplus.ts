@@ -354,7 +354,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    await this.manager.setContactAlias(contactId, alias || '')
+    await this.manager.setContactAlias(this.selfId(), contactId, alias || '')
   }
 
   contactAvatar (contactId: string): Promise<FileBox>
