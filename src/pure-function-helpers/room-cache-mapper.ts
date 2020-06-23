@@ -52,10 +52,10 @@ export function cacheToPadplusMemberBriefPayload (
   cachePayload: PuppetMemberBrief,
 ): PadplusMemberBrief {
   if (!cachePayload.userName) {
-    if ((cachePayload as any)['UserName']) {
+    if ((cachePayload as any).UserName) {
       return {
-        NickName                   : (cachePayload as any)['NickName'] as string,
-        UserName                   : (cachePayload as any)['UserName'] as string,
+        NickName                   : (cachePayload as any).NickName as string,
+        UserName                   : (cachePayload as any).UserName as string,
       }
     }
     throw Error('cannot get userName from cache payload: ' + JSON.stringify(cachePayload))
