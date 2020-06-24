@@ -246,6 +246,7 @@ export class GrpcGateway extends EventEmitter {
           switch (apiType) {
             case ApiType.SEND_MESSAGE:
             case ApiType.SEND_FILE:
+            case ApiType.GET_CONTACT_SELF_INFO:
               timeoutMs = 3 * 60 * 1000
               break
             case ApiType.GET_MESSAGE_MEDIA:
