@@ -3,6 +3,7 @@ import { PadplusMessagePayload, GrpcResponseMessageData, MiniProgramParamsPayloa
 import {
   PadplusMessageType,
   GrpcMessagePayload,
+  WechatAppMessageType,
 } from '../schemas'
 import { MiniProgramPayload } from 'wechaty-puppet'
 
@@ -47,7 +48,7 @@ export function convertMiniProgramPayloadToParams (miniProgramPayload: MiniProgr
     sourcedisplayname: miniProgramPayload.title || '',
     sourceusername: miniProgramPayload.username || '',
     title: miniProgramPayload.title || '',
-    type: 33,
+    type: WechatAppMessageType.MiniProgramApp,
     url: `https://mp.weixin.qq.com/mp/waerrpage?appid=${miniProgramPayload.appid}&type=upgrade&upgradetype=3#wechat_redirect`,
     username: miniProgramPayload.username || '',
     version: '1',
