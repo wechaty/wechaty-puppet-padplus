@@ -32,6 +32,7 @@ export function padplusToCacheFriendshipPayload (
         hello     : padplusPayload.hello,
         id        : padplusPayload.id,
         timestamp : padplusPayload.timestamp,
+        type      : FriendshipType.Confirm,
       } as PuppetCacheFriendshipPayload
     case FriendshipType.Receive:
       return {
@@ -50,6 +51,7 @@ export function padplusToCacheFriendshipPayload (
         hello     : padplusPayload.hello,
         id        : padplusPayload.id,
         timestamp : padplusPayload.timestamp,
+        type      : FriendshipType.Verify,
       } as PuppetCacheFriendshipPayload
     default:
       throw new Error(`unknown friendship type.`)
