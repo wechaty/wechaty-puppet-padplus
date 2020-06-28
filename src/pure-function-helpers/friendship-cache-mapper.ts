@@ -1,6 +1,5 @@
 import { PuppetCacheFriendshipPayload } from 'wechaty-puppet-cache'
-import { FriendshipPayload } from '../schemas'
-import { FriendshipType } from 'wechaty-puppet'
+import { FriendshipType, FriendshipPayload, FriendshipPayloadReceive } from 'wechaty-puppet'
 
 export function cacheToPadplusFriendshipPayload (
   cachePayload: PuppetCacheFriendshipPayload,
@@ -12,6 +11,7 @@ export function cacheToPadplusFriendshipPayload (
     contactId : cachePayload.contactId,
     hello     : cachePayload.hello,
     id        : cachePayload.id,
+    scene     : cachePayload.scene,
     stranger  : cachePayload.stranger,
     ticket    : cachePayload.ticket,
     timestamp : cachePayload.timestamp,
@@ -38,7 +38,7 @@ export function padplusToCacheFriendshipPayload (
         contactId : padplusPayload.contactId,
         hello     : padplusPayload.hello,
         id        : padplusPayload.id,
-        scene     : undefined,
+        scene     : (padplusPayload as FriendshipPayloadReceive).scene,
         stranger  : padplusPayload.stranger,
         ticket    : padplusPayload.ticket,
         timestamp : padplusPayload.timestamp,
@@ -51,6 +51,7 @@ export function padplusToCacheFriendshipPayload (
         id        : padplusPayload.id,
         timestamp : padplusPayload.timestamp,
       } as PuppetCacheFriendshipPayload
+    default:
+      throw new Error(`unknown friendship type.`)
   }
-  throw new Error(`unknown friendship type.`)
 }

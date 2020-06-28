@@ -6,16 +6,16 @@
 import test  from 'blue-tape'
 
 import { PuppetCacheFriendshipPayload } from 'wechaty-puppet-cache'
-import { FriendshipPayload } from '../schemas'
 
 import { cacheToPadplusFriendshipPayload, padplusToCacheFriendshipPayload } from './friendship-cache-mapper'
-import { FriendshipType } from 'wechaty-puppet'
+import { FriendshipType, FriendshipPayload, FriendshipSceneType } from 'wechaty-puppet'
 
 test('friendship-cache-mapper', async t => {
   const PADPLUS_FRIENDSHIP_PAYLOAD: FriendshipPayload = {
     contactId : 'contactId',
     hello     : 'hello',
     id        : 'id',
+    scene     : FriendshipSceneType.Phone,
     stranger  : 'stranger',
     ticket    : 'ticket',
     timestamp : 1591069294176,
@@ -26,7 +26,7 @@ test('friendship-cache-mapper', async t => {
     contactId : 'contactId',
     hello     : 'hello',
     id        : 'id',
-    scene     : undefined,
+    scene     : FriendshipSceneType.Phone,
     stranger  : 'stranger',
     ticket    : 'ticket',
     timestamp : 1591069294176,
