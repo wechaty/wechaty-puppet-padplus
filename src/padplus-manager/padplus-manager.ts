@@ -8,7 +8,7 @@ import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload, EventRoomLeavePayload, MemoryCard } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload, EventRoomLeavePayload, MemoryCard } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -24,7 +24,6 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
-  FriendshipPayload,
   QrcodeStatus,
   PadplusRichMediaData,
   GrpcRoomMemberPayload,
@@ -1508,7 +1507,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new Error(`no cache manager.`)
     }
-    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
+    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship)
   }
 
   public async recallMessage (selfId: string, receiverId: string, messageId: string): Promise<boolean> {

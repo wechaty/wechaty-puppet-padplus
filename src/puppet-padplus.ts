@@ -45,7 +45,7 @@ import {
 
 import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse, LoginDeviceInfo } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse, LoginDeviceInfo } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -561,7 +561,7 @@ export class PuppetPadplus extends Puppet {
     await this.manager.confirmFriendship(contactId, stranger, ticket, (scene && scene.toString()) || '3')
   }
 
-  protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {
+  protected async friendshipRawPayload (friendshipId: string): Promise<FriendshipPayload> {
     log.silly(PRE, `friendshipRawPayload(${friendshipId})`)
 
     if (!this.manager) {
@@ -574,7 +574,7 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`can not find friendship.`)
   }
 
-  protected async friendshipRawPayloadParser (rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
+  protected async friendshipRawPayloadParser (rawPayload: FriendshipPayload): Promise<FriendshipPayload> {
     log.silly(PRE, `friendshipRawPayloadParser(${util.inspect(rawPayload)})`)
 
     return rawPayload as FriendshipPayload
