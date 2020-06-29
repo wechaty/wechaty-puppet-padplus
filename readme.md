@@ -164,7 +164,7 @@ bot
   .on('message', (msg: Message) => {
     console.log(`msg : ${msg}`)
   })
-  .on('logout', (user: Contact, reason: string) => {
+  .on('logout', (user: Contact, reason?: string) => {
     console.log(`logout user: ${user}, reason : ${reason}`)
   })
   .start()
