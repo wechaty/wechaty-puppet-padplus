@@ -37,7 +37,7 @@ export async function messageRawPayloadParser (
 
   const payloadBase = {
     id        : rawPayload.msgId,
-    timestamp : rawPayload.createTime / 1000,   // Padplus message timestamp is seconds
+    timestamp : Math.floor(rawPayload.createTime / 1000),   // Padplus message timestamp is seconds
     type,
   } as {
     id        : string,
