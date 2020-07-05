@@ -89,7 +89,7 @@ test('sys', async t => {
     mentionIdList: [],
     roomId: '23238546298@chatroom',
     text: '<sysmsg type="delchatroommember">\n\t<delchatroommember>\n\t\t<plain><![CDATA[你邀请"佳芮"加入了群聊  ]]></plain>\n\t\t<text><![CDATA[你邀请"佳芮"加入了群聊  ]]></text>\n\t\t<link>\n\t\t\t<scene>invite</scene>\n\t\t\t<text><![CDATA[  撤销]]></text>\n\t\t\t<memberlist>\n\t\t\t\t<username><![CDATA[wxid_rdwh63c150bm12]]></username>\n\t\t\t</memberlist>\n\t\t</link>\n\t</delchatroommember>\n</sysmsg>\n',
-    timestamp: 1568205434.181,
+    timestamp: 1568205434,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Unknown,
   }
