@@ -112,6 +112,12 @@ export class PuppetPadplus extends Puppet {
   public async start (): Promise<void> {
     log.info(PRE, `start()`)
 
+    if (this.state.on()) {
+      log.silly(PRE, 'start() is called on a ON puppet. await ready(on) and return.')
+      await this.state.ready('on')
+      return
+    }
+
     this.state.on('pending')
 
     await this.startManager(this.manager)
