@@ -1,3 +1,4 @@
+/* eslint camelcase: 0 */
 export interface PadplusRoomMemberPayload {
   contactId: string,
   nickName: string,
@@ -138,4 +139,41 @@ export interface GrpcAccpetRoomInvitation {
   source: string,
   uin: string,
   userName: string,
+}
+
+export interface RoomRelatedXmlSchema {
+  sysmsg: {
+    $: {
+      type: string,
+    },
+    sysmsgtemplate: {
+      content_template: {
+        $: {
+          type: string,
+        },
+        plain: string,
+        template: string,
+        link_list: {
+          link: [{
+            $: {
+              name: string,
+              type: string,
+              hidden?: string,
+            },
+            memberlist?: {
+              member: [{
+                username: string,
+                nickname: string,
+              }]
+            },
+            separator?: string,
+            title?: string,
+            usernamelist?: {
+              username: string
+            }
+          }]
+        }
+      }
+    }
+  }
 }

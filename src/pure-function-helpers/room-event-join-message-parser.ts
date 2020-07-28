@@ -6,12 +6,14 @@ import { YOU } from 'wechaty-puppet'
 import {
   PadplusMessagePayload,
   RoomJoinEvent,
+  RoomRelatedXmlSchema,
 }                         from '../schemas'
 
 import {
   isPayload,
   isRoomId,
 }               from './is-type'
+import { getUserName } from './get-xml-label'
 
 // import { log } from '../config'
 
@@ -94,44 +96,10 @@ export async function roomJoinEventMessageParser (
   let linkList
   const tryXmlText = content.replace(/^[^\n]+\n/, '')
 
-  interface XmlSchema {
-    sysmsg: {
-      $: {
-        type: string,
-      },
-      sysmsgtemplate: {
-        content_template: {
-          $: {
-            type: string,
-          },
-          plain: string,
-          template: string,
-          link_list: {
-            link: [{
-              $: {
-                name: string,
-                type: string,
-                hidden?: string,
-              },
-              memberlist?: {
-                member: [{
-                  username: string,
-                  nickname: string,
-                }]
-              },
-              separator?: string,
-              title?: string,
-              usernamelist?: {
-                username: string
-              }
-            }]
-          }
-        }
-      }
-    }
+  const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
+  if (!jsonPayload) {
+    return null
   }
-
-  const jsonPayload: XmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as XmlSchema
   content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
   linkList = jsonPayload.sysmsg.sysmsgtemplate.content_template.link_list.link
 
@@ -276,54 +244,3 @@ export async function roomJoinEventMessageParser (
 function checkString (inviteeIdList: string | string[]) {
   return typeof inviteeIdList !== 'string' ? inviteeIdList : [ inviteeIdList ]
 }
-
-function getUserName (linkList: any, name: string) {
-  const otherObjectArray = linkList.filter((link: any) => name.includes(link.$.name))
-
-  if (!otherObjectArray || otherObjectArray.length === 0) {
-    return null
-  }
-  const otherObject = otherObjectArray[0]
-  const inviteeList = otherObject.memberlist!.member
-
-  const inviteeIdList = inviteeList.length ? inviteeList.map((i: any) => i.username) : (inviteeList as any).username
-  return inviteeIdList
-}
-/*
-const MESSAGE_PAYLOAD: PadplusMessagePayload = {
-  // content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profilewithrevoke\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[你邀请\"$names$\"加入了群聊  $revoke$]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"names\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_3s4v7osfgpbc22]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[柠檬不酸]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"revoke\" type=\"link_revoke\" hidden=\"1\">\n\t\t\t\t\t<title><![CDATA[撤销]]></title>\n\t\t\t\t\t<usernamelist>\n\t\t\t\t\t\t<username><![CDATA[wxid_3s4v7osfgpbc22]]></username>\n\t\t\t\t\t</usernamelist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profilewithrevoke\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[你邀请\"$names$\"加入了群聊  $revoke$]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"names\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_atjcz7dvaxn422]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[古根😄]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_rfd4l6310r3l12]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[小马爱生活]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_q0yib0cg8b2s22]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[小助手]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"revoke\" type=\"link_revoke\" hidden=\"1\">\n\t\t\t\t\t<title><![CDATA[撤销]]></title>\n\t\t\t\t\t<usernamelist>\n\t\t\t\t\t\t<username><![CDATA[wxid_atjcz7dvaxn422]]></username>\n\t\t\t\t\t\t<username><![CDATA[wxid_rfd4l6310r3l12]]></username>\n\t\t\t\t\t\t<username><![CDATA[wxid_q0yib0cg8b2s22]]></username>\n\t\t\t\t\t</usernamelist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  // content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\"$username$\"邀请你加入了群聊，群聊参与人还有：$others$]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"username\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[Soul001001]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[苏畅]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"others\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[古根😄、小马爱生活、小助手]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  // content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\"$username$\"邀请你加入了群聊，群聊参与人还有：$others$]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"username\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[Soul001001]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[苏畅]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"others\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[古根😄、小助手]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  // content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\"$username$\"邀请\"$names$\"加入了群聊]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"username\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[Soul001001]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[苏畅]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"names\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_io10ga6dtjxe22]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[超酷爱宠]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  // content: '21524785272@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\" $adder$\"通过扫描\"$from$\"分享的二维码加入群聊]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"adder\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_rdwh63c150bm12]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[小句子(佳芮助理机器人)]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"from\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_atjcz7dvaxn422]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[古根😄]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
-  createTime: 1595916797061,
-  fromMemberUserName: '20434481305@chatroom',
-  fromUserName: '20434481305@chatroom',
-  imgBuf: '',
-  imgStatus: 1,
-  l1MsgType: 5,
-  msgId: '7816589581642576688',
-  msgSource: '',
-  msgSourceCd: 2,
-  msgType: 10002,
-  newMsgId: 7816589581642577000,
-  pushContent: '',
-  status: 4,
-  toUserName: 'wxid_orp7dihe2pm112',
-  uin: '289099750',
-  wechatUserName: 'wxid_orp7dihe2pm112',
-}
-
-async function main () {
-  const result = await roomJoinEventMessageParser(MESSAGE_PAYLOAD)
-  console.log(`typeof result.inviteeIdList: ${typeof result!.inviteeIdList}`);
-  console.log(`
-  =====================
-  result:
-  ${JSON.stringify(result)}
-  =====================
-  `);
-}
-
-main() */

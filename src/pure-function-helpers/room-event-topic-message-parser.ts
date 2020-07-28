@@ -2,6 +2,7 @@
 import {
   PadplusMessagePayload,
   RoomTopicEvent,
+  RoomRelatedXmlSchema,
 }                         from '../schemas'
 
 import {
@@ -10,6 +11,7 @@ import {
 }               from './is-type'
 import { YOU } from 'wechaty-puppet'
 import { xmlToJson } from './xml-to-json'
+import { getUserName, getNickName } from './get-xml-label'
 
 /**
  *
@@ -47,45 +49,11 @@ export async function roomTopicEventMessageParser (
   let linkList
 
   if (!needParseXML) {
-    interface XmlSchema {
-      sysmsg: {
-        $: {
-          type: string,
-        },
-        sysmsgtemplate: {
-          content_template: {
-            $: {
-              type: string,
-            },
-            plain: string,
-            template: string,
-            link_list: {
-              link: [{
-                $: {
-                  name: string,
-                  type: string,
-                  hidden?: string,
-                },
-                memberlist?: {
-                  member: [{
-                    username: string,
-                    nickname: string,
-                  }]
-                },
-                separator?: string,
-                title?: string,
-                usernamelist?: {
-                  username: string
-                }
-              }]
-            }
-          }
-        }
-      }
-    }
-
     const tryXmlText = content.replace(/^[^\n]+\n/, '')
-    const jsonPayload: XmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as XmlSchema
+    const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
+    if (!jsonPayload) {
+      return null
+    }
     content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
     linkList = jsonPayload.sysmsg.sysmsgtemplate.content_template.link_list.link
   }
@@ -119,30 +87,4 @@ export async function roomTopicEventMessageParser (
   }
 
   return roomTopicEvent
-}
-
-function getUserName (linkList: any, name: string) {
-  const otherObjectArray = linkList.filter((link: any) => name.includes(link.$.name))
-
-  if (!otherObjectArray || otherObjectArray.length === 0) {
-    return null
-  }
-  const otherObject = otherObjectArray[0]
-  const inviteeList = otherObject.memberlist!.member
-
-  const inviteeIdList = inviteeList.length ? inviteeList.map((i: any) => i.username) : (inviteeList as any).username
-  return inviteeIdList
-}
-
-function getNickName (linkList: any, name: string) {
-  const otherObjectArray = linkList.filter((link: any) => name.includes(link.$.name))
-
-  if (!otherObjectArray || otherObjectArray.length === 0) {
-    return null
-  }
-  const otherObject = otherObjectArray[0]
-  const inviteeList = otherObject.memberlist!.member
-
-  const inviteeIdList = inviteeList.length ? inviteeList.map((i: any) => i.nickname) : (inviteeList as any).nickname
-  return inviteeIdList
 }
