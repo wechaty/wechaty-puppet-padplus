@@ -33,12 +33,12 @@ import {
   EventScanPayload,
   EventReadyPayload,
   EventHeartbeatPayload,
+  YOU,
 }                           from 'wechaty-puppet'
 
 import {
   log,
   padplusToken,
-  retry,
   GRPC_ENDPOINT,
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
@@ -255,8 +255,16 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         break
       case PadplusMessageType.Recalled:
-        this.emit('message', eventMessagePayload)
-        await this.onRoomJoinEvent(message)
+        if (message.content.includes('撤回了一条消息') || message.content.includes('You recalled a message')) {
+          this.emit('message', eventMessagePayload)
+        } else {
+          await Promise.all([
+            this.onRoomJoinEvent(message),
+            // this.onRoomLeaveEvent(message),
+            this.onRoomTopicEvent(message),
+            // this.onFriendshipEvent(message),
+          ])
+        }
         break
       case PadplusMessageType.Text:
         await this.onFriendshipEvent(message)
@@ -1270,54 +1278,20 @@ export class PuppetPadplus extends Puppet {
 
     if (joinEvent) {
       log.silly(PRE, `receive room-join event : ${util.inspect(joinEvent)}`)
-      const inviteeNameList = joinEvent.inviteeNameList
-      const inviterName     = joinEvent.inviterName
-      const roomId          = joinEvent.roomId
-      const timestamp       = joinEvent.timestamp
+      let _inviteeIdList = joinEvent.inviteeIdList
+      let inviterId     = joinEvent.inviterId
+      const roomId      = joinEvent.roomId
+      const timestamp   = joinEvent.timestamp
 
-      const inviteeIdList = await retry(async (retryException, attempt) => {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
-
-        const tryIdList = flatten(
-          await Promise.all(
-            inviteeNameList.map(
-              inviteeName => this.roomMemberSearch(roomId, inviteeName),
-            ),
-          ),
-        )
-
-        if (tryIdList.length) {
-          return tryIdList
-        }
-
-        if (!this.manager) {
-          throw new Error('no manager')
-        }
-
-        // Set Cache Dirty
-        await this.roomMemberPayloadDirty(roomId)
-
-        return retryException(new Error('roomMemberSearch() not found'))
-
-      }).catch(e => {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
-        return [] as string[]
-      })
-
-      let inviterIdList = await this.roomMemberSearch(roomId, inviterName)
-
-      if (inviterIdList.length < 1) {
-        await this.roomMemberPayloadDirty(roomId)
-        await this.manager.getRoomMembers(roomId)
-        inviterIdList = await this.roomMemberSearch(roomId, inviterName)
-        if (inviterIdList.length < 1) {
-          throw new Error(`can not get room member`)
-        }
-      } else if (inviterIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+      if (typeof inviterId === 'symbol') {
+        inviterId = await this.searchSymbolYou(inviterId, roomId)
       }
-
-      const inviterId = inviterIdList[0]
+      let inviteeIdList: string[] = []
+      if (typeof _inviteeIdList[0] === 'symbol') {
+        inviteeIdList = [ await this.searchSymbolYou(_inviteeIdList[0] as any, roomId) ]
+      } else {
+        inviteeIdList = _inviteeIdList as string[]
+      }
 
       // Set Cache Dirty
       await this.roomMemberPayloadDirty(roomId)
@@ -1377,11 +1351,11 @@ export class PuppetPadplus extends Puppet {
   protected async onRoomTopicEvent (message: PadplusMessagePayload): Promise<void> {
     log.silly(PRE, `onRoomTopicEvent(${message.msgId})`)
 
-    const topicEvent = roomTopicEventMessageParser(message)
+    const topicEvent = await roomTopicEventMessageParser(message)
 
     if (topicEvent) {
       log.silly(PRE, `receive room-topic event : ${util.inspect(topicEvent)}`)
-      const changerName = topicEvent.changerName
+      const _changerId = topicEvent.changerId
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
       const timestamp   = topicEvent.timestamp
@@ -1389,13 +1363,18 @@ export class PuppetPadplus extends Puppet {
       const roomOldPayload = await this.roomPayload(roomId)
       const oldTopic       = roomOldPayload.topic
 
-      const changerIdList = await this.roomMemberSearch(roomId, changerName)
-      if (changerIdList.length < 1) {
-        throw new Error('no changerId found')
-      } else if (changerIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+      let changerId
+      if (typeof _changerId === 'symbol') {
+        const changerIdList = await this.roomMemberSearch(roomId, _changerId)
+        if (changerIdList.length < 1) {
+          throw new Error('no changerId found')
+        } else if (changerIdList.length > 1) {
+          log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+        }
+        changerId = changerIdList[0]
+      } else {
+        changerId = _changerId
       }
-      const changerId = changerIdList[0]
 
       if (!this.manager) {
         throw new Error('no padplusManager')
@@ -1669,6 +1648,24 @@ export class PuppetPadplus extends Puppet {
         this.emit('room-leave', data)
       }
     }
+  }
+
+  private async searchSymbolYou (id: string | YOU, roomId: string): Promise<string> {
+    let inviteeIdList
+    let inviterIdList = await this.roomMemberSearch(roomId, id)
+
+    if (inviterIdList.length < 1) {
+      await this.roomMemberPayloadDirty(roomId)
+      await this.manager.getRoomMembers(roomId)
+      inviterIdList = await this.roomMemberSearch(roomId, id)
+      if (inviterIdList.length < 1) {
+        throw new Error(`can not get room member`)
+      }
+    } else if (inviterIdList.length > 1) {
+      log.silly(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+    }
+    inviteeIdList = inviterIdList[0]
+    return inviteeIdList
   }
 
 }

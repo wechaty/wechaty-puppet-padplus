@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node
-
+/* eslint-disable */
 // tslint:disable:max-line-length
 // tslint:disable:no-shadowed-variable
 
@@ -17,16 +17,16 @@ import { roomTopicEventMessageParser }  from './room-event-topic-message-parser'
 
 test('roomTopicEventMessageParser() ZH-bot-modify-topic', async t => {
   const MESSAGE_PAYLOAD: PadplusMessagePayload = {
-    content: '"高原ོ"修改群名为“未命名”',
-    createTime: 1568208243261,
-    fromUserName: '18295482296@chatroom',
+    content: '"24674062762@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\"$username$\"修改群名为“$remark$”]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"username\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_8kg1wdu3jvk322]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[疫情小助手]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"remark\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[测试群]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
+    createTime: 1595936004247,
+    fromUserName: '24674062762@chatroom',
     imgBuf: '',
     imgStatus: 1,
     l1MsgType: 5,
     msgId: '4392351666543040436',
     msgSource: '',
     msgSourceCd: 2,
-    msgType: 10000,
+    msgType: 10002,
     newMsgId: 4392351666543040500,
     pushContent: '',
     status: 4,
@@ -35,13 +35,13 @@ test('roomTopicEventMessageParser() ZH-bot-modify-topic', async t => {
     wechatUserName: 'wxid_zovb9ol86m7l22',
   }
   const EXPECTED_EVENT: RoomTopicEvent = {
-    changerName: '高原ོ',
-    roomId: '18295482296@chatroom',
-    timestamp: 1568208243261,
-    topic: '未命名',
+    changerId: 'wxid_8kg1wdu3jvk322',
+    roomId: '24674062762@chatroom',
+    timestamp: 1595936004247,
+    topic: '测试群',
   }
 
-  const event = roomTopicEventMessageParser(MESSAGE_PAYLOAD)
+  const event = await roomTopicEventMessageParser(MESSAGE_PAYLOAD)
   t.deepEqual(event, EXPECTED_EVENT, 'should parse event')
 })
 
@@ -65,12 +65,12 @@ test('roomTopicEventMessageParser() ZH-other-modify-topic', async t => {
     wechatUserName: 'wxid_zovb9ol86m7l22',
   }
   const EXPECTED_EVENT: RoomTopicEvent = {
-    changerName: YOU,
+    changerId: YOU,
     roomId: '18295482296@chatroom',
     timestamp: 1568208437265,
     topic: '命名了',
   }
 
-  const event = roomTopicEventMessageParser(MESSAGE_PAYLOAD)
+  const event = await roomTopicEventMessageParser(MESSAGE_PAYLOAD)
   t.deepEqual(event, EXPECTED_EVENT, 'should parse event')
 })

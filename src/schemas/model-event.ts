@@ -1,10 +1,10 @@
 import { YOU } from 'wechaty-puppet'
 
 export interface RoomJoinEvent {
-  inviteeNameList : Array<(string | YOU)>,
-  inviterName     : string | YOU,
-  roomId          : string,
-  timestamp       : number, // Unix Timestamp, in seconds
+  inviteeIdList : Array<string | YOU>,
+  inviterId     : string | YOU,
+  roomId        : string,
+  timestamp     : number, // Unix Timestamp, in seconds
 }
 
 export interface RoomLeaveEvent {
@@ -15,7 +15,7 @@ export interface RoomLeaveEvent {
 }
 
 export interface RoomTopicEvent {
-  changerName : string | YOU,
+  changerId : string | YOU,
   roomId      : string,
   topic       : string,
   timestamp   : number, // Unix Timestamp, in seconds

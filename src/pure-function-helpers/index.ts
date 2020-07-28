@@ -36,6 +36,7 @@ export * from './room-invitation-cache-mapper'
 export * from './room-member-cache-mapper'
 export * from './room-raw-payload-parser'
 export * from './split-name'
+export * from './get-xml-label'
 
 // export * from './app-message-generator'
 // export * from './contact-message-generator'

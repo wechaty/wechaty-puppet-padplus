@@ -15,31 +15,31 @@ import {
 
 test('roomTopicEventMessageParser() not detected', async t => {
   t.equal(
-    roomTopicEventMessageParser(undefined as any),
+    await roomTopicEventMessageParser(undefined as any),
     null,
     'should return null for undefined',
   )
 
   t.equal(
-    roomTopicEventMessageParser('null' as any),
+    await roomTopicEventMessageParser('null' as any),
     null,
     'should return null for null',
   )
 
   t.equal(
-    roomTopicEventMessageParser('test' as any),
+    await roomTopicEventMessageParser('test' as any),
     null,
     'should return null for string',
   )
 
   t.equal(
-    roomTopicEventMessageParser({} as any),
+    await roomTopicEventMessageParser({} as any),
     null,
     'should return null for empty object',
   )
 
   t.equal(
-    roomTopicEventMessageParser({ content: 'fsdfsfsdfasfas' } as PadplusMessagePayload),
+    await roomTopicEventMessageParser({ content: 'fsdfsfsdfasfas' } as PadplusMessagePayload),
     null,
     'should return null for PadplusMessagePayload with unknown content',
   )

@@ -1,6 +1,8 @@
+/* eslint-disable */
 import {
   PadplusMessagePayload,
   RoomTopicEvent,
+  RoomRelatedXmlSchema,
 }                         from '../schemas'
 
 import {
@@ -8,6 +10,8 @@ import {
   isRoomId,
 }               from './is-type'
 import { YOU } from 'wechaty-puppet'
+import { xmlToJson } from './xml-to-json'
+import { getUserName, getNickName } from './get-xml-label'
 
 /**
  *
@@ -24,22 +28,34 @@ const ROOM_TOPIC_YOU_REGEX_LIST = [
   /^(你)修改群名为“(.+)”$/,
 ]
 
-export function roomTopicEventMessageParser (
+export async function roomTopicEventMessageParser (
   rawPayload: PadplusMessagePayload,
-): null | RoomTopicEvent {
-
+): Promise<null | RoomTopicEvent> {
   if (!isPayload(rawPayload)) {
     return null
   }
 
   const roomId  = rawPayload.fromUserName
-  const content = rawPayload.content
   const timestamp = rawPayload.createTime
   if (!roomId) {
     return null
   }
   if (!isRoomId(roomId)) {
     return null
+  }
+
+  let content = rawPayload.content
+  let needParseXML = content.includes('你修改群名为') || content.includes('You changed the group name to')
+  let linkList
+
+  if (!needParseXML) {
+    const tryXmlText = content.replace(/^[^\n]+\n/, '')
+    const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
+    if (!jsonPayload) {
+      return null
+    }
+    content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
+    linkList = jsonPayload.sysmsg.sysmsgtemplate.content_template.link_list.link
   }
 
   let matchesForOther:  null | string[] = []
@@ -53,15 +69,18 @@ export function roomTopicEventMessageParser (
     return null
   }
 
-  let   changerName = matches[1]
-  const topic       = matches[2] as string
+  let changerId = matches[1]
+  let topic = matches[2] as string
 
-  if ((matchesForYou && changerName === '你') || changerName === 'You') {
-    changerName = YOU
+  if ((matchesForYou && changerId === '你') || changerId === 'You') {
+    changerId = YOU
+  } else {
+    changerId = getUserName(linkList, changerId as string)
+    topic = getNickName(linkList, topic)
   }
 
   const roomTopicEvent: RoomTopicEvent = {
-    changerName,
+    changerId,
     roomId,
     timestamp,
     topic,
