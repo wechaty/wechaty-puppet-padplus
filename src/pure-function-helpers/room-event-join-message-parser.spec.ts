@@ -1,9 +1,10 @@
 #!/usr/bin/env ts-node
-
+/* eslint-disable */
 // tslint:disable:max-line-length
 // tslint:disable:no-shadowed-variable
 
 import test  from 'blue-tape'
+import { YOU } from 'wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -46,56 +47,31 @@ test('roomJoinEventMessageParser() not detected', async t => {
 
 })
 
-test('roomJoinEventMessageParser() Recall Message', async t => {
+test('roomJoinEventMessageParser() bot invite other', async t => {
   const MESSAGE_PAYLOAD: PadplusMessagePayload = {
-    content: 'qq512436430: \n<sysmsg type = "revokemsg"><revokemsg><session>5367653125@chatroom</session><msgid>1452102025</msgid><newmsgid>2582549652250718552</newmsgid><replacemsg><![CDATA["李佳芮" has recalled a message.]]></replacemsg></revokemsg></sysmsg>',
-    createTime: 1528806181,
-    fromUserName: '5367653125@chatroom',
-    imgStatus: 0,
-    l1MsgType: 0,
-    msgId: '8079407148816751084',
-    msgSource: '',
-    msgSourceCd: 0,
-    msgType: 10002,
-    newMsgId: 8079407148816751084,
-    pushContent: '',
-    status: 1,
-    toUserName: 'wxid_5zj4i5htp9ih22',
-    uin: '0',
-    wechatUserName: '',
-  }
-  t.equal(await roomJoinEventMessageParser(MESSAGE_PAYLOAD), null, 'should return null for a normal message recall payload')
-})
-
-test('roomJoinEventMessageParser() Recall Message', async t => {
-  const MESSAGE_PAYLOAD: PadplusMessagePayload = {
-    appMsgType: undefined,
-    content: '"苏畅👾"邀请"奥斯陆"加入了群聊',
-    createTime: 1568205596095,
-    fileName: undefined,
-    fromMemberNickName: undefined,
-    fromMemberUserName: undefined,
-    fromUserName: '18972581662@chatroom',
+    content: '20434481305@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profilewithrevoke\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[你邀请\"$names$\"加入了群聊  $revoke$]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"names\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_3s4v7osfgpbc22]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[柠檬不酸]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"revoke\" type=\"link_revoke\" hidden=\"1\">\n\t\t\t\t\t<title><![CDATA[撤销]]></title>\n\t\t\t\t\t<usernamelist>\n\t\t\t\t\t\t<username><![CDATA[wxid_3s4v7osfgpbc22]]></username>\n\t\t\t\t\t</usernamelist>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n',
+    createTime: 1595916797061,
+    fromMemberUserName: '20434481305@chatroom',
+    fromUserName: '20434481305@chatroom',
     imgBuf: '',
     imgStatus: 1,
     l1MsgType: 5,
-    msgId: '2330628644341231870',
+    msgId: '7816589581642576688',
     msgSource: '',
     msgSourceCd: 2,
-    msgType: 10000,
-    newMsgId: 2330628644341231600,
+    msgType: 10002,
+    newMsgId: 7816589581642577000,
     pushContent: '',
     status: 4,
-    toUserName: 'wxid_v7j3e9kna9l912',
-    uin: '2978186714',
-    url: undefined,
-    wechatUserName: 'wxid_v7j3e9kna9l912',
+    toUserName: 'wxid_orp7dihe2pm112',
+    uin: '289099750',
+    wechatUserName: 'wxid_orp7dihe2pm112',
   }
   const actual = {
-    inviteeNameList: [ '奥斯陆' ],
-    inviterName: '苏畅👾',
-    roomId: '18972581662@chatroom',
-    timestamp: 1568205596095,
+    inviteeIdList: [ 'wxid_3s4v7osfgpbc22' ],
+    inviterId: YOU,
+    roomId: '20434481305@chatroom',
+    timestamp: 1595916797061
   }
   t.deepEqual(await roomJoinEventMessageParser(MESSAGE_PAYLOAD), actual, 'should return actual data')
 })
