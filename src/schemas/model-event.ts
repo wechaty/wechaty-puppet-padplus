@@ -15,7 +15,7 @@ export interface RoomLeaveEvent {
 }
 
 export interface RoomTopicEvent {
-  changerName : string | YOU,
+  changerId : string | YOU,
   roomId      : string,
   topic       : string,
   timestamp   : number, // Unix Timestamp, in seconds

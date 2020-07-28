@@ -50,8 +50,7 @@ const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_ZH = [
 ]
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_EN = [
-  /^(.+) invited you to a group chat/,
-  /^(.+) invited you and (.+) to the group chat/,
+  /^(.+) invited you to a group chat with (.+)/,
 ]
 
 /* ----------------------------------------------- */

@@ -255,10 +255,15 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         break
       case PadplusMessageType.Recalled:
-        if (message.content.includes('撤回了一条消息')) {
+        if (message.content.includes('撤回了一条消息') || message.content.includes('You recalled a message')) {
           this.emit('message', eventMessagePayload)
         } else {
-          await this.onRoomJoinEvent(message)
+          await Promise.all([
+            this.onRoomJoinEvent(message),
+            // this.onRoomLeaveEvent(message),
+            this.onRoomTopicEvent(message),
+            // this.onFriendshipEvent(message),
+          ])
         }
         break
       case PadplusMessageType.Text:
@@ -1346,11 +1351,11 @@ export class PuppetPadplus extends Puppet {
   protected async onRoomTopicEvent (message: PadplusMessagePayload): Promise<void> {
     log.silly(PRE, `onRoomTopicEvent(${message.msgId})`)
 
-    const topicEvent = roomTopicEventMessageParser(message)
+    const topicEvent = await roomTopicEventMessageParser(message)
 
     if (topicEvent) {
       log.silly(PRE, `receive room-topic event : ${util.inspect(topicEvent)}`)
-      const changerName = topicEvent.changerName
+      const _changerId = topicEvent.changerId
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
       const timestamp   = topicEvent.timestamp
@@ -1358,13 +1363,18 @@ export class PuppetPadplus extends Puppet {
       const roomOldPayload = await this.roomPayload(roomId)
       const oldTopic       = roomOldPayload.topic
 
-      const changerIdList = await this.roomMemberSearch(roomId, changerName)
-      if (changerIdList.length < 1) {
-        throw new Error('no changerId found')
-      } else if (changerIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+      let changerId
+      if (typeof _changerId === 'symbol') {
+        const changerIdList = await this.roomMemberSearch(roomId, _changerId)
+        if (changerIdList.length < 1) {
+          throw new Error('no changerId found')
+        } else if (changerIdList.length > 1) {
+          log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+        }
+        changerId = changerIdList[0]
+      } else {
+        changerId = _changerId
       }
-      const changerId = changerIdList[0]
 
       if (!this.manager) {
         throw new Error('no padplusManager')

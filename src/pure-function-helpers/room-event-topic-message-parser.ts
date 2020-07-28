@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   PadplusMessagePayload,
   RoomTopicEvent,
@@ -8,6 +9,7 @@ import {
   isRoomId,
 }               from './is-type'
 import { YOU } from 'wechaty-puppet'
+import { xmlToJson } from './xml-to-json'
 
 /**
  *
@@ -24,22 +26,68 @@ const ROOM_TOPIC_YOU_REGEX_LIST = [
   /^(你)修改群名为“(.+)”$/,
 ]
 
-export function roomTopicEventMessageParser (
+export async function roomTopicEventMessageParser (
   rawPayload: PadplusMessagePayload,
-): null | RoomTopicEvent {
-
+): Promise<null | RoomTopicEvent> {
   if (!isPayload(rawPayload)) {
     return null
   }
 
   const roomId  = rawPayload.fromUserName
-  const content = rawPayload.content
   const timestamp = rawPayload.createTime
   if (!roomId) {
     return null
   }
   if (!isRoomId(roomId)) {
     return null
+  }
+
+  let content = rawPayload.content
+  let needParseXML = content.includes('你修改群名为') || content.includes('You changed the group name to')
+  let linkList
+
+  if (!needParseXML) {
+    interface XmlSchema {
+      sysmsg: {
+        $: {
+          type: string,
+        },
+        sysmsgtemplate: {
+          content_template: {
+            $: {
+              type: string,
+            },
+            plain: string,
+            template: string,
+            link_list: {
+              link: [{
+                $: {
+                  name: string,
+                  type: string,
+                  hidden?: string,
+                },
+                memberlist?: {
+                  member: [{
+                    username: string,
+                    nickname: string,
+                  }]
+                },
+                separator?: string,
+                title?: string,
+                usernamelist?: {
+                  username: string
+                }
+              }]
+            }
+          }
+        }
+      }
+    }
+
+    const tryXmlText = content.replace(/^[^\n]+\n/, '')
+    const jsonPayload: XmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as XmlSchema
+    content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
+    linkList = jsonPayload.sysmsg.sysmsgtemplate.content_template.link_list.link
   }
 
   let matchesForOther:  null | string[] = []
@@ -53,19 +101,48 @@ export function roomTopicEventMessageParser (
     return null
   }
 
-  let   changerName = matches[1]
-  const topic       = matches[2] as string
+  let changerId = matches[1]
+  let topic = matches[2] as string
 
-  if ((matchesForYou && changerName === '你') || changerName === 'You') {
-    changerName = YOU
+  if ((matchesForYou && changerId === '你') || changerId === 'You') {
+    changerId = YOU
+  } else {
+    changerId = getUserName(linkList, changerId as string)
+    topic = getNickName(linkList, topic)
   }
 
   const roomTopicEvent: RoomTopicEvent = {
-    changerName,
+    changerId,
     roomId,
     timestamp,
     topic,
   }
 
   return roomTopicEvent
+}
+
+function getUserName (linkList: any, name: string) {
+  const otherObjectArray = linkList.filter((link: any) => name.includes(link.$.name))
+
+  if (!otherObjectArray || otherObjectArray.length === 0) {
+    return null
+  }
+  const otherObject = otherObjectArray[0]
+  const inviteeList = otherObject.memberlist!.member
+
+  const inviteeIdList = inviteeList.length ? inviteeList.map((i: any) => i.username) : (inviteeList as any).username
+  return inviteeIdList
+}
+
+function getNickName (linkList: any, name: string) {
+  const otherObjectArray = linkList.filter((link: any) => name.includes(link.$.name))
+
+  if (!otherObjectArray || otherObjectArray.length === 0) {
+    return null
+  }
+  const otherObject = otherObjectArray[0]
+  const inviteeList = otherObject.memberlist!.member
+
+  const inviteeIdList = inviteeList.length ? inviteeList.map((i: any) => i.nickname) : (inviteeList as any).nickname
+  return inviteeIdList
 }
