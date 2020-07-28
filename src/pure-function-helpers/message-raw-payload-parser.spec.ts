@@ -89,7 +89,7 @@ test('sys', async t => {
     mentionIdList: [],
     roomId: '23238546298@chatroom',
     text: '<sysmsg type="delchatroommember">\n\t<delchatroommember>\n\t\t<plain><![CDATA[你邀请"佳芮"加入了群聊  ]]></plain>\n\t\t<text><![CDATA[你邀请"佳芮"加入了群聊  ]]></text>\n\t\t<link>\n\t\t\t<scene>invite</scene>\n\t\t\t<text><![CDATA[  撤销]]></text>\n\t\t\t<memberlist>\n\t\t\t\t<username><![CDATA[wxid_rdwh63c150bm12]]></username>\n\t\t\t</memberlist>\n\t\t</link>\n\t</delchatroommember>\n</sysmsg>\n',
-    timestamp: 1568205434,
+    timestamp: 1568205434181,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Unknown,
   }
@@ -128,7 +128,7 @@ test('room invitation created by others', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '<msg><appmsg appid="" sdkver=""><title><![CDATA[邀请你加入群聊]]></title><des><![CDATA["高原ོ"邀请你加入群聊舞哩团02群，进入可查看详情。]]></des><action>view</action><type>5</type><showtype>0</showtype><content></content><url><![CDATA[https://support.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyinvite?ticket=AXRyTvurvCvq0LAjognrPg%3D%3D]]></url><thumburl><![CDATA[https://u.weixin.qq.com/cgi-bin/getchatroomheadimg?username=A27ac8722f7321d8915f06845d25369ed729322a37058e7556fa49f81f631175b&from=1]]></thumburl><lowurl></lowurl><appattach><totallen>0</totallen><attachid></attachid><fileext></fileext></appattach><extinfo></extinfo></appmsg><appinfo><version></version><appname></appname></appinfo></msg>',
-    timestamp: 1568205752,
+    timestamp: 1568205752199,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Url,
   }
@@ -164,7 +164,7 @@ test('room ownership transfer message', async t => {
     mentionIdList: [],
     roomId: '18295482296@chatroom',
     text: '你已成为新群主',
-    timestamp: 1568206018,
+    timestamp: 1568206018206,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Unknown,
   }
@@ -198,7 +198,7 @@ test('share card peer to peer', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '<?xml version="1.0" encoding="UTF-8" standalone="no"?><msg ContactFlag="3" alias="" antispamticket="v2_4fc82b8cfcd54be18bebd693a13705e4f804822a1686bd2959a07979994fc22cbdac6cbb584de3751137538a3d41004f@stranger" bigheadimgurl="http://wx.qlogo.cn/mmhead/ver_1/D7ibkLTEbZ5ZgAZM8mb4eQFGicCBbAst97JXJJ3TORLusf0w1qLrrFxzYxEtnUP4Z4nR69DzA2FEEOntkENslo0w/0" brandFlags="0" brandHomeUrl="" brandIconUrl="" brandSubscriptConfigUrl="" certflag="0" certinfo="" city="中国" fullpy="suchang?" imagestatus="3" nickname="苏畅&#128126;" province="北京" regionCode="CN_Beijing_Chaoyang" scene="17" sex="1" shortpy="" sign="" smallheadimgurl="http://wx.qlogo.cn/mmhead/ver_1/D7ibkLTEbZ5ZgAZM8mb4eQFGicCBbAst97JXJJ3TORLusf0w1qLrrFxzYxEtnUP4Z4nR69DzA2FEEOntkENslo0w/132" username="v1_db2fb22335cd14700c7d70d171e960fbd5d17e3a134f74a1b2663edab59d6265@stranger"/>',
-    timestamp: 1568206141,
+    timestamp: 1568206141208,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Contact,
   }
@@ -236,7 +236,7 @@ test('share card in room', async t => {
     mentionIdList: [],
     roomId: '18295482296@chatroom',
     text: '<?xml version="1.0"?>\n<msg bigheadimgurl="http://wx.qlogo.cn/mmhead/ver_1/ibVX6Cxtt58AlLIiczVMA3Vt1IkOOKxnJJKwADcsHibGC1HfkGQEKicbylcjWLxEVSen0Znnnp6DpOqXtiaR7xpYFnWQwtofrpHEuj4O0DdbZ9Is/0" smallheadimgurl="http://wx.qlogo.cn/mmhead/ver_1/ibVX6Cxtt58AlLIiczVMA3Vt1IkOOKxnJJKwADcsHibGC1HfkGQEKicbylcjWLxEVSen0Znnnp6DpOqXtiaR7xpYFnWQwtofrpHEuj4O0DdbZ9Is/132" username="v1_26802a5a2b8341aa44b60db1d875169c9b80bd08dabfc1aaae46ff9841921bcacc480ebd85edbcb68529638c1588e00f@stranger" nickname="百年-句子技术支持" fullpy="bainiangouzijishuzhichi" shortpy="" alias="" imagestatus="3" scene="17" province="" city="" sign="" sex="0" certflag="0" certinfo="" brandIconUrl="" brandHomeUrl="" brandSubscriptConfigUrl="" brandFlags="0" regionCode="" antispamticket="v2_050f2a36e5e8583abdaea142242cf6ffbc72a980c8f95da1d99bcede3fd01f8944c61690df7fd872eeebadbb6c986e16@stranger" />\n',
-    timestamp: 1568206684,
+    timestamp: 1568206684229,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Contact,
   }
@@ -274,7 +274,7 @@ test('attachment file with ext .xlsx', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '<msg><appmsg appid="" sdkver="0"><title>报价.xlsx</title><des></des><action></action><type>6</type><showtype>0</showtype><mediatagname></mediatagname><messageaction></messageaction><content></content><url></url><lowurl></lowurl><dataurl></dataurl><lowdataurl></lowdataurl><appattach><totallen>11934</totallen><attachid>@cdn_304e020100044730450201000204d8e50c6e02033d0af80204ba30feb602045d78f1e10420777869645f7a6f7662396f6c38366d376c323235305f313536383230373332390204010400050201000400_0780b7157995b47c0e88275d0c40da6a_1</attachid><emoticonmd5></emoticonmd5><fileext>xlsx</fileext><cdnattachurl>304e020100044730450201000204d8e50c6e02033d0af80204ba30feb602045d78f1e10420777869645f7a6f7662396f6c38366d376c323235305f313536383230373332390204010400050201000400</cdnattachurl><aeskey>0780b7157995b47c0e88275d0c40da6a</aeskey><encryver>0</encryver></appattach><extinfo></extinfo><sourceusername></sourceusername><sourcedisplayname></sourcedisplayname><commenturl></commenturl><thumburl></thumburl><md5>420e8bc8986eb1539bbab10d396e814d</md5></appmsg><fromusername>lylezhuifeng</fromusername><scene>0</scene><appinfo><version>1</version><appname></appname></appinfo><commenturl></commenturl></msg>',
-    timestamp: 1568207329,
+    timestamp: 1568207329248,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Attachment,
   }
@@ -311,7 +311,7 @@ test('others recalled message in room', async t => {
     mentionIdList: [],
     roomId: '18295482296@chatroom',
     text: '6800642263058603981',
-    timestamp: 1568207817,
+    timestamp: 1568207817258,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Recalled,
   }
@@ -352,7 +352,7 @@ test('bot recalled message in room', async t => {
     mentionIdList: [],
     roomId: '23446751259@chatroom',
     text: '245587684513446090',
-    timestamp: 1568776956,
+    timestamp: 1568776956065,
     toId: 'wxid_v7j3e9kna9l912',
     type: MessageType.Recalled,
   }
@@ -393,7 +393,7 @@ test('others recalled message in private chat', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '3169605043756821364',
-    timestamp: 1568777325,
+    timestamp: 1568777325070,
     toId: 'wxid_v7j3e9kna9l912',
     type: MessageType.Recalled,
   }
@@ -434,7 +434,7 @@ test('bot recalled message in private chat', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '5435185973422451659',
-    timestamp: 1568777162,
+    timestamp: 1568777162068,
     toId: 'Soul001001',
     type: MessageType.Recalled,
   }
@@ -528,7 +528,7 @@ test('Transfer money message', async t => {
     mentionIdList: [],
     roomId: undefined,
     text: '<msg><appmsg appid="" sdkver=""><title><![CDATA[微信转账]]></title><des><![CDATA[收到转账0.10元。如需收钱，请点此升级至最新版本]]></des><action></action><type>2000</type><content><![CDATA[]]></content><url><![CDATA[https://support.weixin.qq.com/cgi-bin/mmsupport-bin/readtemplate?t=page/common_page__upgrade&text=text001&btn_text=btn_text_0]]></url><thumburl><![CDATA[https://support.weixin.qq.com/cgi-bin/mmsupport-bin/readtemplate?t=page/common_page__upgrade&text=text001&btn_text=btn_text_0]]></thumburl><lowurl></lowurl><extinfo></extinfo><wcpayinfo><paysubtype>1</paysubtype><feedesc><![CDATA[￥0.10]]></feedesc><transcationid><![CDATA[100005010119091100065311563152679024]]></transcationid><transferid><![CDATA[1000050101201909111009170910447]]></transferid><invalidtime><![CDATA[1568299743]]></invalidtime><begintransfertime><![CDATA[1568207943]]></begintransfertime><effectivedate><![CDATA[1]]></effectivedate><pay_memo><![CDATA[]]></pay_memo></wcpayinfo></appmsg></msg>',
-    timestamp: 1568207943,
+    timestamp: 1568207943259,
     toId: 'wxid_zovb9ol86m7l22',
     type: MessageType.Transfer,
   }
