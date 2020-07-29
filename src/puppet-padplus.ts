@@ -1297,6 +1297,12 @@ export class PuppetPadplus extends Puppet {
       await this.roomMemberPayloadDirty(roomId)
       await this.roomPayloadDirty(roomId)
 
+      let memberList = await this.roomMemberList(roomId)
+      while (!inviteeIdList.every(c => memberList.includes(c))) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        memberList = await this.roomMemberList(roomId)
+      }
+
       const eventRoomJoinPayload: EventRoomJoinPayload = {
         inviteeIdList,
         inviterId,
