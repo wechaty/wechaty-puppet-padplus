@@ -77,6 +77,11 @@ export {
   log,
 }
 
+export const GRPC_LIMITATION = {
+  "grpc.max_receive_message_length": 1024 * 1024 * 150,
+  "grpc.max_send_message_length": 1024 * 1024 * 150,
+}
+
 export const AWS_S3 = {
   ACCESS_KEY_ID: 'AKIA3PQY2OQGY3IMXJ74',
   BUCKET: 'macpro-message-file',
