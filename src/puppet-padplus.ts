@@ -1,6 +1,5 @@
 import util from 'util'
 import path from 'path'
-import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
@@ -260,7 +259,7 @@ export class PuppetPadplus extends Puppet {
         } else {
           await Promise.all([
             this.onRoomJoinEvent(message),
-            // this.onRoomLeaveEvent(message),
+            this.onRoomLeaveEvent(message),
             this.onRoomTopicEvent(message),
             // this.onFriendshipEvent(message),
           ])
@@ -1319,32 +1318,33 @@ export class PuppetPadplus extends Puppet {
   protected async onRoomLeaveEvent (message: PadplusMessagePayload): Promise<void> {
     log.silly(PRE, `onRoomLeaveEvent(${message.msgId})`)
 
-    const leaveEvent = roomLeaveEventMessageParser(message)
+    const leaveEvent = await roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
       log.silly(PRE, `receive room-leave event : ${util.inspect(leaveEvent)}`)
-      const leaverNameList = leaveEvent.leaverNameList
-      const removerName    = leaveEvent.removerName
+      let _leaverIdList = leaveEvent.leaverIdList
+      let removerId    = leaveEvent.removerId
       const roomId         = leaveEvent.roomId
       const timestamp      = leaveEvent.timestamp
 
-      const leaverIdList = flatten(
-        await Promise.all(
-          leaverNameList.map(
-            leaverName => this.roomMemberSearch(roomId, leaverName),
-          ),
-        ),
-      )
-      const removerIdList = await this.roomMemberSearch(roomId, removerName)
-      if (removerIdList.length < 1) {
-        throw new Error('no removerId found')
-      } else if (removerIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventLeave(): removerId found more than 1, use the first one.')
+      if (typeof removerId === 'symbol') {
+        removerId = await this.searchSymbolYou(removerId, roomId)
       }
-      const removerId = removerIdList[0]
+      let leaverIdList: string[] = []
+      if (typeof _leaverIdList[0] === 'symbol') {
+        leaverIdList = [ await this.searchSymbolYou(_leaverIdList[0] as any, roomId) ]
+        removerId = await this.searchSymbolYou(removerId, roomId)
+      } else {
+        leaverIdList = _leaverIdList as string[]
+      }
 
-      if (!this.manager) {
-        throw new Error('no padplusManager')
+      // Sync room member
+      const startTime = Date.now()
+      const expireTime = 1 * 60 * 1000
+      let memberList = await this.roomMemberList(roomId)
+      while (leaverIdList.some(c => memberList.includes(c)) && Date.now() - startTime < expireTime) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        memberList = await this.roomMemberList(roomId)
       }
 
       const eventRoomLeavePayload: EventRoomLeavePayload = {
