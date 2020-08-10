@@ -8,10 +8,10 @@ export interface RoomJoinEvent {
 }
 
 export interface RoomLeaveEvent {
-  leaverNameList : Array<(string | YOU)>,
-  removerName    : string | YOU,
-  roomId         : string,
-  timestamp      : number,  // Unix Timestamp, in seconds
+  leaverIdList : Array<(string | YOU)>,
+  removerId    : string | YOU,
+  roomId       : string,
+  timestamp    : number,  // Unix Timestamp, in seconds
 }
 
 export interface RoomTopicEvent {
