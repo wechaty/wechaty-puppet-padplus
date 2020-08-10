@@ -77,12 +77,9 @@ export {
   log,
 }
 
-export const AWS_S3 = {
-  ACCESS_KEY_ID: 'AKIA3PQY2OQGY3IMXJ74',
-  BUCKET: 'macpro-message-file',
-  EXPIRE_TIME: 3600 * 24 * 3,
-  PATH: 'image-message',
-  SECRET_ACCESS_KEY: '7aDA2DpNmPFvsFoO4P/CcxPSnnEjIB1XKkPVMhVG',
+export const GRPC_LIMITATION = {
+  'grpc.max_receive_message_length': 1024 * 1024 * 150,
+  'grpc.max_send_message_length': 1024 * 1024 * 150,
 }
 
 export async function retry<T> (

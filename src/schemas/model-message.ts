@@ -168,6 +168,11 @@ export interface PadplusMediaData {
   thumb: string,
 }
 
+export interface PadplusUploadFileData {
+  status: number,
+  url: string,
+}
+
 export interface PadplusRecallData {
   BaseResponse: {
     Ret: number,

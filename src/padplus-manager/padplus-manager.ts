@@ -892,7 +892,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.requestClient) {
       throw new Error(`no request client`)
     }
-    const content = await videoPreProcess(this.requestClient, url)
+    const content = await videoPreProcess(this.padplusMesasge, url)
 
     const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
     if (!messageResponse.msgId) {
@@ -955,12 +955,12 @@ export class PadplusManager extends EventEmitter {
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
     log.verbose(PRE, 'generatorFileUrl(%s)', file)
-    if (this.requestClient) {
-      const url = await this.requestClient.uploadFile(file.name, await file.toStream())
-      return url
-    } else {
-      throw new Error(`no requestClient`)
+
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
     }
+    return this.padplusMesasge.uploadFile(file)
+
   }
 
   public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string, fileSize?: number) {
