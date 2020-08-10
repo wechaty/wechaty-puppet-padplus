@@ -892,7 +892,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.requestClient) {
       throw new Error(`no request client`)
     }
-    const content = await videoPreProcess(this.requestClient, url)
+    const content = await videoPreProcess(this.padplusMesasge, url)
 
     const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
     if (!messageResponse.msgId) {

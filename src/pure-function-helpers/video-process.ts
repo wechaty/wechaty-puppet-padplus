@@ -1,10 +1,10 @@
 import { FileBox } from 'wechaty-puppet'
-import { RequestClient } from './../padplus-manager/api-request/request'
 import { VideoContent } from '../schemas'
+import { PadplusMessage } from '../padplus-manager/api-request/message'
 const extractFrames = require('ffmpeg-extract-frames')
 const probe = require('ffmpeg-probe')
 
-export async function videoPreProcess (request: RequestClient, url: string): Promise<VideoContent> {
+export async function videoPreProcess (request: PadplusMessage, url: string): Promise<VideoContent> {
   const name = `screenshot-${Date.now()}.jpg`
   const path = './screenshot/' + name
   await extractFrames({
@@ -14,8 +14,8 @@ export async function videoPreProcess (request: RequestClient, url: string): Pro
   })
   const info = await probe(url)
 
-  const fileBox = FileBox.fromFile(path)
-  const thumb = await request.uploadFile(name, await fileBox.toStream())
+  const fileBox = FileBox.fromFile(path, name)
+  const thumb = await request.uploadFile(fileBox)
 
   const videoContent: VideoContent = {
     cdnthumbheight: info.height,
