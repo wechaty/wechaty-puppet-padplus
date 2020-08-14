@@ -1,7 +1,7 @@
 import grpc from 'grpc'
 import util from 'util'
 import { v4 as uuid } from 'uuid'
-import { log, padplusToken } from '../config'
+import { log, padplusToken, GRPC_LIMITATION } from '../config'
 
 import { PadPlusServerClient } from './proto-ts/PadPlusServer_grpc_pb' // add proto file from Gao
 import { CallbackPool } from '../utils/callbackHelper'
@@ -58,6 +58,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.REVOKE_MESSAGE,
   ApiType.ACCEPT_ROOM_INVITATION,
   ApiType.LOGIN_DEVICE,
+  ApiType.UPLOAD_FILE,
 ]
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
@@ -135,7 +136,7 @@ export class GrpcGateway extends EventEmitter {
   ) {
     super()
     this.stopping = false
-    this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure())
+    this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure(), GRPC_LIMITATION)
     this.isAlive = false
     this.reconnectStatus = true
     this.timeoutNumber = 0
@@ -246,6 +247,7 @@ export class GrpcGateway extends EventEmitter {
           switch (apiType) {
             case ApiType.SEND_MESSAGE:
             case ApiType.SEND_FILE:
+            case ApiType.GET_CONTACT_SELF_INFO:
               timeoutMs = 3 * 60 * 1000
               break
             case ApiType.GET_MESSAGE_MEDIA:
@@ -394,7 +396,7 @@ export class GrpcGateway extends EventEmitter {
       =====================================================================
       `)
       if (err.code === 14 || err.code === 13 || err.code === 2) {
-        log.silly(PRE, `err code is : ${err.code}, ready to reconnect`)
+        log.info(PRE, `Failed to reconnect grpc server, error code : ${err.code}, detail info : ${JSON.stringify(err)}, try to reconnect 5 seconds later.`)
         await new Promise(resolve => setTimeout(resolve, 5000))
         this.isAlive = false
         Object.values(this.eventEmitterMap).map(emitter => {

@@ -37,7 +37,7 @@ export async function messageRawPayloadParser (
 
   const payloadBase = {
     id        : rawPayload.msgId,
-    timestamp : rawPayload.createTime / 1000,   // Padplus message timestamp is seconds
+    timestamp : rawPayload.createTime,
     type,
   } as {
     id        : string,
@@ -135,7 +135,7 @@ export async function messageRawPayloadParser (
     const recalledPayload = await recalledPayloadParser(rawPayload)
     const pattern = [
       /"(.+)" 撤回了一条消息/,
-      /"(.+)" has recalled a message./,
+      /"(.+)" recalled a message/,
     ]
     const patternSelf = [
       /你撤回了一条消息/,

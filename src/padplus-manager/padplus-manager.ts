@@ -4,12 +4,11 @@ import {
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
 import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
-import { MemoryCard } from 'memory-card'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FileBox, FriendshipPayload as PuppetFriendshipPayload, EventRoomLeavePayload } from 'wechaty-puppet'
+import { ScanStatus, ContactGender, FileBox, FriendshipPayload, EventRoomLeavePayload, MemoryCard } from 'wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -25,7 +24,6 @@ import {
   PadplusMessageType,
   PadplusRoomPayload,
   ScanData,
-  FriendshipPayload,
   QrcodeStatus,
   PadplusRichMediaData,
   GrpcRoomMemberPayload,
@@ -54,6 +52,7 @@ import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helper
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -67,6 +66,7 @@ export interface ManagerOptions {
   token: string,
   name: unknown,
   endpoint?: string,
+  cacheOption?: PuppetCacheStoreOptions,
 }
 
 const PRE = 'PadplusManager'
@@ -137,7 +137,7 @@ export class PadplusManager extends EventEmitter {
     this.getRoomMemberQueue = new DelayQueueExecutor(500)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
-      log.silly(PRE, 'resetThrottleQueue.subscribe() reason: %s', reason)
+      log.info(PRE, 'ready to restart due to receive event: %s', reason)
 
       if (this.grpcGatewayEmitter) {
         this.grpcGatewayEmitter.removeAllListeners()
@@ -478,7 +478,7 @@ export class PadplusManager extends EventEmitter {
             }
 
             log.verbose(PRE, `init cache manager`)
-            await CacheManager.init(loginData.userName)
+            await CacheManager.init(loginData.userName, this.options.cacheOption)
             this.cacheManager = CacheManager.Instance
 
             const contactSelf: PadplusContactPayload = {
@@ -520,7 +520,7 @@ export class PadplusManager extends EventEmitter {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
                 log.verbose(PRE, `init cache manager`)
-                await CacheManager.init(wechatUser.userName)
+                await CacheManager.init(wechatUser.userName, this.options.cacheOption)
                 this.cacheManager = CacheManager.Instance
                 /* if (this.padplusUser) {
                   await this.padplusUser.reconnect()
@@ -807,7 +807,9 @@ export class PadplusManager extends EventEmitter {
     log.silly(PRE, `contactSelfQrcode()`)
 
     if (this.padplusContact) {
-      return this.padplusContact.contactSelfQrcode()
+      const qrcodeBuf = await this.padplusContact.contactSelfQrcode()
+      const fileBox = FileBox.fromBase64(qrcodeBuf, `${Date.now()}.png`)
+      return fileBox.toQRCode()
     } else {
       throw new Error(`no padplus contact`)
     }
@@ -890,7 +892,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.requestClient) {
       throw new Error(`no request client`)
     }
-    const content = await videoPreProcess(this.requestClient, url)
+    const content = await videoPreProcess(this.padplusMesasge, url)
 
     const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
     if (!messageResponse.msgId) {
@@ -953,12 +955,12 @@ export class PadplusManager extends EventEmitter {
 
   public async generatorFileUrl (file: FileBox): Promise<string> {
     log.verbose(PRE, 'generatorFileUrl(%s)', file)
-    if (this.requestClient) {
-      const url = await this.requestClient.uploadFile(file.name, await file.toStream())
-      return url
-    } else {
-      throw new Error(`no requestClient`)
+
+    if (!this.padplusMesasge) {
+      throw new Error(`no padplus message`)
     }
+    return this.padplusMesasge.uploadFile(file)
+
   }
 
   public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string, fileSize?: number) {
@@ -1114,15 +1116,16 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async setContactAlias (
+    selfId: string,
     contactId: string,
     alias: string,
   ): Promise<void> {
-    log.silly(PRE, `setContactAlias(${contactId}, ${alias})`)
+    log.silly(PRE, `setContactAlias(${selfId}, ${contactId}, ${alias})`)
 
     if (!this.padplusContact) {
       throw new Error(`no padplusContact`)
     }
-    await this.padplusContact.setAlias(contactId, alias)
+    await this.padplusContact.setAlias(selfId, contactId, alias)
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('set alias failed since timeout')), 5000)
       CallbackPool.Instance.pushContactAliasCallback(contactId, alias, () => {
@@ -1504,7 +1507,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new Error(`no cache manager.`)
     }
-    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship as PuppetFriendshipPayload)
+    await this.cacheManager.setFriendshipRawPayload(friendshipId, friendship)
   }
 
   public async recallMessage (selfId: string, receiverId: string, messageId: string): Promise<boolean> {

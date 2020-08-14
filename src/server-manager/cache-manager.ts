@@ -2,18 +2,39 @@ import fs     from 'fs-extra'
 import os     from 'os'
 import path   from 'path'
 
-import { FlashStore } from 'flash-store'
+import { PuppetCache,
+  AsyncMap,
+  PuppetCacheMessagePayload,
+  PuppetCacheContactPayload,
+  PuppetCacheRoomPayload,
+  PuppetCacheRoomInvitationPayload,
+  PuppetCacheFriendshipPayload,
+  PuppetCacheRoomMemberPayloadMap,
+  PuppetCacheStoreOptions,
+} from 'wechaty-puppet-cache'
 
 import { log } from '../config'
 import {
   PadplusContactPayload,
   PadplusRoomPayload,
   PadplusRoomInvitationPayload,
-  PadplusRoomMemberPayload,
   PadplusRoomMemberMap,
   PadplusMessagePayload,
 } from '../schemas'
 import { FriendshipPayload } from 'wechaty-puppet'
+import { cacheToPadplusMessagePayload,
+  padplusToCacheMessagePayload,
+  padplusToCacheContactPayload,
+  cacheToPadplusContactPayload,
+  cacheToPadplusRoomPayload,
+  padplusToCacheRoomPayload,
+  cacheToPadplusRoomMemberPayload,
+  padplusToCacheRoomMemberPayload,
+  cacheToPadplusRoomInvitationPayload,
+  padplusToCacheRoomInvitationPayload,
+  cacheToPadplusFriendshipPayload,
+  padplusToCacheFriendshipPayload,
+} from '../pure-function-helpers'
 
 const PRE = 'CacheManager'
 
@@ -33,14 +54,17 @@ export class CacheManager {
     return this._instance
   }
 
-  public static async init (userId: string) {
+  public static async init (
+    userId: string,
+    cacheOption?: PuppetCacheStoreOptions,
+  ) {
     log.verbose(PRE, `init()`)
     if (this._instance) {
       log.verbose(PRE, `init() CacheManager has been initialized, no need to initialize again.`)
       return
     }
     this._instance = new CacheManager()
-    await this._instance.initCache(userId)
+    await this._instance.initCache(userId, cacheOption)
   }
 
   public static async release () {
@@ -58,16 +82,14 @@ export class CacheManager {
    *                Instance Methods
    * ************************************************************************
    */
-  private cacheImageMessageRawPayload? : FlashStore<string, PadplusMessagePayload>
-  private cacheContactRawPayload?     : FlashStore<string, PadplusContactPayload>
-  private cacheRoomMemberRawPayload?  : FlashStore<string, {
-    [contactId: string]: PadplusRoomMemberPayload,
-  }>
-  private cacheRoomRawPayload?        : FlashStore<string, PadplusRoomPayload>
-  private cacheRoomInvitationRawPayload? : FlashStore<string, PadplusRoomInvitationPayload>
-  private cacheFriendshipRawPayload?  : FlashStore<string, FriendshipPayload>
+  private cacheImageMessageRawPayload?           : AsyncMap<string, PuppetCacheMessagePayload>
+  private cacheContactRawPayload?                : AsyncMap<string, PuppetCacheContactPayload>
+  private cacheRoomMemberRawPayload?             : AsyncMap<string, PuppetCacheRoomMemberPayloadMap>
+  private cacheRoomRawPayload?                   : AsyncMap<string, PuppetCacheRoomPayload>
+  private cacheRoomInvitationRawPayload?         : AsyncMap<string, PuppetCacheRoomInvitationPayload>
+  private cacheFriendshipRawPayload?             : AsyncMap<string, PuppetCacheFriendshipPayload>
 
-  private compactCacheTimer?          : NodeJS.Timeout
+  private compactCacheTimer?                     : NodeJS.Timeout
 
   /**
    * -------------------------------
@@ -80,7 +102,8 @@ export class CacheManager {
     if (!this.cacheImageMessageRawPayload) {
       throw new Error(`${PRE} getMessage() has no cache.`)
     }
-    return this.cacheImageMessageRawPayload.get(messageId)
+    const cacheData = await this.cacheImageMessageRawPayload.get(messageId)
+    return cacheData ? cacheToPadplusMessagePayload(cacheData) : undefined
   }
 
   public async setMessage (
@@ -90,7 +113,8 @@ export class CacheManager {
     if (!this.cacheImageMessageRawPayload || !contactId) {
       throw new Error(`${PRE} setMessage() has no cache.`)
     }
-    await this.cacheImageMessageRawPayload.set(contactId, payload)
+    const cacheData = padplusToCacheMessagePayload(payload)
+    await this.cacheImageMessageRawPayload.set(contactId, cacheData)
   }
 
   /**
@@ -104,7 +128,8 @@ export class CacheManager {
     if (!this.cacheContactRawPayload) {
       throw new Error(`${PRE} getContact() has no cache.`)
     }
-    return this.cacheContactRawPayload.get(contactId)
+    const cacheData = await this.cacheContactRawPayload.get(contactId)
+    return cacheData ? cacheToPadplusContactPayload(cacheData) : undefined
   }
 
   public async setContact (
@@ -114,7 +139,8 @@ export class CacheManager {
     if (!this.cacheContactRawPayload || !contactId) {
       throw new Error(`${PRE} setContact() has no cache.`)
     }
-    await this.cacheContactRawPayload.set(contactId, payload)
+    const cacheData = padplusToCacheContactPayload(payload)
+    await this.cacheContactRawPayload.set(contactId, cacheData)
   }
 
   public async deleteContact (
@@ -144,7 +170,7 @@ export class CacheManager {
     }
     const result: PadplusContactPayload[] = []
     for await (const value of this.cacheContactRawPayload.values()) {
-      result.push(value)
+      result.push(cacheToPadplusContactPayload(value))
     }
     return result
   }
@@ -174,7 +200,8 @@ export class CacheManager {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} getRoom() has no cache.`)
     }
-    return this.cacheRoomRawPayload.get(roomId)
+    const cacheData = await this.cacheRoomRawPayload.get(roomId)
+    return cacheData ? cacheToPadplusRoomPayload(cacheData) : undefined
   }
 
   public async setRoom (
@@ -184,7 +211,8 @@ export class CacheManager {
     if (!this.cacheRoomRawPayload) {
       throw new Error(`${PRE} setRoom() has no cache.`)
     }
-    await this.cacheRoomRawPayload.set(roomId, payload)
+    const cacheData = padplusToCacheRoomPayload(payload)
+    await this.cacheRoomRawPayload.set(roomId, cacheData)
   }
 
   public async deleteRoom (
@@ -231,7 +259,15 @@ export class CacheManager {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} getRoomMember() has no cache.`)
     }
-    return this.cacheRoomMemberRawPayload.get(roomId)
+    const cacheData = await this.cacheRoomMemberRawPayload.get(roomId)
+    if (!cacheData) {
+      return undefined
+    }
+    const map: PadplusRoomMemberMap = {}
+    for (const memberId of Object.keys(cacheData)) {
+      map[memberId] = cacheToPadplusRoomMemberPayload(cacheData[memberId])
+    }
+    return map
   }
 
   public async setRoomMember (
@@ -241,7 +277,11 @@ export class CacheManager {
     if (!this.cacheRoomMemberRawPayload) {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
-    await this.cacheRoomMemberRawPayload.set(roomId, payload)
+    const map: PuppetCacheRoomMemberPayloadMap = {}
+    for (const memberId of Object.keys(payload)) {
+      map[memberId] = padplusToCacheRoomMemberPayload(payload[memberId])
+    }
+    await this.cacheRoomMemberRawPayload.set(roomId, map)
   }
 
   public async deleteRoomMember (
@@ -264,7 +304,8 @@ export class CacheManager {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} getRoomInvitationRawPayload() has no cache.`)
     }
-    return this.cacheRoomInvitationRawPayload.get(messageId)
+    const cacheData = await this.cacheRoomInvitationRawPayload.get(messageId)
+    return cacheData ? cacheToPadplusRoomInvitationPayload(cacheData) : undefined
   }
 
   public async setRoomInvitation (
@@ -274,7 +315,8 @@ export class CacheManager {
     if (!this.cacheRoomInvitationRawPayload) {
       throw new Error(`${PRE} setRoomInvitationRawPayload() has no cache.`)
     }
-    await this.cacheRoomInvitationRawPayload.set(messageId, payload)
+    const cacheData = padplusToCacheRoomInvitationPayload(payload)
+    await this.cacheRoomInvitationRawPayload.set(messageId, cacheData)
   }
 
   public async deleteRoomInvitation (
@@ -295,7 +337,8 @@ export class CacheManager {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} getFriendshipRawPayload() has no cache.`)
     }
-    return this.cacheFriendshipRawPayload.get(id)
+    const cacheData = await this.cacheFriendshipRawPayload.get(id)
+    return cacheData ? cacheToPadplusFriendshipPayload(cacheData) : undefined
   }
 
   public async setFriendshipRawPayload (
@@ -305,7 +348,8 @@ export class CacheManager {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} setFriendshipRawPayload() has no cache.`)
     }
-    await this.cacheFriendshipRawPayload.set(id, payload)
+    const cacheData = padplusToCacheFriendshipPayload(payload)
+    await this.cacheFriendshipRawPayload.set(id, cacheData)
   }
 
   /**
@@ -316,8 +360,12 @@ export class CacheManager {
 
   private async initCache (
     userId: string,
+    cacheOption: PuppetCacheStoreOptions = {
+      baseDir: process.cwd(),
+      type: 'flashStore',
+    },
   ): Promise<void> {
-    log.verbose(PRE, 'initCache(%s)', userId)
+    log.verbose(PRE, 'initCache(%s,%s)', userId, JSON.stringify(cacheOption))
 
     if (this.cacheContactRawPayload) {
       throw new Error('cache exists')
@@ -331,22 +379,27 @@ export class CacheManager {
       path.sep,
       'flash-store-v0.14',
       path.sep,
-      userId,
     )
 
-    const baseDirExist = await fs.pathExists(baseDir)
-
-    if (!baseDirExist) {
-      await fs.mkdirp(baseDir)
+    if (cacheOption.type === 'flashStore') {
+      const baseDirExist = await fs.pathExists(baseDir)
+      if (!baseDirExist) {
+        await fs.mkdirp(baseDir)
+      }
+      cacheOption.baseDir = baseDir
     }
-
-    this.cacheImageMessageRawPayload    = new FlashStore(path.join(baseDir, 'message-raw-payload'))
-    this.cacheContactRawPayload        = new FlashStore(path.join(baseDir, 'contact-raw-payload'))
-    this.cacheRoomMemberRawPayload     = new FlashStore(path.join(baseDir, 'room-member-raw-payload'))
-    this.cacheRoomRawPayload           = new FlashStore(path.join(baseDir, 'room-raw-payload'))
-    this.cacheFriendshipRawPayload     = new FlashStore(path.join(baseDir, 'friendship'))
-    this.cacheRoomInvitationRawPayload = new FlashStore(path.join(baseDir, 'room-invitation-raw-payload'))
-    const contactTotal = this.cacheContactRawPayload.size
+    const puppetCache = new PuppetCache({
+      name: userId,
+      storeOptions: cacheOption,
+    })
+    await puppetCache.init()
+    this.cacheImageMessageRawPayload   = puppetCache.genMessageClient()
+    this.cacheContactRawPayload        = puppetCache.genContactClient()
+    this.cacheRoomMemberRawPayload     = puppetCache.genRoomMemberClient()
+    this.cacheRoomRawPayload           = puppetCache.genRoomClient()
+    this.cacheFriendshipRawPayload     = puppetCache.genFriendshipClient()
+    this.cacheRoomInvitationRawPayload = puppetCache.genRoomInvitationClient()
+    const contactTotal = this.cacheContactRawPayload?.size
 
     log.verbose(PRE, `initCache() inited ${contactTotal} Contacts,  cachedir="${baseDir}"`)
   }

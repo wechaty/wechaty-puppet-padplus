@@ -1,21 +1,21 @@
+/* eslint-disable */
 import { xmlToJson } from './xml-to-json'
+
+import { YOU } from 'wechaty-puppet'
 
 import {
   PadplusMessagePayload,
-  PadplusMessageType,
   RoomJoinEvent,
+  RoomRelatedXmlSchema,
 }                         from '../schemas'
 
 import {
   isPayload,
   isRoomId,
 }               from './is-type'
+import { getUserName } from './get-xml-label'
 
-import {
-  splitChineseNameList,
-  splitEnglishNameList,
-}                         from './split-name'
-import { YOU, log } from 'wechaty-puppet'
+// import { log } from '../config'
 
 /**
  *
@@ -36,7 +36,7 @@ import { YOU, log } from 'wechaty-puppet'
  */
 
 const ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_ZH = [
-  /^你邀请"(.+)"加入了群聊/,
+  /^你邀请"(.+)"加入了群聊 {2}\$revoke\$/,
   /^" ?(.+)"通过扫描你分享的二维码加入群聊/,
 ]
 
@@ -48,13 +48,11 @@ const ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_EN = [
 /* ----------------------------------------------- */
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_ZH = [
-  /^"([^"]+?)"邀请你加入了群聊/,
-  /^"([^"]+?)"邀请你和"(.+)"加入了群聊/,
+  /^"([^"]+?)"邀请你加入了群聊，群聊参与人还有：(.+)/,
 ]
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_EN = [
-  /^(.+) invited you to a group chat/,
-  /^(.+) invited you and (.+) to the group chat/,
+  /^(.+) invited you to a group chat with (.+)/,
 ]
 
 /* ----------------------------------------------- */
@@ -80,7 +78,6 @@ const ROOM_JOIN_OTHER_INVITE_OTHER_QRCODE_REGEX_LIST_EN = [
 export async function roomJoinEventMessageParser (
   rawPayload: PadplusMessagePayload,
 ): Promise<null | RoomJoinEvent> {
-
   if (!isPayload(rawPayload)) {
     return null
   }
@@ -96,73 +93,23 @@ export async function roomJoinEventMessageParser (
   const timestamp = rawPayload.createTime
 
   let content = rawPayload.content
+  let linkList
+  const tryXmlText = content.replace(/^[^\n]+\n/, '')
+
+  const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
+  if (!jsonPayload) {
+    return null
+  }
+  content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
+  linkList = jsonPayload.sysmsg.sysmsgtemplate.content_template.link_list.link
 
   /**
-   * when the message is a Recalled type, bot can undo the invitation
+   * Process English language
    */
-  if (rawPayload.msgType === PadplusMessageType.Recalled) {
-    /**
-     * content:
-     * ```
-     * 3453262102@chatroom:
-     * <sysmsg type="delchatroommember">
-     *   ...
-     * </sysmsg>
-     * ```
-     */
-    const tryXmlText = content.replace(/^[^\n]+\n/, '')
-    interface XmlSchema {
-      sysmsg: {
-        $: {
-          type: string,
-        },
-        delchatroommember?: {
-          plain : string,
-          text  : string,
-        },
-        revokemsg?: {
-          replacemsg : string,
-          msgid      : string,
-          newmsgid   : string,
-          session    : string,
-        },
-      }
-    }
-    const jsonPayload: XmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as XmlSchema
-    try {
-      const type = jsonPayload.sysmsg.$.type
-      switch (type) {
-        case 'delchatroommember':
-          content = jsonPayload.sysmsg.delchatroommember!.plain
-          break
-        case 'revokemsg':
-          content = jsonPayload.sysmsg.revokemsg!.replacemsg
-          break
-        case 'banner':
-        case 'multivoip':
-        case 'roomtoolstips':
-        case 'NewXmlDisableChatRoomAccessVerifyApplication':
-        case 'sysmsgtemplate':
-          return null
-        default:
-          log.warn('XmlSchema', `unkonw type: ${type} jsonPayload: ${JSON.stringify(jsonPayload)}`)
-          break
-      }
-    } catch (e) {
-      console.error(e)
-      throw e
-    }
-  }
-
   let matchesForBotInviteOtherEn         = null as null | string[]
   let matchesForOtherInviteBotEn         = null as null | string[]
   let matchesForOtherInviteOtherEn       = null as null | string[]
   let matchesForOtherInviteOtherQrcodeEn = null as null | string[]
-
-  let matchesForBotInviteOtherZh         = null as null | string[]
-  let matchesForOtherInviteBotZh         = null as null | string[]
-  let matchesForOtherInviteOtherZh       = null as null | string[]
-  let matchesForOtherInviteOtherQrcodeZh = null as null | string[]
 
   ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_EN.some(
     regex => !!(matchesForBotInviteOtherEn = content.match(regex)),
@@ -176,6 +123,14 @@ export async function roomJoinEventMessageParser (
   ROOM_JOIN_OTHER_INVITE_OTHER_QRCODE_REGEX_LIST_EN.some(
     regex => !!(matchesForOtherInviteOtherQrcodeEn = content.match(regex)),
   )
+
+  /**
+   * Process Chinese language
+   */
+  let matchesForBotInviteOtherZh         = null as null | string[]
+  let matchesForOtherInviteBotZh         = null as null | string[]
+  let matchesForOtherInviteOtherZh       = null as null | string[]
+  let matchesForOtherInviteOtherQrcodeZh = null as null | string[]
 
   ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_ZH.some(
     regex => !!(matchesForBotInviteOtherZh = content.match(regex)),
@@ -195,16 +150,6 @@ export async function roomJoinEventMessageParser (
   const matchesForOtherInviteOther       = matchesForOtherInviteOtherEn       || matchesForOtherInviteOtherZh
   const matchesForOtherInviteOtherQrcode = matchesForOtherInviteOtherQrcodeEn || matchesForOtherInviteOtherQrcodeZh
 
-  const languageEn =   matchesForBotInviteOtherEn
-                    || matchesForOtherInviteBotEn
-                    || matchesForOtherInviteOtherEn
-                    || matchesForOtherInviteOtherQrcodeEn
-
-  const languageZh =   matchesForBotInviteOtherZh
-                    || matchesForOtherInviteBotZh
-                    || matchesForOtherInviteOtherZh
-                    || matchesForOtherInviteOtherQrcodeZh
-
   const matches =    matchesForBotInviteOther
                   || matchesForOtherInviteBot
                   || matchesForOtherInviteOther
@@ -215,9 +160,7 @@ export async function roomJoinEventMessageParser (
   }
 
   /**
-   *
    * Parse all Names From the Event Text
-   *
    */
   if (matchesForBotInviteOther) {
     /**
@@ -225,20 +168,11 @@ export async function roomJoinEventMessageParser (
      *  (include invite via QrCode)
      */
     const other = matches[1]
-
-    let inviteeNameList
-    if (languageEn) {
-      inviteeNameList = splitEnglishNameList(other)
-    } else if (languageZh) {
-      inviteeNameList = splitChineseNameList(other)
-    } else {
-      throw new Error('make typescript happy')
-    }
-
-    const inviterName: string | YOU = YOU
+    const inviteeIdList = getUserName(linkList, other)
+    const inviterId: string | YOU = YOU
     const joinEvent: RoomJoinEvent = {
-      inviteeNameList,
-      inviterName,
+      inviteeIdList: checkString(inviteeIdList),
+      inviterId,
       roomId,
       timestamp,
     }
@@ -250,23 +184,13 @@ export async function roomJoinEventMessageParser (
      */
     // /^"([^"]+?)"邀请你加入了群聊/,
     // /^"([^"]+?)"邀请你和"(.+?)"加入了群聊/,
-    const inviterName = matches[1]
-    let inviteeNameList: Array<YOU | string> = [YOU]
-    if (matches[2]) {
-      let nameList
-      if (languageEn) {
-        nameList = splitEnglishNameList(matches[2])
-      } else if (languageZh) {
-        nameList = splitChineseNameList(matches[2])
-      } else {
-        throw new Error('neither English nor Chinese')
-      }
-      inviteeNameList = inviteeNameList.concat(nameList)
-    }
+    const _inviterName = matches[1]
+    const inviterId = getUserName(linkList, _inviterName)
+    let inviteeIdList: Array<string | YOU> = [ YOU ]
 
     const joinEvent: RoomJoinEvent = {
-      inviteeNameList,
-      inviterName,
+      inviteeIdList,
+      inviterId,
       roomId,
       timestamp,
     }
@@ -279,23 +203,15 @@ export async function roomJoinEventMessageParser (
      */
     // /^"([^"]+?)"邀请"([^"]+)"加入了群聊$/,
     // /^([^"]+?) invited ([^"]+?) to (the|a) group chat/,
-    const inviterName = matches[1]
+    const _inviterName = matches[1]
+    const inviterId = getUserName(linkList, _inviterName)
 
-    let   inviteeNameList: string[]
-
-    const other = matches[2]
-
-    if (languageEn) {
-      inviteeNameList = splitEnglishNameList(other)
-    } else if (languageZh) {
-      inviteeNameList = splitChineseNameList(other)
-    } else {
-      throw new Error('neither English nor Chinese')
-    }
+    const _others = matches[2]
+    const inviteeIdList = getUserName(linkList, _others)
 
     const joinEvent: RoomJoinEvent = {
-      inviteeNameList,
-      inviterName,
+      inviteeIdList: checkString(inviteeIdList),
+      inviterId,
       roomId,
       timestamp,
     }
@@ -306,23 +222,15 @@ export async function roomJoinEventMessageParser (
      * 4. Other Invite Other via Qrcode to join a Room
      *   /^" (.+)"通过扫描"(.+)"分享的二维码加入群聊/,
      */
-    const inviterName = matches[2]
-
-    let   inviteeNameList: string[]
+    const _inviterName = matches[2]
+    const inviterId = getUserName(linkList, _inviterName)
 
     const other = matches[1]
-
-    if (languageEn) {
-      inviteeNameList = splitEnglishNameList(other)
-    } else if (languageZh) {
-      inviteeNameList = splitChineseNameList(other)
-    } else {
-      throw new Error('neither English nor Chinese')
-    }
+    const inviteeIdList = getUserName(linkList, other)
 
     const joinEvent: RoomJoinEvent = {
-      inviteeNameList,
-      inviterName,
+      inviteeIdList: checkString(inviteeIdList),
+      inviterId,
       roomId,
       timestamp,
     }
@@ -331,4 +239,8 @@ export async function roomJoinEventMessageParser (
   } else {
     throw new Error('who invite who?')
   }
+}
+
+function checkString (inviteeIdList: string | string[]) {
+  return typeof inviteeIdList !== 'string' ? inviteeIdList : [ inviteeIdList ]
 }

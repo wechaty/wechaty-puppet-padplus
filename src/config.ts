@@ -24,8 +24,10 @@ export const INVALID_TOKEN_MESSAGE = `
 ===========================================================================================
 
       The token is invalid, please use an valid token to access padplus
+      See: https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
       你使用的Token是无效的，请使用有效Token
+      更多详情参见：https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
 ============================================================================================
 
@@ -38,8 +40,10 @@ export const EXPIRED_TOKEN_MESSAGE = `
 ===========================================================================================
 
       The token you are using is expired, please renew this token
+      See: https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
       你使用的Token已经过期了，如果你想继续使用wechaty-puppet-padplus，请续费你的Token
+      更多详情参见：https://github.com/juzibot/Welcome/wiki/Everything-about-Wechaty
 
 ============================================================================================
 
@@ -57,7 +61,7 @@ export const GRPC_ENDPOINT = process.env[WECHATY_PUPPET_PADPLUS_ENDPOINT_ENV_VAR
 export const MESSAGE_CACHE_AGE = 1000 * 60 * 60
 export const MESSAGE_CACHE_MAX = 1000
 
-export const WAIT_FOR_READY_TIME = 1000 * 60 * 1
+export const WAIT_FOR_READY_TIME = 1000 * 60 * 10
 
 export const COMPACT_CACHE_FIRST_START = 1000 * 60 * 15
 
@@ -73,12 +77,9 @@ export {
   log,
 }
 
-export const AWS_S3 = {
-  ACCESS_KEY_ID: 'AKIA3PQY2OQG5FEXWMH6',
-  BUCKET: 'macpro-message-file',
-  EXPIRE_TIME: 3600 * 24 * 3,
-  PATH: 'image-message',
-  SECRET_ACCESS_KEY: 'jw7Deo+W8l4FTOL2BXd/VubTJjt1mhm55sRhnsEn',
+export const GRPC_LIMITATION = {
+  'grpc.max_receive_message_length': 1024 * 1024 * 150,
+  'grpc.max_send_message_length': 1024 * 1024 * 150,
 }
 
 export async function retry<T> (

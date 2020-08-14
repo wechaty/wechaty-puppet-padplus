@@ -1,8 +1,9 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData } from '../../schemas'
+import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData } from '../../schemas'
 import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
+import { FileBox } from 'wechaty-puppet'
 
 const PRE = 'PadplusMessage'
 
@@ -231,6 +232,32 @@ export class PadplusMessage {
     }
 
     return false
+  }
+
+  public async uploadFile (fileBox: FileBox): Promise<string> {
+    log.verbose(PRE, `recallMessage`)
+    const data = {
+      data: await fileBox.toBase64(),
+      filename: fileBox.name,
+    }
+
+    const res = await this.requestClient.request({
+      apiType: ApiType.UPLOAD_FILE,
+      data,
+    })
+
+    if (res) {
+      const msgDataStr = res.getData()
+      if (msgDataStr) {
+        const msgData: PadplusUploadFileData = JSON.parse(msgDataStr)
+        return msgData.url
+      } else {
+        log.error(`can not parse message data from grpc`)
+      }
+    } else {
+      log.error(`can not get response from grpc server`)
+    }
+    return ''
   }
 
 }

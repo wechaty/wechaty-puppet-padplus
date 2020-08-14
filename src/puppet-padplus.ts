@@ -1,6 +1,5 @@
 import util from 'util'
 import path from 'path'
-import { flatten } from 'array-flatten'
 
 import {
   ContactPayload,
@@ -33,19 +32,19 @@ import {
   EventScanPayload,
   EventReadyPayload,
   EventHeartbeatPayload,
+  YOU,
 }                           from 'wechaty-puppet'
 
 import {
   log,
   padplusToken,
-  retry,
   GRPC_ENDPOINT,
   PADPLUS_REPLAY_MESSAGE,
 }                                   from './config'
 
 import { RequestQueue } from './padplus-manager/api-request/request-queue'
 import PadplusManager from './padplus-manager/padplus-manager'
-import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, FriendshipPayload as PadplusFriendshipPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse, LoginDeviceInfo } from './schemas'
+import { PadplusMessageType, PadplusContactPayload, PadplusRoomPayload, GrpcQrCodeLogin, PadplusRoomMemberPayload, PadplusRoomInvitationPayload, SearchContactTypeStatus, GrpcSearchContact, PadplusMessageStatus, GetContactSelfInfoGrpcResponse, LoginDeviceInfo } from './schemas'
 import { PadplusMessagePayload, PadplusRichMediaData, GrpcResponseMessageData } from './schemas/model-message'
 import { convertToPuppetRoomMember } from './convert-manager/room-convertor'
 import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-join-message-parser'
@@ -59,6 +58,7 @@ import { convertSearchContactToContact } from './convert-manager/contact-convert
 import checkNumber from './utils/util'
 import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
 import { convertMiniProgramPayloadToParams, convertMiniProgramPayloadToMessage } from './convert-manager/message-convertor'
+import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 
 const PRE = 'PuppetPadplus'
 
@@ -75,7 +75,29 @@ export class PuppetPadplus extends Puppet {
     const token = this.options.token || padplusToken()
     const name = this.options.name
     if (token) {
+      const cacheOption: any = this.options.cacheOption
+      let cacheStoreOption: PuppetCacheStoreOptions | undefined
+      if (cacheOption) {
+        const type: string = cacheOption.type
+        if (type) {
+          switch (type) {
+            case 'mongo':
+              const url: string = cacheOption.url
+              const option = cacheOption.option
+              if (!url) {
+                throw new Error(`can not get mongo url from cache option.`)
+              }
+              cacheStoreOption = {
+                option: option,
+                type: 'mongo',
+                url,
+              }
+          }
+        }
+      }
+
       this.manager = new PadplusManager({
+        cacheOption: cacheStoreOption,
         endpoint: this.options.endpoint || GRPC_ENDPOINT,
         name,
         token,
@@ -88,6 +110,12 @@ export class PuppetPadplus extends Puppet {
 
   public async start (): Promise<void> {
     log.info(PRE, `start()`)
+
+    if (this.state.on()) {
+      log.silly(PRE, 'start() is called on a ON puppet. await ready(on) and return.')
+      await this.state.ready('on')
+      return
+    }
 
     this.state.on('pending')
 
@@ -226,8 +254,16 @@ export class PuppetPadplus extends Puppet {
         await this.onFriendshipEvent(message)
         break
       case PadplusMessageType.Recalled:
-        this.emit('message', eventMessagePayload)
-        await this.onRoomJoinEvent(message)
+        if (message.content.includes('撤回了一条消息') || message.content.includes('You recalled a message')) {
+          this.emit('message', eventMessagePayload)
+        } else {
+          await Promise.all([
+            this.onRoomJoinEvent(message),
+            this.onRoomLeaveEvent(message),
+            this.onRoomTopicEvent(message),
+            // this.onFriendshipEvent(message),
+          ])
+        }
         break
       case PadplusMessageType.Text:
         await this.onFriendshipEvent(message)
@@ -331,7 +367,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    await this.manager.setContactAlias(contactId, alias || '')
+    await this.manager.setContactAlias(this.selfId(), contactId, alias || '')
   }
 
   contactAvatar (contactId: string): Promise<FileBox>
@@ -538,7 +574,7 @@ export class PuppetPadplus extends Puppet {
     await this.manager.confirmFriendship(contactId, stranger, ticket, (scene && scene.toString()) || '3')
   }
 
-  protected async friendshipRawPayload (friendshipId: string): Promise<PadplusFriendshipPayload> {
+  protected async friendshipRawPayload (friendshipId: string): Promise<FriendshipPayload> {
     log.silly(PRE, `friendshipRawPayload(${friendshipId})`)
 
     if (!this.manager) {
@@ -551,7 +587,7 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`can not find friendship.`)
   }
 
-  protected async friendshipRawPayloadParser (rawPayload: PadplusFriendshipPayload): Promise<FriendshipPayload> {
+  protected async friendshipRawPayloadParser (rawPayload: FriendshipPayload): Promise<FriendshipPayload> {
     log.silly(PRE, `friendshipRawPayloadParser(${util.inspect(rawPayload)})`)
 
     return rawPayload as FriendshipPayload
@@ -1241,58 +1277,33 @@ export class PuppetPadplus extends Puppet {
 
     if (joinEvent) {
       log.silly(PRE, `receive room-join event : ${util.inspect(joinEvent)}`)
-      const inviteeNameList = joinEvent.inviteeNameList
-      const inviterName     = joinEvent.inviterName
-      const roomId          = joinEvent.roomId
-      const timestamp       = joinEvent.timestamp
+      let _inviteeIdList = joinEvent.inviteeIdList
+      let inviterId     = joinEvent.inviterId
+      const roomId      = joinEvent.roomId
+      const timestamp   = joinEvent.timestamp
 
-      const inviteeIdList = await retry(async (retryException, attempt) => {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry(attempt=%d)', attempt)
-
-        const tryIdList = flatten(
-          await Promise.all(
-            inviteeNameList.map(
-              inviteeName => this.roomMemberSearch(roomId, inviteeName),
-            ),
-          ),
-        )
-
-        if (tryIdList.length) {
-          return tryIdList
-        }
-
-        if (!this.manager) {
-          throw new Error('no manager')
-        }
-
-        // Set Cache Dirty
-        await this.roomMemberPayloadDirty(roomId)
-
-        return retryException(new Error('roomMemberSearch() not found'))
-
-      }).catch(e => {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin({id=%s}) roomJoin retry() fail: %s', e.message)
-        return [] as string[]
-      })
-
-      let inviterIdList = await this.roomMemberSearch(roomId, inviterName)
-
-      if (inviterIdList.length < 1) {
-        await this.roomMemberPayloadDirty(roomId)
-        await this.manager.getRoomMembers(roomId)
-        inviterIdList = await this.roomMemberSearch(roomId, inviterName)
-        if (inviterIdList.length < 1) {
-          throw new Error(`can not get room member`)
-        }
-      } else if (inviterIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+      if (typeof inviterId === 'symbol') {
+        inviterId = await this.searchSymbolYou(inviterId, roomId)
       }
-
-      const inviterId = inviterIdList[0]
+      let inviteeIdList: string[] = []
+      if (typeof _inviteeIdList[0] === 'symbol') {
+        inviteeIdList = [ await this.searchSymbolYou(_inviteeIdList[0] as any, roomId) ]
+      } else {
+        inviteeIdList = _inviteeIdList as string[]
+      }
 
       // Set Cache Dirty
       await this.roomMemberPayloadDirty(roomId)
       await this.roomPayloadDirty(roomId)
+
+      // Sync room member
+      const startTime = Date.now()
+      const expireTime = 1 * 60 * 1000
+      let memberList = await this.roomMemberList(roomId)
+      while (!inviteeIdList.every(c => memberList.includes(c)) && Date.now() - startTime < expireTime) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        memberList = await this.roomMemberList(roomId)
+      }
 
       const eventRoomJoinPayload: EventRoomJoinPayload = {
         inviteeIdList,
@@ -1307,32 +1318,33 @@ export class PuppetPadplus extends Puppet {
   protected async onRoomLeaveEvent (message: PadplusMessagePayload): Promise<void> {
     log.silly(PRE, `onRoomLeaveEvent(${message.msgId})`)
 
-    const leaveEvent = roomLeaveEventMessageParser(message)
+    const leaveEvent = await roomLeaveEventMessageParser(message)
 
     if (leaveEvent) {
       log.silly(PRE, `receive room-leave event : ${util.inspect(leaveEvent)}`)
-      const leaverNameList = leaveEvent.leaverNameList
-      const removerName    = leaveEvent.removerName
+      let _leaverIdList = leaveEvent.leaverIdList
+      let removerId    = leaveEvent.removerId
       const roomId         = leaveEvent.roomId
       const timestamp      = leaveEvent.timestamp
 
-      const leaverIdList = flatten(
-        await Promise.all(
-          leaverNameList.map(
-            leaverName => this.roomMemberSearch(roomId, leaverName),
-          ),
-        ),
-      )
-      const removerIdList = await this.roomMemberSearch(roomId, removerName)
-      if (removerIdList.length < 1) {
-        throw new Error('no removerId found')
-      } else if (removerIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventLeave(): removerId found more than 1, use the first one.')
+      if (typeof removerId === 'symbol') {
+        removerId = await this.searchSymbolYou(removerId, roomId)
       }
-      const removerId = removerIdList[0]
+      let leaverIdList: string[] = []
+      if (typeof _leaverIdList[0] === 'symbol') {
+        leaverIdList = [ await this.searchSymbolYou(_leaverIdList[0] as any, roomId) ]
+        removerId = await this.searchSymbolYou(removerId, roomId)
+      } else {
+        leaverIdList = _leaverIdList as string[]
+      }
 
-      if (!this.manager) {
-        throw new Error('no padplusManager')
+      // Sync room member
+      const startTime = Date.now()
+      const expireTime = 1 * 60 * 1000
+      let memberList = await this.roomMemberList(roomId)
+      while (leaverIdList.some(c => memberList.includes(c)) && Date.now() - startTime < expireTime) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        memberList = await this.roomMemberList(roomId)
       }
 
       const eventRoomLeavePayload: EventRoomLeavePayload = {
@@ -1348,11 +1360,11 @@ export class PuppetPadplus extends Puppet {
   protected async onRoomTopicEvent (message: PadplusMessagePayload): Promise<void> {
     log.silly(PRE, `onRoomTopicEvent(${message.msgId})`)
 
-    const topicEvent = roomTopicEventMessageParser(message)
+    const topicEvent = await roomTopicEventMessageParser(message)
 
     if (topicEvent) {
       log.silly(PRE, `receive room-topic event : ${util.inspect(topicEvent)}`)
-      const changerName = topicEvent.changerName
+      const _changerId = topicEvent.changerId
       const newTopic    = topicEvent.topic
       const roomId      = topicEvent.roomId
       const timestamp   = topicEvent.timestamp
@@ -1360,13 +1372,18 @@ export class PuppetPadplus extends Puppet {
       const roomOldPayload = await this.roomPayload(roomId)
       const oldTopic       = roomOldPayload.topic
 
-      const changerIdList = await this.roomMemberSearch(roomId, changerName)
-      if (changerIdList.length < 1) {
-        throw new Error('no changerId found')
-      } else if (changerIdList.length > 1) {
-        log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+      let changerId
+      if (typeof _changerId === 'symbol') {
+        const changerIdList = await this.roomMemberSearch(roomId, _changerId)
+        if (changerIdList.length < 1) {
+          throw new Error('no changerId found')
+        } else if (changerIdList.length > 1) {
+          log.silly(PRE, 'onPadplusMessageRoomEventTopic() changerId found more than 1, use the first one.')
+        }
+        changerId = changerIdList[0]
+      } else {
+        changerId = _changerId
       }
-      const changerId = changerIdList[0]
 
       if (!this.manager) {
         throw new Error('no padplusManager')
@@ -1640,6 +1657,24 @@ export class PuppetPadplus extends Puppet {
         this.emit('room-leave', data)
       }
     }
+  }
+
+  private async searchSymbolYou (id: string | YOU, roomId: string): Promise<string> {
+    let inviteeIdList
+    let inviterIdList = await this.roomMemberSearch(roomId, id)
+
+    if (inviterIdList.length < 1) {
+      await this.roomMemberPayloadDirty(roomId)
+      await this.manager.getRoomMembers(roomId)
+      inviterIdList = await this.roomMemberSearch(roomId, id)
+      if (inviterIdList.length < 1) {
+        throw new Error(`can not get room member`)
+      }
+    } else if (inviterIdList.length > 1) {
+      log.silly(PRE, 'onPadplusMessageRoomEventJoin() inviterId found more than 1, use the first one.')
+    }
+    inviteeIdList = inviterIdList[0]
+    return inviteeIdList
   }
 
 }
