@@ -11,7 +11,6 @@ import {
 import { YOU } from 'wechaty-puppet'
 import { xmlToJson } from './xml-to-json'
 import { getUserName } from './get-xml-label'
-import { log } from '../config'
 
 /**
  *
@@ -42,7 +41,6 @@ export async function roomLeaveEventMessageParser (
   rawPayload: PadplusMessagePayload,
 ): Promise<null | RoomLeaveEvent> {
 
-  log.silly(`rawPayload: ${JSON.stringify(rawPayload)}`)
   if (!isPayload(rawPayload)) {
     return null
   }
@@ -60,7 +58,7 @@ export async function roomLeaveEventMessageParser (
   if (!needParseXML) {
     const tryXmlText = content.replace(/^[^\n]+\n/, '')
     const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
-    if (!jsonPayload) {
+    if (!jsonPayload || !jsonPayload.sysmsg || jsonPayload.sysmsg.$.type !== 'sysmsgtemplate') {
       return null
     }
     content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template

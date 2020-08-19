@@ -51,7 +51,7 @@ export async function roomTopicEventMessageParser (
   if (!needParseXML) {
     const tryXmlText = content.replace(/^[^\n]+\n/, '')
     const jsonPayload: RoomRelatedXmlSchema = await xmlToJson(tryXmlText) // toJson(tryXmlText, { object: true }) as RoomRelatedXmlSchema
-    if (!jsonPayload) {
+    if (!jsonPayload || !jsonPayload.sysmsg || jsonPayload.sysmsg.$.type !== 'sysmsgtemplate') {
       return null
     }
     content = jsonPayload.sysmsg.sysmsgtemplate.content_template.template
