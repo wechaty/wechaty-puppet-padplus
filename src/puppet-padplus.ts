@@ -66,6 +66,7 @@ export class PuppetPadplus extends Puppet {
 
   private manager: PadplusManager
   private leaveEventKey: string = ''
+  private time?: NodeJS.Timer
 
   constructor (
     public options: PuppetOptions = {},
@@ -1647,14 +1648,17 @@ export class PuppetPadplus extends Puppet {
 
   private deduplicateRoomLeaveEvent (data: EventRoomLeavePayload) {
     const key = `${data.removeeIdList[0]}_${data.roomId}`
-    if (data.removerId !== data.removeeIdList[0]) {
+    if (data.removerId === data.removeeIdList[0]) {
       this.leaveEventKey = key
-      this.emit('room-leave', data)
+      this.time = setTimeout(() => {
+        this.emit('room-leave', data)
+      }, 1000)
     } else {
       if (this.leaveEventKey && this.leaveEventKey === key) {
         this.leaveEventKey = ''
-      } else {
         this.emit('room-leave', data)
+        clearTimeout(this.time!)
+        this.time = undefined
       }
     }
   }
