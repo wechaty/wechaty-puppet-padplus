@@ -1684,7 +1684,6 @@ export class PuppetPadplus extends Puppet {
     let inviterIdList = await this.roomMemberSearch(roomId, id)
 
     if (inviterIdList.length < 1) {
-      await this.dirtyPayload(PayloadType.RoomMember, roomId)
       this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.RoomMember })
       await this.manager.getRoomMembers(roomId)
       inviterIdList = await this.roomMemberSearch(roomId, id)
