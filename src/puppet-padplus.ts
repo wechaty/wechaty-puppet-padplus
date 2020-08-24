@@ -33,6 +33,7 @@ import {
   EventReadyPayload,
   EventHeartbeatPayload,
   YOU,
+  PayloadType,
 }                           from 'wechaty-puppet'
 
 import {
@@ -159,7 +160,7 @@ export class PuppetPadplus extends Puppet {
       this.emit('heartbeat', eventWatchdogPayload)
     })
 
-    manager.on('logout', (reason?: string) => this.logout(true, reason))
+    manager.on('logout', (reason?: string) => this.logout(reason, true))
 
     manager.on('room-leave', (data: EventRoomLeavePayload) => {
       this.deduplicateRoomLeaveEvent(data)
@@ -188,7 +189,7 @@ export class PuppetPadplus extends Puppet {
     }
 
     this.state.off('pending')
-    await this.logout(true, 'logout in wechaty')
+    await this.logout('logout in wechaty', true)
     await this.manager.stop()
     this.manager.removeAllListeners()
 
@@ -204,7 +205,7 @@ export class PuppetPadplus extends Puppet {
    * @param force case 1: true, case 2: false, case 3: true
    * @param reason
    */
-  public async logout (force?: boolean, reason?: string): Promise<void> {
+  public async logout (reason?: string, force?: boolean): Promise<void> {
     log.info(PRE, `logout(${force}, ${reason})`)
 
     if (!this.id) {
@@ -392,6 +393,16 @@ export class PuppetPadplus extends Puppet {
       `wechaty-contact-avatar-${payload.userName}.jpg`
     )
     return fileBox
+  }
+
+  contactPhone (contactId: string, phoneList: string[]): Promise<void> {
+    throw new Error(`contactPhone(${contactId}, ${phoneList}) called failed: Method not supported.`)
+  }
+  contactCorporationRemark (contactId: string, corporationRemark: string | null): Promise<void> {
+    throw new Error(`contactCorporationRemark(${contactId}, ${corporationRemark}) called failed: Method not supported.`)
+  }
+  contactDescription (contactId: string, description: string | null): Promise<void> {
+    throw new Error(`contactDescription(${contactId}, ${description}) called failed: Method not supported.`)
   }
 
   public async contactList (): Promise<string[]> {
@@ -1246,7 +1257,12 @@ export class PuppetPadplus extends Puppet {
 
     const payload = await messageRawPayloadParser(rawPayload)
 
-    if (payload.mentionIdList && payload.mentionIdList.length === 1 && payload.mentionIdList[0] === 'announcement@all') {
+    if (
+      'mentionIdList' in payload
+      && payload.mentionIdList
+      && payload.mentionIdList.length === 1
+      && payload.mentionIdList[0] === 'announcement@all'
+    ) {
       const memberIds = await this.roomMemberList(payload.roomId!)
       payload.mentionIdList = memberIds.filter(m => m !== payload.fromId)
       payload.text = `${payload.text || ''}`
@@ -1294,8 +1310,8 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.roomMemberPayloadDirty(roomId)
-      await this.roomPayloadDirty(roomId)
+      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.RoomMember })
+      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
 
       // Sync room member
       const startTime = Date.now()
@@ -1391,7 +1407,7 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.roomPayloadDirty(roomId)
+      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
       if (this.manager && this.manager.cacheManager) {
         await this.manager.cacheManager.deleteRoom(roomId)
       }
@@ -1532,7 +1548,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     await this.manager.setRoomTopic(roomId, topic as string)
-    await this.roomPayloadDirty(roomId)
+    this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
     await new Promise(resolve => setTimeout(resolve, 500))
     await this.roomTopic(roomId)
   }
@@ -1668,7 +1684,7 @@ export class PuppetPadplus extends Puppet {
     let inviterIdList = await this.roomMemberSearch(roomId, id)
 
     if (inviterIdList.length < 1) {
-      await this.roomMemberPayloadDirty(roomId)
+      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.RoomMember })
       await this.manager.getRoomMembers(roomId)
       inviterIdList = await this.roomMemberSearch(roomId, id)
       if (inviterIdList.length < 1) {

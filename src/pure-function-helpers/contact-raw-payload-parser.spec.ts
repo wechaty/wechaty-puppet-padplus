@@ -87,9 +87,10 @@ test('contactRawPayloadParser', async t => {
     gender    : ContactGender.Male,
     id        : 'lylezhuifeng',
     name      : '高原ོ',
+    phone     : [],
     province  : 'Beijing',
     signature : '',
-    type      : ContactType.Personal,
+    type      : ContactType.Individual,
     weixin    : 'lylezhuifeng',
   }
 
@@ -101,9 +102,10 @@ test('contactRawPayloadParser', async t => {
     gender    : ContactGender.Female,
     id        : 'wxid_v7j3e9kna9l912',
     name      : '李青青',
+    phone     : [],
     province  : 'Beijing',
     signature : '',
-    type      : ContactType.Personal,
+    type      : ContactType.Individual,
     weixin    : 'wxid_v7j3e9kna9l912',
   }
 
