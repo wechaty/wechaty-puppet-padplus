@@ -1548,7 +1548,6 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     await this.manager.setRoomTopic(roomId, topic as string)
-    await this.dirtyPayload(PayloadType.Room, roomId)
     this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
     await new Promise(resolve => setTimeout(resolve, 500))
     await this.roomTopic(roomId)
