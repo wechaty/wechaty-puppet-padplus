@@ -19,6 +19,7 @@ import { recalledPayloadParser } from './message-recalled-payload-parser'
 import { messageSourceParser } from './message-source-parser'
 import { messageType } from './message-type'
 import { log } from '../config'
+import { quotePayloadParser } from './message-quote-payload-parser'
 // import { xmlToJson } from './xml-to-json'
 
 const PRE = 'messageRawPayloadParser'
@@ -187,6 +188,13 @@ export async function messageRawPayloadParser (
   }
 
   /**
+   * 7. Set text for quote message
+   */
+  if (rawPayload.appMsgType === WechatAppMessageType.QuoteMessage) {
+    text = await quotePayloadParser(rawPayload)
+  }
+
+  /**
    * 6. Set Contact for ShareCard
    */
   /* if (type === MessageType.Contact) {
@@ -260,6 +268,9 @@ export async function messageRawPayloadParser (
         case WechatAppMessageType.GroupNote:
           payload.type = MessageType.GroupNote
           payload.text = appPayload.title
+          break
+        case WechatAppMessageType.QuoteMessage:
+          payload.type = MessageType.Text
           break
         default:
           payload.type = MessageType.Unknown
