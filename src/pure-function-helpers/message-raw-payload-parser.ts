@@ -20,15 +20,12 @@ import { messageSourceParser } from './message-source-parser'
 import { messageType } from './message-type'
 import { log } from '../config'
 import { quotePayloadParser } from './message-quote-payload-parser'
-// import { xmlToJson } from './xml-to-json'
 
 const PRE = 'messageRawPayloadParser'
 
 export async function messageRawPayloadParser (
   rawPayload: PadplusMessagePayload,
 ): Promise<MessagePayload> {
-
-  // console.log('messageRawPayloadParser:', rawPayload)
 
   /**
    * 0. Set Message Type
@@ -193,16 +190,6 @@ export async function messageRawPayloadParser (
   if (rawPayload.appMsgType === WechatAppMessageType.QuoteMessage) {
     text = await quotePayloadParser(rawPayload)
   }
-
-  /**
-   * 6. Set Contact for ShareCard
-   */
-  /* if (type === MessageType.Contact) {
-    const xml = await xmlToJson(rawPayload.content.split('\n')[1])
-    log.silly(PRE, `xml : ${JSON.stringify(xml)}`)
-    const shareCardData = xml.msg.$
-    text = JSON.stringify(shareCardData)
-  } */
 
   let payload: MessagePayload
 

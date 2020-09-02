@@ -51,13 +51,12 @@ export async function quotePayloadParser (rawPayload: PadplusMessagePayload): Pr
 
     const { title, refermsg } = jsonPayload.msg.appmsg
     const { type, displayname, content } = refermsg
+    const splitLine = '\n- - - - - - - - - - - - - - -\n'
+    const refContent = type === REFER_MSG_TYPE.TEXT ? content : referMsgDic(type)
 
-    const preText = type === REFER_MSG_TYPE.TEXT ?
-      `"${displayname}:\n${content}"\n- - - - - - - - - - - - - - -\n`
-      :
-      `"${displayname}:【${referMsgDic(type)}】"\n- - - - - - - - - - - - - - -\n`
+    const preText = `"${displayname}:\n${refContent}"${splitLine}`
 
-      return preText + title
+    return preText + title
   } catch (e) {
     throw new Error(`can not parse xml to json: ${JSON.stringify(tryXmlText)}`)
   }
