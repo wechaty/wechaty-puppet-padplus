@@ -50,7 +50,7 @@ export function contactRawPayloadParser (
   if (isContactOfficialId(rawPayload.userName) || rawPayload.verifyFlag !== 0) {
     contactType = ContactType.Official
   } else {
-    contactType = ContactType.Personal
+    contactType = ContactType.Individual
   }
   let friend = false
   if (rawPayload.contactFlag && rawPayload.contactFlag !== 0 && rawPayload.verifyFlag === 0) {
@@ -64,6 +64,7 @@ export function contactRawPayloadParser (
     gender    : rawPayload.sex,
     id        : rawPayload.userName,
     name      : rawPayload.nickName,
+    phone     : [],
     province  : rawPayload.province,
     signature : (rawPayload.signature).replace('+', ' '),          // Stay+Foolish
     type      : contactType,
