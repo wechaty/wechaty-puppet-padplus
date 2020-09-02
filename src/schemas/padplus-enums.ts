@@ -111,6 +111,7 @@ export enum WechatAppMessageType {
   MiniProgram           = 33,
   MiniProgramApp        = 36,  // this is forwardable mini program
   GroupNote             = 53,
+  QuoteMessage          = 57,
   Transfers             = 2000,
   RedEnvelopes          = 2001,
   ReaderType            = 100001,
@@ -271,4 +272,12 @@ export enum GrpcMQType {
   ADD_CONTACT = 15,
   SYNC = 51,
   LOGOUT = 1100,
+}
+
+export enum REFER_MSG_TYPE {
+  TEXT = '1',
+  IMAGE = '3',
+  VIDEO = '43',
+  LOCATION = '48',
+  LINK = '49',
 }
