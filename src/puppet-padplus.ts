@@ -66,8 +66,7 @@ const PRE = 'PuppetPadplus'
 export class PuppetPadplus extends Puppet {
 
   private manager: PadplusManager
-  private leaveEventKey: string = ''
-  private time?: NodeJS.Timer
+  private leaveEventMap: { [key: string]: NodeJS.Timer } = {}
 
   constructor (
     public options: PuppetOptions = {},
@@ -1283,6 +1282,36 @@ export class PuppetPadplus extends Puppet {
   }
 
   /**
+   *
+   * Dirty payload
+   *
+   */
+
+  public async dirtyLocalPayload (type: PayloadType, id: string) {
+    switch (type) {
+      case PayloadType.Contact:
+        await this.manager.cacheManager?.deleteContact(id)
+        break
+
+      case PayloadType.Message:
+        this.manager.cachePadplusMessagePayload.del(id)
+        break
+
+      case PayloadType.Room:
+        await this.manager.cacheManager?.deleteRoom(id)
+        break
+
+      case PayloadType.RoomMember:
+        await this.manager.cacheManager?.deleteRoomMember(id)
+        break
+
+      default:
+        log.info(PRE, `dirtyLocalPayload() Received unknown payload type.`)
+        break
+    }
+  }
+
+  /**
    * ========================
    *      ROOM SECTION
    * ========================
@@ -1310,8 +1339,8 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.RoomMember })
-      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
+      await this.dirtyLocalPayload(PayloadType.Room, roomId)
+      await this.dirtyLocalPayload(PayloadType.RoomMember, roomId)
 
       // Sync room member
       const startTime = Date.now()
@@ -1407,10 +1436,8 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
-      if (this.manager && this.manager.cacheManager) {
-        await this.manager.cacheManager.deleteRoom(roomId)
-      }
+      await this.dirtyLocalPayload(PayloadType.Room, roomId)
+
       const eventRoomTopicPayload: EventRoomTopicPayload = {
         changerId,
         newTopic,
@@ -1663,18 +1690,18 @@ export class PuppetPadplus extends Puppet {
   }
 
   private deduplicateRoomLeaveEvent (data: EventRoomLeavePayload) {
+    log.silly(`deduplicateRoomLeaveEvent(${data.removeeIdList[0]})`)
+
     const key = `${data.removeeIdList[0]}_${data.roomId}`
     if (data.removerId === data.removeeIdList[0]) {
-      this.leaveEventKey = key
-      this.time = setTimeout(() => {
+      this.leaveEventMap[key] = setTimeout(() => {
         this.emit('room-leave', data)
-      }, 1000)
+      }, 3000)
     } else {
-      if (this.leaveEventKey && this.leaveEventKey === key) {
-        this.leaveEventKey = ''
+      if (Object.keys(this.leaveEventMap).length > 0 && Object.keys(this.leaveEventMap).includes(key)) {
         this.emit('room-leave', data)
-        clearTimeout(this.time!)
-        this.time = undefined
+        clearTimeout(this.leaveEventMap[key])
+        delete this.leaveEventMap[key]
       }
     }
   }

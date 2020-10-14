@@ -721,9 +721,7 @@ export class PadplusManager extends EventEmitter {
             const oldMembers = await this.cacheManager.getRoomMember(roomId)
             if (oldMembers) {
               const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
-              if (eventRoomLeavePayload) {
-                this.emit('room-leave', eventRoomLeavePayload)
-              }
+              eventRoomLeavePayload && eventRoomLeavePayload.map(event => this.emit('room-leave', event))
             }
             const members = roomMemberParser(membersList)
             await this.cacheManager.setRoomMember(roomId, members)
@@ -1166,7 +1164,7 @@ export class PadplusManager extends EventEmitter {
     })
 
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 5000)
+      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 30 * 1000)
       CallbackPool.Instance.pushContactCallback(contactId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusContactPayload)
@@ -1301,7 +1299,7 @@ export class PadplusManager extends EventEmitter {
       await this.padplusContact.getContactInfo(roomId)
     })
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get room timeout')), 5000)
+      const timeout = setTimeout(() => reject(new Error('get room timeout')), 30 * 1000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)
@@ -1521,13 +1519,13 @@ export class PadplusManager extends EventEmitter {
     return isSuccess
   }
 
-  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<EventRoomLeavePayload | undefined> {
+  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<EventRoomLeavePayload[] | undefined> {
     log.silly(PRE, `generateLeaveEvent()`)
 
     const newLength = newMembers.length
-
     const oldLength = Object.keys(oldMembers).length
-    if (newLength > oldLength) {
+
+    if (newLength >= oldLength) {
       return undefined
     }
 
@@ -1537,16 +1535,16 @@ export class PadplusManager extends EventEmitter {
         delete oldMembers[member.UserName]
       }
     })
-    if (Object.values(oldMembers).length !== 1) {
-      return undefined
-    }
-    const eventRoomLeavePayload: EventRoomLeavePayload = {
-      removeeIdList : Object.keys(oldMembers),
-      removerId: Object.keys(oldMembers)[0],
-      roomId,
-      timestamp: Date.now(),
-    }
-    return eventRoomLeavePayload
+
+    return Object.keys(oldMembers).map(member => {
+      const eventRoomLeavePayload: EventRoomLeavePayload = {
+        removeeIdList : [member],
+        removerId: member,
+        roomId,
+        timestamp: Date.now(),
+      }
+      return eventRoomLeavePayload
+    })
   }
 
 }
