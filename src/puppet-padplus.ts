@@ -1690,7 +1690,7 @@ export class PuppetPadplus extends Puppet {
   }
 
   private deduplicateRoomLeaveEvent (data: EventRoomLeavePayload) {
-    log.silly(`deduplicateRoomLeaveEvent(${data.removeeIdList[0]})`)
+    log.silly(`deduplicateRoomLeaveEvent(${JSON.stringify(data)})`)
 
     const key = `${data.removeeIdList[0]}_${data.roomId}`
     if (data.removerId === data.removeeIdList[0]) {
@@ -1702,6 +1702,8 @@ export class PuppetPadplus extends Puppet {
         this.emit('room-leave', data)
         clearTimeout(this.leaveEventMap[key])
         delete this.leaveEventMap[key]
+      } else {
+        this.emit('room-leave', data)
       }
     }
   }
