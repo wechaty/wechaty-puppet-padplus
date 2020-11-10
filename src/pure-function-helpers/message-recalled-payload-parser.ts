@@ -1,5 +1,5 @@
 import { PadplusMessagePayload, PadplusRecalledMessagePayload } from '../schemas'
-import { isPayload, isRoomId } from './is-type'
+import { isContactId, isPayload, isRoomId } from './is-type'
 import { xmlToJson } from './xml-to-json'
 
 export async function recalledPayloadParser (
@@ -16,10 +16,12 @@ export async function recalledPayloadParser (
 
     text = rawPayload.content.slice(startIndex !== -1 ? startIndex + 2 : 0)
 
-  } else {
+  } else if (isContactId(rawPayload.fromUserName)) {
 
     text = rawPayload.content
 
+  } else {
+    return null
   }
 
   // {

@@ -52,7 +52,7 @@ import { roomJoinEventMessageParser } from './pure-function-helpers/room-event-j
 import { roomLeaveEventMessageParser } from './pure-function-helpers/room-event-leave-message-parser'
 import { roomTopicEventMessageParser } from './pure-function-helpers/room-event-topic-message-parser'
 import { friendshipConfirmEventMessageParser, friendshipReceiveEventMessageParser, friendshipVerifyEventMessageParser } from './pure-function-helpers/friendship-event-message-parser'
-import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId, roomInviteEventMessageParser } from './pure-function-helpers'
+import { messageRawPayloadParser, roomRawPayloadParser, friendshipRawPayloadParser, appMessageParser, isStrangerV2, isStrangerV1, isRoomId, roomInviteEventMessageParser, isContactId } from './pure-function-helpers'
 import { contactRawPayloadParser } from './pure-function-helpers/contact-raw-payload-parser'
 import { xmlToJson } from './pure-function-helpers/xml-to-json'
 import { convertSearchContactToContact } from './convert-manager/contact-convertor'
@@ -236,8 +236,11 @@ export class PuppetPadplus extends Puppet {
 
     if (isRoomId(message.fromUserName)) {
       await this.roomRawPayload(message.fromUserName)
-    } else {
+    } else if (isContactId(message.fromUserName)) {
       await this.contactRawPayload(message.fromUserName)
+    } else {
+      log.error(`not support receive message from WeCom`)
+      return
     }
     const eventMessagePayload: EventMessagePayload = {
       messageId: message.msgId,
@@ -742,8 +745,10 @@ export class PuppetPadplus extends Puppet {
           let contentXML
           if (isRoomId(rawPayload.fromUserName)) {
             contentXML = rawPayload.content.split(':\n')[1]
-          } else {
+          } else if (isContactId(rawPayload.fromUserName)) {
             contentXML = rawPayload.content
+          } else {
+            throw new Error(`not support forward message to WeCom`)
           }
           const content = await xmlToJson(contentXML)
           fileBox.metadata = {
@@ -833,9 +838,11 @@ export class PuppetPadplus extends Puppet {
       if (isRoomId(rawPayload.fromUserName)) {
         contentXML = rawPayload.content.split(':\n')[1]
         url = rawPayload.url!
-      } else {
+      } else if (isContactId(rawPayload.fromUserName)) {
         contentXML = rawPayload.content
         url = rawPayload.fileName!
+      } else {
+        throw new Error(`not support forward message to WeCom`)
       }
       const content = await xmlToJson(contentXML)
       const voiceLength = content.msg.voicemsg.$.voicelength

@@ -10,6 +10,7 @@ import {
 
 import {
   isContactId,
+  isIMRoomId,
   isRoomId,
 }                         from './is-type'
 
@@ -72,6 +73,10 @@ export async function messageRawPayloadParser (
     roomId = rawPayload.fromUserName
   } else if (isRoomId(rawPayload.toUserName)) {
     roomId = rawPayload.toUserName
+  } else if (isIMRoomId(rawPayload.fromUserName)) {
+    roomId = rawPayload.fromUserName
+  } else if (isIMRoomId(rawPayload.toUserName)) {
+    roomId = rawPayload.toUserName
   } else {
     roomId = undefined
   }
@@ -122,7 +127,7 @@ export async function messageRawPayloadParser (
 
     text = rawPayload.content.slice(startIndex !== -1 ? startIndex + 2 : 0)
 
-  } else {
+  } else if (isContactId(rawPayload.fromUserName)) {
 
     text = rawPayload.content
 
