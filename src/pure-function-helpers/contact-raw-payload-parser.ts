@@ -8,8 +8,8 @@ import {
 }                             from '../schemas'
 
 import {
+  isContactId,
   isContactOfficialId,
-  isRoomId,
 }                           from './is-type'
 
 export function contactRawPayloadParser (
@@ -42,7 +42,7 @@ export function contactRawPayloadParser (
     throw Error('cannot get user_name from raw payload: ' + JSON.stringify(rawPayload))
   }
 
-  if (isRoomId(rawPayload.userName)) {
+  if (!isContactId(rawPayload.userName)) {
     throw Error('Room Object instead of Contact!')
   }
 

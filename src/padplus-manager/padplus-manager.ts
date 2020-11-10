@@ -621,7 +621,7 @@ export class PadplusManager extends EventEmitter {
           const roomRawData = data.getData()
           if (roomRawData) {
             const _data = JSON.parse(roomRawData)
-            if (!isRoomId(_data.UserName)) {
+            if (isContactId(_data.UserName)) {
               const contactData: GrpcContactPayload = _data
 
               const contact = convertFromGrpcContact(contactData, true)
@@ -630,7 +630,7 @@ export class PadplusManager extends EventEmitter {
               }
 
               CallbackPool.Instance.resolveContactCallBack(contact.userName, contact)
-            } else {
+            } else if (isRoomId(_data.UserName)) {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (this.cacheManager) {
@@ -644,6 +644,8 @@ export class PadplusManager extends EventEmitter {
                 throw new PadplusError(PadplusErrorType.NO_CACHE, `CONTACT_MODIFY`)
               }
               CallbackPool.Instance.resolveRoomCallBack(roomPayload.chatroomId, roomPayload)
+            } else {
+              log.error(PRE, `not support this IM contact or room modify.`)
             }
           }
           break
