@@ -2,6 +2,8 @@
 
 Learn more about Wechaty Puppet Service Providers from <https://github.com/wechaty/puppet-service-providers>
 
+You can use Wechaty with other puppet services like WXWork, Rock, PadLocal, etc as well.
+
 ## 通知 (Nov, 2020)
 
 亲爱的开发者，您好！
