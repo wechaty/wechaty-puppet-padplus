@@ -1,4 +1,6 @@
-# 通知
+# THIS REPO HAS BEEN DEPRECATED
+
+## 通知
 
 亲爱的开发者，您好！
 
