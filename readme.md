@@ -1,6 +1,8 @@
 # THIS REPO HAS BEEN DEPRECATED
 
-## 通知
+Learn more about Wechaty Puppet Service Providers from <https://github.com/wechaty/puppet-service-providers>
+
+## 通知 (Nov, 2020)
 
 亲爱的开发者，您好！
 
