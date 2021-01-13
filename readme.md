@@ -1,6 +1,6 @@
 # THIS REPO HAS BEEN DEPRECATED
 
-Learn more about Wechaty Puppet Service Providers from <https://github.com/wechaty/puppet-service-providers>
+Learn more about Wechaty Puppet Services from <https://wechaty.js.org/docs/puppet-services>
 
 You can use Wechaty with other puppet services like WXWork, Rock, PadLocal, etc as well.
 
