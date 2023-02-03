@@ -1,15 +1,13 @@
-import { MiniProgramPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 import { xmlToJson } from './xml-to-json'
 
 import {
   PadplusMessagePayload,
 }                       from '../schemas'
 
-import { log } from '../config'
-
 import { isPayload } from './is-type'
 
-export async function miniProgramMessageParser (rawPayload: PadplusMessagePayload): Promise<MiniProgramPayload | null> {
+export async function miniProgramMessageParser (rawPayload: PadplusMessagePayload): Promise<payloads.MiniProgram | null> {
   if (!isPayload(rawPayload)) {
     return null
   }
@@ -56,8 +54,7 @@ export async function miniProgramMessageParser (rawPayload: PadplusMessagePayloa
       title,
       username,
     }
-  } catch (e) {
-    log.verbose(e.stack)
+  } catch (err) {
     return null
   }
 }

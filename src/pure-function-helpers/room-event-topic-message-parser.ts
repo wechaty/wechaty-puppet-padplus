@@ -9,7 +9,7 @@ import {
   isPayload,
   isRoomId,
 }               from './is-type'
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 import { xmlToJson } from './xml-to-json'
 import { getUserName, getNickName } from './get-xml-label'
 
@@ -64,7 +64,7 @@ export async function roomTopicEventMessageParser (
   ROOM_TOPIC_OTHER_REGEX_LIST.some(regex => !!(matchesForOther = content.match(regex)))
   ROOM_TOPIC_YOU_REGEX_LIST.some(regex => !!(matchesForYou   = content.match(regex)))
 
-  const matches: Array<string | YOU> = matchesForOther || matchesForYou
+  const matches: Array<string | typeof types.YOU> = matchesForOther || matchesForYou
   if (!matches) {
     return null
   }
@@ -73,7 +73,7 @@ export async function roomTopicEventMessageParser (
   let topic = matches[2] as string
 
   if ((matchesForYou && changerId === '你') || changerId === 'You') {
-    changerId = YOU
+    changerId = types.YOU
   } else {
     changerId = getUserName(linkList, changerId as string)
     topic = getNickName(linkList, topic)

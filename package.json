@@ -59,18 +59,16 @@
     "pkg-jq": "^0.2.2",
     "shx": "^0.3.1",
     "ts-protoc-gen": "^0.12.0",
-    "tstest": "^0.4.1",
-    "wechaty-puppet": "^0.32.0"
-  },
-  "peerDependencies": {
-    "wechaty-puppet": "^0.32.0"
+    "tstest": "^0.4.1"
   },
   "dependencies": {
+    "@juzi/wechaty-puppet": "^1.0.48",
     "array-flatten": "^3.0.0",
     "axios": "^0.19.2",
     "brolog": "^1.6.5",
     "ffmpeg-extract-frames": "^2.0.2",
     "ffmpeg-probe": "^1.0.6",
+    "file-box": "^1.5.5",
     "flash-store": "^0.14.5",
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",

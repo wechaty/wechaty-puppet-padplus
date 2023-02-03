@@ -1,14 +1,7 @@
 /* eslint-disable sort-keys */
 import { xmlToJson } from './xml-to-json'
 
-import {
-  FriendshipType,
-  FriendshipPayload,
-  FriendshipPayloadConfirm,
-  FriendshipPayloadReceive,
-  FriendshipPayloadVerify,
-  FriendshipSceneType,
-} from 'wechaty-puppet'
+import { payloads, types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusFriendshipPayload,
@@ -21,23 +14,23 @@ import {
   friendshipVerifyEventMessageParser,
 }                                         from './friendship-event-message-parser'
 
-const friendshipTypeMap: { [scene: string]: FriendshipSceneType } = {
-  '1': FriendshipSceneType.QQ,
-  '2': FriendshipSceneType.Email,
-  '3': FriendshipSceneType.Weixin,
-  '12': FriendshipSceneType.QQtbd,
-  '14': FriendshipSceneType.Room,
-  '15': FriendshipSceneType.Phone,
-  '17': FriendshipSceneType.Card,
-  '18': FriendshipSceneType.Location,
-  '25': FriendshipSceneType.Bottle,
-  '29': FriendshipSceneType.Shaking,
-  '30': FriendshipSceneType.QRCode,
+const friendshipTypeMap: { [scene: string]: types.FriendshipScene } = {
+  '1': types.FriendshipScene.QQ,
+  '2': types.FriendshipScene.Email,
+  '3': types.FriendshipScene.Weixin,
+  '12': types.FriendshipScene.QQtbd,
+  '14': types.FriendshipScene.Room,
+  '15': types.FriendshipScene.Phone,
+  '17': types.FriendshipScene.Card,
+  '18': types.FriendshipScene.Location,
+  '25': types.FriendshipScene.Bottle,
+  '29': types.FriendshipScene.Shaking,
+  '30': types.FriendshipScene.QRCode,
 }
 
 export async function friendshipRawPayloadParser (
   rawPayload: PadplusMessagePayload,
-) : Promise<FriendshipPayload> {
+) : Promise<payloads.Friendship> {
 
   if (friendshipConfirmEventMessageParser(rawPayload)) {
     /**
@@ -64,24 +57,24 @@ export async function friendshipRawPayloadParser (
 
 async function friendshipRawPayloadParserConfirm (
   rawPayload: PadplusMessagePayload,
-): Promise<FriendshipPayload> {
-  const payload: FriendshipPayloadConfirm = {
+): Promise<payloads.Friendship> {
+  const payload: payloads.FriendshipConfirm = {
     contactId : rawPayload.fromUserName,
     id        : rawPayload.msgId,
     timestamp : rawPayload.createTime,
-    type      : FriendshipType.Confirm,
+    type      : types.Friendship.Confirm,
   }
   return payload
 }
 
 function friendshipRawPayloadParserVerify (
   rawPayload: PadplusMessagePayload,
-): FriendshipPayload {
-  const payload: FriendshipPayloadVerify = {
+): payloads.Friendship {
+  const payload: payloads.FriendshipVerify = {
     contactId : rawPayload.fromUserName,
     id        : rawPayload.msgId,
     timestamp : rawPayload.createTime,
-    type      : FriendshipType.Verify,
+    type      : types.Friendship.Verify,
   }
   return payload
 }
@@ -104,7 +97,7 @@ async function friendshipRawPayloadParserReceive (
   }
   const padplusFriendshipPayload: PadplusFriendshipPayload = jsonPayload.msg.$
 
-  const friendshipPayload: FriendshipPayloadReceive = {
+  const friendshipPayload: payloads.FriendshipReceive = {
     contactId : padplusFriendshipPayload.fromusername,
     hello     : padplusFriendshipPayload.content,
     id        : rawPayload.msgId,
@@ -112,7 +105,7 @@ async function friendshipRawPayloadParserReceive (
     stranger  : padplusFriendshipPayload.encryptusername,
     ticket    : padplusFriendshipPayload.ticket,
     timestamp : rawPayload.createTime,
-    type      : FriendshipType.Receive,
+    type      : types.Friendship.Receive,
   }
 
   return friendshipPayload

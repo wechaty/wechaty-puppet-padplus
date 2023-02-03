@@ -1,5 +1,5 @@
-import { YOU } from 'wechaty-puppet'
-
+import { types } from '@juzi/wechaty-puppet'
+type YOU = typeof types.YOU
 export interface RoomJoinEvent {
   inviteeIdList : Array<string | YOU>,
   inviterId     : string | YOU,
@@ -8,7 +8,7 @@ export interface RoomJoinEvent {
 }
 
 export interface RoomLeaveEvent {
-  leaverIdList : Array<(string | YOU)>,
+  leaverIdList : Array<string | YOU>,
   removerId    : string | YOU,
   roomId       : string,
   timestamp    : number,  // Unix Timestamp, in seconds
@@ -16,9 +16,9 @@ export interface RoomLeaveEvent {
 
 export interface RoomTopicEvent {
   changerId : string | YOU,
-  roomId      : string,
-  topic       : string,
-  timestamp   : number, // Unix Timestamp, in seconds
+  roomId    : string,
+  topic     : string,
+  timestamp : number, // Unix Timestamp, in seconds
 }
 
 export interface RoomInviteEvent {

@@ -4,7 +4,7 @@
 // tslint:disable:no-shadowed-variable
 
 import test  from 'blue-tape'
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -69,7 +69,7 @@ test('roomJoinEventMessageParser() bot invite other', async t => {
   }
   const actual = {
     inviteeIdList: [ 'wxid_3s4v7osfgpbc22' ],
-    inviterId: YOU,
+    inviterId: types.YOU,
     roomId: '20434481305@chatroom',
     timestamp: 1595916797061
   }

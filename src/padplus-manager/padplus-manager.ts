@@ -8,7 +8,11 @@ import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
 import { StreamResponse, ResponseType } from '../server-manager/proto-ts/PadPlusServer_pb'
-import { ScanStatus, ContactGender, FileBox, FriendshipPayload, EventRoomLeavePayload, MemoryCard } from 'wechaty-puppet'
+import { FileBox } from 'file-box'
+import {
+  payloads,
+  types,
+} from '@juzi/wechaty-puppet'
 import { RequestClient } from './api-request/request'
 import { PadplusUser } from './api-request/user'
 import { PadplusContact } from './api-request/contact'
@@ -53,6 +57,7 @@ import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
 import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
+import { MemoryCard } from '@juzi/wechaty-puppet/dist/esm/src/config'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'
 
@@ -86,7 +91,7 @@ export class PadplusManager extends EventEmitter {
   public cacheManager?      : CacheManager
   private memory?            : MemoryCard
   private memorySlot         : PadplusMemorySlot
-  private qrcodeStatus?      : ScanStatus
+  private qrcodeStatus?      : types.ScanStatus
   private loginStatus?       : boolean
   public readonly cachePadplusMessagePayload: LRU<string, PadplusMessagePayload>
   public readonly cachePadplusSearchContactPayload: LRU<string, GrpcSearchContact>
@@ -161,7 +166,7 @@ export class PadplusManager extends EventEmitter {
   public emit (event: 'contact-delete', data: string): boolean
   public emit (event: 'message', msg: PadplusMessagePayload): boolean
   public emit (event: 'room-member-list', data: string): boolean
-  public emit (event: 'room-leave', data: EventRoomLeavePayload): boolean
+  public emit (event: 'room-leave', data: payloads.EventRoomLeave): boolean
   public emit (event: 'room-member-modify', data: string): boolean
   public emit (event: 'status-notify', data: string): boolean
   public emit (event: 'ready'): boolean
@@ -186,7 +191,7 @@ export class PadplusManager extends EventEmitter {
   public on (event: 'reset', listener: ((this: PadplusManager, reason: string) => void)): this
   public on (event: 'heartbeat', listener: ((this: PadplusManager, data: string) => void)): this
   public on (event: 'error', listener: ((this: PadplusManager, error: Error) => void)): this
-  public on (event: 'room-leave', listener: ((this: PadplusManager, data: EventRoomLeavePayload) => void)): this
+  public on (event: 'room-leave', listener: ((this: PadplusManager, data: payloads.EventRoomLeave) => void)): this
   public on (event: never, listener: never): never
 
   public on (event: PadplusManagerEvent, listener: ((...args: any[]) => any)): this {
@@ -395,7 +400,7 @@ export class PadplusManager extends EventEmitter {
 
             const fileBox = FileBox.fromBase64(qrcodeData.qrcode, `qrcode${(Math.random() * 10000).toFixed()}.png`)
             const qrcodeUrl = await fileBox.toQRCode()
-            this.qrcodeStatus = ScanStatus.Waiting
+            this.qrcodeStatus = types.ScanStatus.Waiting
             this.emit('scan', qrcodeUrl, this.qrcodeStatus)
           }
           break
@@ -413,15 +418,15 @@ export class PadplusManager extends EventEmitter {
             grpcGatewayEmitter.setQrcodeId(scanData.user_name)
             switch (scanData.status as QrcodeStatus) {
               case QrcodeStatus.Scanned:
-                if (this.qrcodeStatus !== ScanStatus.Scanned) {
-                  this.qrcodeStatus = ScanStatus.Scanned
+                if (this.qrcodeStatus !== types.ScanStatus.Scanned) {
+                  this.qrcodeStatus = types.ScanStatus.Scanned
                   this.emit('scan', '', this.qrcodeStatus)
                 }
                 break
 
               case QrcodeStatus.Confirmed:
-                if (this.qrcodeStatus !== ScanStatus.Confirmed) {
-                  this.qrcodeStatus = ScanStatus.Confirmed
+                if (this.qrcodeStatus !== types.ScanStatus.Confirmed) {
+                  this.qrcodeStatus = types.ScanStatus.Confirmed
                   this.emit('scan', '', this.qrcodeStatus)
                 }
                 break
@@ -436,9 +441,9 @@ export class PadplusManager extends EventEmitter {
                 }
 
                 if (scanData.status === QrcodeStatus.Expired) {
-                  this.qrcodeStatus = ScanStatus.Timeout
+                  this.qrcodeStatus = types.ScanStatus.Timeout
                 } else {
-                  this.qrcodeStatus = ScanStatus.Cancel
+                  this.qrcodeStatus = types.ScanStatus.Cancel
                 }
                 this.emit('scan', '', this.qrcodeStatus)
 
@@ -491,7 +496,7 @@ export class PadplusManager extends EventEmitter {
               nickName: loginData.nickName,
               province: '',
               remark: '',
-              sex: ContactGender.Unknown,
+              sex: types.ContactGender.Unknown,
               signature: '',
               smallHeadUrl: '',
               stranger: '',
@@ -538,7 +543,7 @@ export class PadplusManager extends EventEmitter {
                   nickName: wechatUser.nickName,
                   province: '',
                   remark: '',
-                  sex: ContactGender.Unknown,
+                  sex: types.ContactGender.Unknown,
                   signature: '',
                   smallHeadUrl: '',
                   stranger: '',
@@ -744,7 +749,7 @@ export class PadplusManager extends EventEmitter {
                   nickName: member.NickName,
                   province: '',
                   remark: member.RemarkName,
-                  sex: ContactGender.Unknown,
+                  sex: types.ContactGender.Unknown,
                   signature: '',
                   smallHeadUrl: member.HeadImgUrl,
                   stranger: '',
@@ -1236,7 +1241,7 @@ export class PadplusManager extends EventEmitter {
     } else {
       throw new Error(`no cache manager.`)
     }
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('set alias failed since timeout')), 5000)
       CallbackPool.Instance.pushRoomTopicCallback(roomId, topic, () => {
         clearTimeout(timeout)
@@ -1489,7 +1494,7 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplusFriendship`)
     }
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket, scene)
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('accept friend request timeout.')), 60 * 1000)
       CallbackPool.Instance.pushAcceptFriendCallback(contactId, () => {
         clearTimeout(timeout)
@@ -1500,7 +1505,7 @@ export class PadplusManager extends EventEmitter {
 
   public async saveFriendship (
     friendshipId: string,
-    friendship: FriendshipPayload,
+    friendship: payloads.Friendship,
   ): Promise<void> {
     log.silly(PRE, `saveFriendship(${util.inspect(friendship)})`)
 
@@ -1521,7 +1526,7 @@ export class PadplusManager extends EventEmitter {
     return isSuccess
   }
 
-  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<EventRoomLeavePayload[] | undefined> {
+  private async generateLeaveEvent (newMembers: GrpcRoomMemberPayload[], oldMembers: PadplusRoomMemberMap, roomId: string): Promise<payloads.EventRoomLeave[] | undefined> {
     log.silly(PRE, `generateLeaveEvent()`)
 
     const newLength = newMembers.length
@@ -1539,7 +1544,7 @@ export class PadplusManager extends EventEmitter {
     })
 
     return Object.keys(oldMembers).map(member => {
-      const eventRoomLeavePayload: EventRoomLeavePayload = {
+      const eventRoomLeavePayload: payloads.EventRoomLeave = {
         removeeIdList : [member],
         removerId: member,
         roomId,

@@ -1,6 +1,4 @@
-import {
-  MessageType,
-}                         from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessageType,
@@ -8,61 +6,61 @@ import {
 
 export function messageType (
   rawType: PadplusMessageType,
-): MessageType {
-  let type: MessageType
+): types.Message {
+  let type: types.Message
 
   switch (rawType) {
 
     case PadplusMessageType.Text:
-      type = MessageType.Text
+      type = types.Message.Text
       break
 
     case PadplusMessageType.Image:
-      type = MessageType.Image
+      type = types.Message.Image
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.Voice:
-      type = MessageType.Audio
+      type = types.Message.Audio
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.Emoticon:
-      type = MessageType.Emoticon
+      type = types.Message.Emoticon
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.App:
-      type = MessageType.Attachment
+      type = types.Message.Attachment
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.Location:
-      type = MessageType.Location
+      type = types.Message.Location
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.Video:
-      type = MessageType.Video
+      type = types.Message.Video
       // console.log(rawPayload)
       break
 
     case PadplusMessageType.Sys:
-      type = MessageType.Unknown
+      type = types.Message.Unknown
       break
 
     case PadplusMessageType.ShareCard:
-      type = MessageType.Contact
+      type = types.Message.Contact
       break
 
     case PadplusMessageType.VoipMsg:
     case PadplusMessageType.Recalled:
-      type = MessageType.Recalled
+      type = types.Message.Recalled
       break
 
     case PadplusMessageType.StatusNotify:
     case PadplusMessageType.SysNotice:
-      type = MessageType.Unknown
+      type = types.Message.Unknown
       break
 
     default:

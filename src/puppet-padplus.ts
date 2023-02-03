@@ -1,40 +1,13 @@
 import util from 'util'
 import path from 'path'
+import { FileBox } from 'file-box'
 
 import {
-  ContactPayload,
-  FileBox,
-  FriendshipPayload,
-  FriendshipPayloadReceive,
-  FriendshipType,
-  ImageType,
-  MessagePayload,
-  MessageType,
-  MiniProgramPayload,
+  payloads,
+  types,
   Puppet,
   PuppetOptions,
-  RoomInvitationPayload,
-  RoomMemberPayload,
-  RoomPayload,
-  ScanStatus,
-  UrlLinkPayload,
-
-  EventDongPayload,
-  EventErrorPayload,
-  EventFriendshipPayload,
-  EventLogoutPayload,
-  EventMessagePayload,
-  EventResetPayload,
-  EventRoomJoinPayload,
-  EventRoomLeavePayload,
-  EventRoomTopicPayload,
-  EventRoomInvitePayload,
-  EventScanPayload,
-  EventReadyPayload,
-  EventHeartbeatPayload,
-  YOU,
-  PayloadType,
-}                           from 'wechaty-puppet'
+} from '@juzi/wechaty-puppet'
 
 import {
   log,
@@ -64,6 +37,32 @@ import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
 const PRE = 'PuppetPadplus'
 
 export class PuppetPadplus extends Puppet {
+
+  public async onStart (): Promise<void> {
+    log.info(PRE, 'onStart()')
+
+    // if (this.isLoggedIn) {
+    //   this.checkDataForReadyEvent()
+    // }
+    await this.startManager(this.manager)
+  }
+
+  public async onStop (): Promise<void> {
+    log.info(PRE, 'stop()')
+
+    try {
+
+      await this.logout('logout in wechaty', true)
+      await this.manager.stop()
+      this.manager.removeAllListeners()
+
+    } catch (e) {
+      log.warn(PRE, 'stop() rejection: %s', e && (e as Error).message)
+      // try to fix it whatever...
+    }
+
+    log.info(PRE, 'stop() stopped')
+  }
 
   private manager: PadplusManager
   private leaveEventMap: { [key: string]: NodeJS.Timer } = {}
@@ -109,25 +108,9 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  public async start (): Promise<void> {
-    log.info(PRE, `start()`)
-
-    if (this.state.on()) {
-      log.silly(PRE, 'start() is called on a ON puppet. await ready(on) and return.')
-      await this.state.ready('on')
-      return
-    }
-
-    this.state.on('pending')
-
-    await this.startManager(this.manager)
-
-    this.state.on(true)
-  }
-
   private async startManager (manager: PadplusManager) {
-    manager.on('scan', async (url: string, status: ScanStatus) => {
-      const eventScanPayload: EventScanPayload = {
+    manager.on('scan', async (url: string, status: types.ScanStatus) => {
+      const eventScanPayload: payloads.EventScan = {
         qrcode: url,
         status,
       }
@@ -143,17 +126,17 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('message', msg => this.onMessage(msg))
 
-    manager.on('ready', () => this.emit('ready', { data: 'ready' } as EventReadyPayload))
+    manager.on('ready', () => this.emit('ready', { data: 'ready' } as payloads.EventReady))
 
     manager.on('reset', (reason: string) => {
-      const eventResetPayload: EventResetPayload = {
+      const eventResetPayload: payloads.EventReset = {
         data: reason,
       }
       this.emit('reset', eventResetPayload)
     })
 
     manager.on('heartbeat', (data: string) => {
-      const eventWatchdogPayload: EventHeartbeatPayload = {
+      const eventWatchdogPayload: payloads.EventHeartbeat = {
         data,
       }
       this.emit('heartbeat', eventWatchdogPayload)
@@ -161,39 +144,17 @@ export class PuppetPadplus extends Puppet {
 
     manager.on('logout', (reason?: string) => this.logout(reason, true))
 
-    manager.on('room-leave', (data: EventRoomLeavePayload) => {
+    manager.on('room-leave', (data: payloads.EventRoomLeave) => {
       this.deduplicateRoomLeaveEvent(data)
     })
 
     manager.on('error', (err: Error) => {
-      const eventErrorPayload: EventErrorPayload = {
+      const eventErrorPayload: payloads.EventError = {
         data: err.toString(),
       }
       this.emit('error', eventErrorPayload)
     })
     await manager.start()
-  }
-
-  public async stop (): Promise<void> {
-    log.info(PRE, 'stop()')
-
-    if (!this.manager) {
-      throw new Error('no padplus manager')
-    }
-
-    if (this.state.off()) {
-      log.silly(PRE, 'stop() is called on a OFF puppet. await ready(off) and return.')
-      await this.state.ready('off')
-      return
-    }
-
-    this.state.off('pending')
-    await this.logout('logout in wechaty', true)
-    await this.manager.stop()
-    this.manager.removeAllListeners()
-
-    this.state.off(true)
-    log.silly(PRE, `stop() finished`)
   }
 
   /**
@@ -207,24 +168,18 @@ export class PuppetPadplus extends Puppet {
   public async logout (reason?: string, force?: boolean): Promise<void> {
     log.info(PRE, `logout(${force}, ${reason})`)
 
-    if (!this.id) {
-      log.silly(PRE, 'logout() this.id not exist')
-      return
-    }
-
     if (!force) {
       await this.manager.logout(this.selfId())
       reason = 'logout by call logout() method'
     }
-    const eventLogoutPayload: EventLogoutPayload = {
+    const eventLogoutPayload: payloads.EventLogout = {
       contactId: this.selfId(),
       data: reason ? reason! : 'unknow reason',
     }
     this.emit('logout', eventLogoutPayload)
-    this.id = undefined
 
     if (reason !== 'logout in wechaty') {
-      const eventResetPayload: EventResetPayload = {
+      const eventResetPayload: payloads.EventReset = {
         data: 'padplus reset',
       }
       this.emit('reset', eventResetPayload)
@@ -242,7 +197,7 @@ export class PuppetPadplus extends Puppet {
       log.error(`not support receive message from WeCom`)
       return
     }
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: message.msgId,
     }
     switch (messageType) {
@@ -417,7 +372,7 @@ export class PuppetPadplus extends Puppet {
     return contactIds
   }
 
-  protected async contactRawPayload (contactId: string): Promise<PadplusContactPayload> {
+  public async contactRawPayload (contactId: string): Promise<PadplusContactPayload> {
 
     if (!this.manager) {
       throw new Error(`no manager.`)
@@ -427,7 +382,7 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  protected async contactRawPayloadParser (rawPayload: PadplusContactPayload): Promise<ContactPayload> {
+  public async contactRawPayloadParser (rawPayload: PadplusContactPayload): Promise<payloads.Contact> {
     log.silly(PRE, `contactRawPayloadParser()`)
 
     const payload = contactRawPayloadParser(rawPayload)
@@ -469,7 +424,7 @@ export class PuppetPadplus extends Puppet {
       }
       const { msgId } = message
       await this.manager.saveFriendship(msgId, friendship)
-      const eventFriendshipPayload: EventFriendshipPayload = {
+      const eventFriendshipPayload: payloads.EventFriendship = {
         friendshipId: msgId,
       }
       this.emit('friendship', eventFriendshipPayload)
@@ -577,18 +532,18 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no manager.`)
     }
-    const payload = await this.manager.getFriendship(friendshipId) as undefined | FriendshipPayloadReceive
-    if (!payload || payload.type !== FriendshipType.Receive) {
+    const payload = await this.manager.getFriendship(friendshipId) as undefined | payloads.FriendshipReceive
+    if (!payload || payload.type !== types.Friendship.Receive) {
       throw new Error(`can not find friendship payload ${JSON.stringify(payload)} or friendship type ${payload && payload.type} error.`)
     }
-    const { contactId, scene, stranger, ticket } = payload as FriendshipPayloadReceive
+    const { contactId, scene, stranger, ticket } = payload as payloads.FriendshipReceive
     if (!stranger || !ticket) {
       throw new Error(`friendship data error, stranger or ticket is null.`)
     }
     await this.manager.confirmFriendship(contactId, stranger, ticket, (scene && scene.toString()) || '3')
   }
 
-  protected async friendshipRawPayload (friendshipId: string): Promise<FriendshipPayload> {
+  public async friendshipRawPayload (friendshipId: string): Promise<payloads.Friendship> {
     log.silly(PRE, `friendshipRawPayload(${friendshipId})`)
 
     if (!this.manager) {
@@ -601,21 +556,21 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`can not find friendship.`)
   }
 
-  protected async friendshipRawPayloadParser (rawPayload: FriendshipPayload): Promise<FriendshipPayload> {
+  public async friendshipRawPayloadParser (rawPayload: payloads.Friendship): Promise<payloads.Friendship> {
     log.silly(PRE, `friendshipRawPayloadParser(${util.inspect(rawPayload)})`)
 
-    return rawPayload as FriendshipPayload
+    return rawPayload as payloads.Friendship
   }
 
   // get
-  public async friendshipPayload (friendshipId: string): Promise<FriendshipPayload>
+  public async friendshipPayload (friendshipId: string): Promise<payloads.Friendship>
   // set
-  public async friendshipPayload (friendshipId: string, friendshipPayload: FriendshipPayload): Promise<void>
+  public async friendshipPayload (friendshipId: string, friendshipPayload: payloads.Friendship): Promise<void>
 
   public async friendshipPayload (
     friendshipId: string,
-    friendshipPayload?: FriendshipPayload,
-  ): Promise<void | FriendshipPayload> {
+    friendshipPayload?: payloads.Friendship,
+  ): Promise<void | payloads.Friendship> {
     log.silly('PadPlus', 'friendshipPayload(%s)',
       friendshipId,
       friendshipPayload
@@ -641,7 +596,7 @@ export class PuppetPadplus extends Puppet {
    *   MESSAGE IMAGE SECTION
    * =========================
    */
-  public async messageImage (messageId: string, type: ImageType): Promise<FileBox> {
+  public async messageImage (messageId: string, type: types.Image): Promise<FileBox> {
     log.silly(PRE, `messageImage(${messageId})`)
     const rawPayload = await this.messageRawPayload(messageId)
 
@@ -650,11 +605,11 @@ export class PuppetPadplus extends Puppet {
     }
 
     switch (type) {
-      case ImageType.Thumbnail:
+      case types.Image.Thumbnail:
         return FileBox.fromUrl(rawPayload.url)
-      case ImageType.HD:
+      case types.Image.HD:
         throw new Error(`HD not support!`)
-      case ImageType.Artwork:
+      case types.Image.Artwork:
         let content = rawPayload.content
         const mediaData: PadplusRichMediaData = {
           appMsgType: 0,
@@ -699,11 +654,11 @@ export class PuppetPadplus extends Puppet {
     const payload    = await this.messagePayload(messageId)
 
     let filename = payload.filename || payload.id
-    const type = payload.type === MessageType.Image ? 'img' : payload.type === MessageType.Video ? 'video' : 'file'
+    const type = payload.type === types.Message.Image ? 'img' : payload.type === types.Message.Video ? 'video' : 'file'
     switch (payload.type) {
-      case MessageType.Image:
-      case MessageType.Attachment:
-      case MessageType.Video:
+      case types.Message.Image:
+      case types.Message.Attachment:
+      case types.Message.Video:
         let content = rawPayload.content
         const mediaData: PadplusRichMediaData = {
           appMsgType: type === 'file' ? 6 : 0,
@@ -731,14 +686,14 @@ export class PuppetPadplus extends Puppet {
         } else {
           throw new Error(`Can not get media data url by this message id: ${messageId}`)
         }
-      case MessageType.Emoticon:
+      case types.Message.Emoticon:
         if (rawPayload && rawPayload.url) {
           const name = this.getNameFromUrl(rawPayload.url)
           return FileBox.fromUrl(rawPayload.url, name)
         } else {
           throw new Error(`can not get image/audio url fot message id: ${messageId}`)
         }
-      case MessageType.Audio:
+      case types.Message.Audio:
         if (rawPayload && rawPayload.url) {
           const name = this.getNameFromUrl(rawPayload.url)
           const fileBox = FileBox.fromUrl(rawPayload.url, name)
@@ -779,13 +734,13 @@ export class PuppetPadplus extends Puppet {
     return name
   }
 
-  public async messageUrl (messageId: string): Promise<UrlLinkPayload> {
+  public async messageUrl (messageId: string): Promise<payloads.UrlLink> {
     log.silly(PRE, `messageUrl(${messageId})`)
 
     const rawPayload = await this.messageRawPayload(messageId)
     const payload = await this.messagePayload(messageId)
 
-    if (payload.type !== MessageType.Url) {
+    if (payload.type !== types.Message.Url) {
       throw new Error('Can not get url from non url payload')
     } else {
       const appPayload = await appMessageParser(rawPayload)
@@ -806,7 +761,7 @@ export class PuppetPadplus extends Puppet {
     throw new Error(`not implement`)
   }
 
-  public async messageMiniProgram (messageId: string): Promise<MiniProgramPayload> {
+  public async messageMiniProgram (messageId: string): Promise<payloads.MiniProgram> {
     log.silly(PRE, `messageMiniProgram(${messageId})`)
 
     const messageRawPayload = await this.messageRawPayload(messageId)
@@ -823,7 +778,7 @@ export class PuppetPadplus extends Puppet {
 
     const payload = await this.messagePayload(messageId)
 
-    if (payload.type === MessageType.Text) {
+    if (payload.type === types.Message.Text) {
       if (!payload.text) {
         throw new Error('no text')
       }
@@ -831,7 +786,7 @@ export class PuppetPadplus extends Puppet {
         conversationId,
         payload.text,
       )
-    } else if (payload.type === MessageType.Audio) {
+    } else if (payload.type === types.Message.Audio) {
       const rawPayload = await this.messageRawPayload(payload.id)
       let contentXML
       let url
@@ -847,17 +802,17 @@ export class PuppetPadplus extends Puppet {
       const content = await xmlToJson(contentXML)
       const voiceLength = content.msg.voicemsg.$.voicelength
       await this.messageSendVoice(conversationId, url, voiceLength)
-    } else if (payload.type === MessageType.Url) {
+    } else if (payload.type === types.Message.Url) {
       await this.messageSendUrl(
         conversationId,
         await this.messageUrl(messageId)
       )
-    } else if (payload.type === MessageType.MiniProgram) {
+    } else if (payload.type === types.Message.MiniProgram) {
       await this.messageSendMiniProgram(
         conversationId,
         await this.messageMiniProgram(messageId)
       )
-    } else if (payload.type === MessageType.ChatHistory) {
+    } else if (payload.type === types.Message.ChatHistory) {
       throw new Error('Message type ChatHistory not supported.')
     } else {
       await this.messageSendFile(
@@ -936,7 +891,7 @@ export class PuppetPadplus extends Puppet {
       payload.msgSource = this.generateMsgSource(atUserList)
     }
     log.silly(PRE, 'replayTextMsg replaying message: %s', JSON.stringify(payload))
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: payload.msgId,
     }
     this.emit('message', eventMessagePayload)
@@ -1023,7 +978,7 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.ShareCard
     payload.content = content
     log.silly(PRE, 'replayContactMsg replaying message: %s', JSON.stringify(payload))
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: payload.msgId,
     }
     this.emit('message', eventMessagePayload)
@@ -1143,7 +1098,7 @@ export class PuppetPadplus extends Puppet {
     payload.content = `<msg>${url}</msg>`
     payload.url = url
     log.silly(PRE, 'replayImageMsg replaying message: %s', JSON.stringify(payload))
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: payload.msgId,
     }
     this.emit('message', eventMessagePayload)
@@ -1154,13 +1109,13 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = `<msg>${content}</msg>`
     log.silly(PRE, 'replayAppMsg replaying message: %s', JSON.stringify(payload))
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: payload.msgId,
     }
     this.emit('message', eventMessagePayload)
   }
 
-  public async messageSendUrl (conversationId: string, urlLinkPayload: UrlLinkPayload): Promise<void | string> {
+  public async messageSendUrl (conversationId: string, urlLinkPayload: payloads.UrlLink): Promise<void | string> {
     log.silly(PRE, `messageSendUrl(${conversationId})`)
 
     const { url, title, thumbnailUrl, description } = urlLinkPayload
@@ -1205,13 +1160,13 @@ export class PuppetPadplus extends Puppet {
     payload.msgType = PadplusMessageType.App
     payload.content = content
     log.silly(PRE, 'replayUrlLinkMsg replaying message: %s', JSON.stringify(payload))
-    const eventMessagePayload: EventMessagePayload = {
+    const eventMessagePayload: payloads.EventMessage = {
       messageId: payload.msgId,
     }
     this.emit('message', eventMessagePayload)
   }
 
-  public async messageSendMiniProgram (conversationId: string, miniProgramPayload: MiniProgramPayload): Promise<string | void> {
+  public async messageSendMiniProgram (conversationId: string, miniProgramPayload: payloads.MiniProgram): Promise<string | void> {
     log.silly(PRE, `messageSendMiniProgram(${conversationId}, ${miniProgramPayload})`)
 
     if (!this.manager) {
@@ -1258,7 +1213,7 @@ export class PuppetPadplus extends Puppet {
     return rawPayload
   }
 
-  public async messageRawPayloadParser (rawPayload: PadplusMessagePayload): Promise<MessagePayload> {
+  public async messageRawPayloadParser (rawPayload: PadplusMessagePayload): Promise<payloads.Message> {
     log.silly(PRE, 'messageRawPayloadParser()')
 
     const payload = await messageRawPayloadParser(rawPayload)
@@ -1294,21 +1249,21 @@ export class PuppetPadplus extends Puppet {
    *
    */
 
-  public async dirtyLocalPayload (type: PayloadType, id: string) {
+  public async dirtyLocalPayload (type: types.Payload, id: string) {
     switch (type) {
-      case PayloadType.Contact:
+      case types.Payload.Contact:
         await this.manager.cacheManager?.deleteContact(id)
         break
 
-      case PayloadType.Message:
+      case types.Payload.Message:
         this.manager.cachePadplusMessagePayload.del(id)
         break
 
-      case PayloadType.Room:
+      case types.Payload.Room:
         await this.manager.cacheManager?.deleteRoom(id)
         break
 
-      case PayloadType.RoomMember:
+      case types.Payload.RoomMember:
         await this.manager.cacheManager?.deleteRoomMember(id)
         break
 
@@ -1346,8 +1301,8 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.dirtyLocalPayload(PayloadType.Room, roomId)
-      await this.dirtyLocalPayload(PayloadType.RoomMember, roomId)
+      await this.dirtyLocalPayload(types.Payload.Room, roomId)
+      await this.dirtyLocalPayload(types.Payload.RoomMember, roomId)
 
       // Sync room member
       const startTime = Date.now()
@@ -1358,7 +1313,7 @@ export class PuppetPadplus extends Puppet {
         memberList = await this.roomMemberList(roomId)
       }
 
-      const eventRoomJoinPayload: EventRoomJoinPayload = {
+      const eventRoomJoinPayload: payloads.EventRoomJoin = {
         inviteeIdList,
         inviterId,
         roomId,
@@ -1400,7 +1355,7 @@ export class PuppetPadplus extends Puppet {
         memberList = await this.roomMemberList(roomId)
       }
 
-      const eventRoomLeavePayload: EventRoomLeavePayload = {
+      const eventRoomLeavePayload: payloads.EventRoomLeave = {
         removeeIdList: leaverIdList,
         removerId,
         roomId,
@@ -1443,9 +1398,9 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.dirtyLocalPayload(PayloadType.Room, roomId)
+      await this.dirtyLocalPayload(types.Payload.Room, roomId)
 
-      const eventRoomTopicPayload: EventRoomTopicPayload = {
+      const eventRoomTopicPayload: payloads.EventRoomTopic = {
         changerId,
         newTopic,
         oldTopic,
@@ -1466,12 +1421,12 @@ export class PuppetPadplus extends Puppet {
         throw new Error('no manager')
       }
       await this.manager.saveRoomInvitationRawPayload(roomInviteEvent)
-      const eventRoomInvitePayload: EventRoomInvitePayload = {
+      const eventRoomInvitePayload: payloads.EventRoomInvite = {
         roomInvitationId: roomInviteEvent.msgId,
       }
       this.emit('room-invite', eventRoomInvitePayload)
     } else {
-      const eventMessagePayload: EventMessagePayload = {
+      const eventMessagePayload: payloads.EventMessage = {
         messageId: rawPayload.msgId,
       }
       this.emit('message', eventMessagePayload)
@@ -1497,10 +1452,10 @@ export class PuppetPadplus extends Puppet {
     return payload
   }
 
-  public async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<RoomInvitationPayload> {
+  public async roomInvitationRawPayloadParser (rawPayload: PadplusRoomInvitationPayload): Promise<payloads.RoomInvitation> {
     log.silly(PRE, `roomInvitationRawPayloadParser()`)
 
-    const payload: RoomInvitationPayload = {
+    const payload: payloads.RoomInvitation = {
       avatar: rawPayload.thumbUrl,
       id: rawPayload.id,
       invitation: rawPayload.url,
@@ -1582,7 +1537,7 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager.`)
     }
     await this.manager.setRoomTopic(roomId, topic as string)
-    this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.Room })
+    this.emit('dirty', { payloadId: roomId, payloadType: types.Payload.Room })
     await new Promise(resolve => setTimeout(resolve, 500))
     await this.roomTopic(roomId)
   }
@@ -1615,21 +1570,21 @@ export class PuppetPadplus extends Puppet {
     return roomIds
   }
 
-  protected async roomRawPayload (roomId: string): Promise<PadplusRoomPayload> {
+  public async roomRawPayload (roomId: string): Promise<PadplusRoomPayload> {
     log.silly(PRE, `roomRawPayload(${roomId})`)
 
     const rawRoom = await this.manager.getRoomInfo(roomId)
     return rawRoom
   }
 
-  protected async roomRawPayloadParser (rawPayload: PadplusRoomPayload): Promise<RoomPayload> {
+  public async roomRawPayloadParser (rawPayload: PadplusRoomPayload): Promise<payloads.Room> {
     log.silly(PRE, `roomRawPayloadParser()`)
 
     const room = roomRawPayloadParser(rawPayload)
     return room
   }
 
-  protected async roomMemberRawPayload (roomId: string, contactId: string): Promise<PadplusRoomMemberPayload> {
+  public async roomMemberRawPayload (roomId: string, contactId: string): Promise<PadplusRoomMemberPayload> {
     log.silly(PRE, `roomMemberRawPayload(${roomId}, ${contactId})`)
 
     if (!this.manager) {
@@ -1643,7 +1598,7 @@ export class PuppetPadplus extends Puppet {
     return member
   }
 
-  protected async roomMemberRawPayloadParser (rawPayload: PadplusRoomMemberPayload): Promise<RoomMemberPayload> {
+  public async roomMemberRawPayloadParser (rawPayload: PadplusRoomMemberPayload): Promise<payloads.RoomMember> {
     log.silly(PRE, `roomMemberRawPayloadParser()`)
 
     const member = convertToPuppetRoomMember(rawPayload)
@@ -1690,13 +1645,13 @@ export class PuppetPadplus extends Puppet {
 
   public ding (data?: string): void {
     log.silly(PRE, `ding(${data})`)
-    const eventDongPayload: EventDongPayload = {
+    const eventDongPayload: payloads.EventDong = {
       data: data ? data! : 'ding-dong',
     }
     this.emit('dong', eventDongPayload)
   }
 
-  private deduplicateRoomLeaveEvent (data: EventRoomLeavePayload) {
+  private deduplicateRoomLeaveEvent (data: payloads.EventRoomLeave) {
     log.silly(`deduplicateRoomLeaveEvent(${JSON.stringify(data)})`)
 
     const key = `${data.removeeIdList[0]}_${data.roomId}`
@@ -1715,12 +1670,12 @@ export class PuppetPadplus extends Puppet {
     }
   }
 
-  private async searchSymbolYou (id: string | YOU, roomId: string): Promise<string> {
+  private async searchSymbolYou (id: string | typeof types.YOU, roomId: string): Promise<string> {
     let inviteeIdList
     let inviterIdList = await this.roomMemberSearch(roomId, id)
 
     if (inviterIdList.length < 1) {
-      this.emit('dirty', { payloadId: roomId, payloadType: PayloadType.RoomMember })
+      this.emit('dirty', { payloadId: roomId, payloadType: types.Payload.RoomMember })
       await this.manager.getRoomMembers(roomId)
       inviterIdList = await this.roomMemberSearch(roomId, id)
       if (inviterIdList.length < 1) {

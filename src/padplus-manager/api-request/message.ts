@@ -2,8 +2,8 @@ import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData } from '../../schemas'
-import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
-import { FileBox } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
+import { FileBox } from 'file-box'
 
 const PRE = 'PadplusMessage'
 
@@ -122,7 +122,7 @@ export class PadplusMessage {
         url,
       }
       data = {
-        appMsgType: WechatAppMessageType.Attach,
+        appMsgType: types.Message.Attachment,
         content: JSON.stringify(content),
         fileName,
         fromUserName: selfId,

@@ -21,7 +21,7 @@ import {
   PadplusRoomMemberMap,
   PadplusMessagePayload,
 } from '../schemas'
-import { FriendshipPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 import { cacheToPadplusMessagePayload,
   padplusToCacheMessagePayload,
   padplusToCacheContactPayload,
@@ -343,7 +343,7 @@ export class CacheManager {
 
   public async setFriendshipRawPayload (
     id: string,
-    payload: FriendshipPayload,
+    payload: payloads.Friendship,
   ) {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} setFriendshipRawPayload() has no cache.`)

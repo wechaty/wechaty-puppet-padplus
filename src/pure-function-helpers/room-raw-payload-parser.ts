@@ -1,6 +1,4 @@
-import {
-  RoomPayload,
-}                   from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 
 import {
   PadplusRoomPayload,
@@ -8,8 +6,8 @@ import {
 
 export function roomRawPayloadParser (
   rawPayload: PadplusRoomPayload,
-): RoomPayload {
-  const payload: RoomPayload = {
+): payloads.Room {
+  const payload: payloads.Room = {
     adminIdList  : [],
     avatar       : rawPayload.bigHeadUrl,
     id           : rawPayload.chatroomId,

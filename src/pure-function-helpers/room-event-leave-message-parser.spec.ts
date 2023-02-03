@@ -5,7 +5,7 @@
 // tslint:disable:no-shadowed-variable
 
 import test  from 'blue-tape'
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -71,7 +71,7 @@ test('roomLeaveEventMessageParser() bot kick out other', async t => {
 
   const actual = {
     leaverIdList: [ 'Soul001001' ],
-    removerId: YOU,
+    removerId: types.YOU,
     roomId: '25044049015@chatroom',
     timestamp: 1597032764085,
   }

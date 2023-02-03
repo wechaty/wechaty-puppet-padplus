@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { xmlToJson } from './xml-to-json'
 
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -171,7 +171,7 @@ export async function roomJoinEventMessageParser (
      */
     const other = matches[1]
     const inviteeIdList = getUserName(linkList, other)
-    const inviterId: string | YOU = YOU
+    const inviterId: string | typeof types.YOU = types.YOU
     const joinEvent: RoomJoinEvent = {
       inviteeIdList: checkString(inviteeIdList),
       inviterId,
@@ -188,7 +188,7 @@ export async function roomJoinEventMessageParser (
     // /^"([^"]+?)"邀请你和"(.+?)"加入了群聊/,
     const _inviterName = matches[1]
     const inviterId = getUserName(linkList, _inviterName)
-    let inviteeIdList: Array<string | YOU> = [ YOU ]
+    const inviteeIdList: Array<string | typeof types.YOU> = [ types.YOU ]
 
     const joinEvent: RoomJoinEvent = {
       inviteeIdList,

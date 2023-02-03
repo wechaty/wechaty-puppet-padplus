@@ -1,7 +1,4 @@
-import {
-  ContactPayload,
-  ContactType,
-}                       from 'wechaty-puppet'
+import { payloads, types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusContactPayload,
@@ -14,7 +11,7 @@ import {
 
 export function contactRawPayloadParser (
   rawPayload: PadplusContactPayload,
-): ContactPayload {
+): payloads.Contact {
   if (!rawPayload.userName) {
     /**
      * { big_head: '',
@@ -46,17 +43,17 @@ export function contactRawPayloadParser (
     throw Error('Room Object instead of Contact!')
   }
 
-  let contactType = ContactType.Unknown
+  let contactType = types.Contact.Unknown
   if (isContactOfficialId(rawPayload.userName) || rawPayload.verifyFlag !== 0) {
-    contactType = ContactType.Official
+    contactType = types.Contact.Official
   } else {
-    contactType = ContactType.Individual
+    contactType = types.Contact.Individual
   }
   let friend = false
   if (rawPayload.contactFlag && rawPayload.contactFlag !== 0 && rawPayload.verifyFlag === 0) {
     friend = true
   }
-  const payload: ContactPayload = {
+  const payload: payloads.Contact = {
     alias     : rawPayload.remark,
     avatar    : rawPayload.bigHeadUrl,
     city      : rawPayload.city,

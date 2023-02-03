@@ -8,7 +8,7 @@ import {
   isPayload,
   isRoomId,
 }               from './is-type'
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 import { xmlToJson } from './xml-to-json'
 import { getUserName } from './get-xml-label'
 
@@ -91,16 +91,16 @@ export async function roomLeaveEventMessageParser (
     return null
   }
 
-  let leaverId  : string | YOU
-  let removerId : string | YOU
+  let leaverId  : string | typeof types.YOU
+  let removerId : string | typeof types.YOU
 
   if (matchesForOther) {
-    removerId = YOU
+    removerId = types.YOU
     const leaverName  = matchesForOther[2]
     leaverId  = getUserName([linkList], leaverName)
   } else if (matchesForBot) {
     removerId = matchesForBot[2]
-    leaverId  = YOU
+    leaverId  = types.YOU
   } else {
     throw new Error('for typescript type checking, will never go here')
   }

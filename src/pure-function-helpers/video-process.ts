@@ -1,4 +1,4 @@
-import { FileBox } from 'wechaty-puppet'
+import { FileBox } from 'file-box'
 import { VideoContent } from '../schemas'
 import { PadplusMessage } from '../padplus-manager/api-request/message'
 const extractFrames = require('ffmpeg-extract-frames')
