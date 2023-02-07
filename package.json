@@ -1,6 +1,6 @@
 {
-  "name": "wechaty-puppet-padplus",
-  "version": "0.7.43",
+  "name": "@juzi/wechaty-puppet-padplus",
+  "version": "1.0.1",
   "description": "Puppet Padplus for Wechaty",
   "directories": {
     "test": "tests"
@@ -26,6 +26,9 @@
     "type": "git",
     "url": "git+https://github.com/botorange/wechaty-puppet-padplus.git"
   },
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "chatie",
     "wechaty",
@@ -63,6 +66,7 @@
   },
   "dependencies": {
     "@juzi/wechaty-puppet": "^1.0.48",
+    "@juzi/wechaty-puppet-cache": "^1.0.0",
     "array-flatten": "^3.0.0",
     "axios": "^0.19.2",
     "brolog": "^1.6.5",
@@ -79,7 +83,6 @@
     "state-switch": "^0.9.7",
     "uuid": "^7.0.0",
     "watchdog": "^0.8.10",
-    "wechaty-puppet-cache": "^0.1.10",
     "xml2js": "^0.4.22"
   },
   "publishConfig": {

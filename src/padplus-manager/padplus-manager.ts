@@ -56,7 +56,7 @@ import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helper
 import { isRoomId, isContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
-import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
+import { PuppetCacheStoreOptions } from '@juzi/wechaty-puppet-cache'
 import { MemoryCard } from '@juzi/wechaty-puppet/dist/esm/src/config'
 
 const MEMORY_SLOT_NAME = 'WECHATY_PUPPET_PADPLUS'

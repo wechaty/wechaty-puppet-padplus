@@ -292,7 +292,7 @@ export class GrpcGateway extends EventEmitter {
       Object.values(this.eventEmitterMap).map(emitter => {
         emitter.emit('reconnect')
       })
-      if (err.details === 'INVALID_TOKEN') {
+      if ((err as unknown as any).details === 'INVALID_TOKEN') {
         padplusToken()
       }
     }
@@ -367,7 +367,7 @@ export class GrpcGateway extends EventEmitter {
 
     const channel = this.client.getChannel()
     if (channel) {
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         channel.getConnectivityState(true)
         const beforeState = channel.getConnectivityState(false)
         channel.watchConnectivityState(beforeState, Date.now() + 5000, (err) => {

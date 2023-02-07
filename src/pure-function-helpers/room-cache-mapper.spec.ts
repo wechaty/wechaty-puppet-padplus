@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { PuppetCacheRoomPayload } from 'wechaty-puppet-cache'
+import { PuppetCacheRoomPayload } from '@juzi/wechaty-puppet-cache'
 import { PadplusRoomPayload } from '../schemas'
 
 import { cacheToPadplusRoomPayload, padplusToCacheRoomPayload } from './room-cache-mapper'

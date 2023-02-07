@@ -1,4 +1,4 @@
-import { PuppetCacheContactPayload } from 'wechaty-puppet-cache'
+import { PuppetCacheContactPayload } from '@juzi/wechaty-puppet-cache'
 import { PadplusContactPayload } from '../schemas'
 
 export function cacheToPadplusContactPayload (

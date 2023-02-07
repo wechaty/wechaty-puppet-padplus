@@ -11,7 +11,7 @@ import { PuppetCache,
   PuppetCacheFriendshipPayload,
   PuppetCacheRoomMemberPayloadMap,
   PuppetCacheStoreOptions,
-} from 'wechaty-puppet-cache'
+} from '@juzi/wechaty-puppet-cache'
 
 import { log } from '../config'
 import {

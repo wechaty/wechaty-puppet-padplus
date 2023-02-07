@@ -1,4 +1,4 @@
-import { PuppetCacheRoomPayload, PuppetMemberBrief } from 'wechaty-puppet-cache'
+import { PuppetCacheRoomPayload, PuppetMemberBrief } from '@juzi/wechaty-puppet-cache'
 import { PadplusRoomPayload, PadplusMemberBrief } from '../schemas'
 
 export function cacheToPadplusRoomPayload (

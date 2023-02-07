@@ -32,7 +32,7 @@ import { convertSearchContactToContact } from './convert-manager/contact-convert
 import checkNumber from './utils/util'
 import { miniProgramMessageParser } from './pure-function-helpers/message-mini-program-payload-parser'
 import { convertMiniProgramPayloadToParams, convertMiniProgramPayloadToMessage } from './convert-manager/message-convertor'
-import { PuppetCacheStoreOptions } from 'wechaty-puppet-cache'
+import { PuppetCacheStoreOptions } from '@juzi/wechaty-puppet-cache'
 
 const PRE = 'PuppetPadplus'
 

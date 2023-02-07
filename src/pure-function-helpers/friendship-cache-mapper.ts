@@ -1,4 +1,4 @@
-import { PuppetCacheFriendshipPayload } from 'wechaty-puppet-cache'
+import { PuppetCacheFriendshipPayload } from '@juzi/wechaty-puppet-cache'
 import { payloads, types } from '@juzi/wechaty-puppet'
 
 export function cacheToPadplusFriendshipPayload (

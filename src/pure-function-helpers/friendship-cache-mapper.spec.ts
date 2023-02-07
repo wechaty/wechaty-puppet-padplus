@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { PuppetCacheFriendshipPayload } from 'wechaty-puppet-cache'
+import { PuppetCacheFriendshipPayload } from '@juzi/wechaty-puppet-cache'
 
 import { cacheToPadplusFriendshipPayload, padplusToCacheFriendshipPayload } from './friendship-cache-mapper'
 import { payloads, types } from '@juzi/wechaty-puppet'

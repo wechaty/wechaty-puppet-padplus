@@ -1,4 +1,4 @@
-import { RoomMemberPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomPayload } from '../schemas'
 
 export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload => {
@@ -20,8 +20,8 @@ export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload =
   return roomPayload
 }
 
-export const convertToPuppetRoomMember = (input: PadplusRoomMemberPayload): RoomMemberPayload => {
-  const resut: RoomMemberPayload = {
+export const convertToPuppetRoomMember = (input: PadplusRoomMemberPayload): payloads.RoomMember => {
+  const resut: payloads.RoomMember = {
     avatar     : input.smallHeadUrl,
     id         : input.contactId,
     inviterId  : input.inviterId,   // 'wxid_7708837087612',
