@@ -57,7 +57,7 @@ export async function messageRawPayloadParser (
 
   let talkerId: undefined | string
   let roomId: undefined | string
-  let receiverId:   undefined | string
+  let listenerId:   undefined | string
 
   let text:   undefined | string
 
@@ -83,12 +83,12 @@ export async function messageRawPayloadParser (
    */
   if (isContactId(rawPayload.toUserName)) {
 
-    receiverId = rawPayload.toUserName
+    listenerId = rawPayload.toUserName
 
   } else {
     // TODO: if the message @someone, the toId should set to the mentioned contact id(?)
 
-    receiverId = undefined
+    listenerId = undefined
 
   }
 
@@ -151,7 +151,7 @@ export async function messageRawPayloadParser (
           if (isRoomId(rawPayload.fromUserName)) {
             roomId = rawPayload.fromUserName
           } else if (isContactId(rawPayload.fromUserName)) {
-            receiverId = rawPayload.fromUserName
+            listenerId = rawPayload.fromUserName
           }
         }
       } else {
@@ -172,7 +172,7 @@ export async function messageRawPayloadParser (
   /**
    * 5.1 Validate Room & To ID
    */
-  if (!roomId && !receiverId) {
+  if (!roomId && !listenerId) {
     throw Error('empty roomId and empty toId!')
   }
 
@@ -197,23 +197,23 @@ export async function messageRawPayloadParser (
 
   // Two branch is the same code.
   // Only for making TypeScript happy
-  if (talkerId && receiverId) {
+  if (talkerId && listenerId) {
     payload = {
       ...payloadBase,
+      listenerId: listenerId!,
       mentionIdList,
       roomId: roomId!,
       talkerId,
       text,
-      toId: receiverId,
     }
   } else if (roomId) {
     payload = {
       ...payloadBase,
+      listenerId: listenerId!,
       mentionIdList,
       roomId,
       talkerId: talkerId!,
       text,
-      toId: receiverId,
     }
   } else {
     throw new Error('neither toId nor roomId')
