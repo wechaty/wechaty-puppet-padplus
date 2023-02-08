@@ -169,11 +169,11 @@ export class PuppetPadplus extends Puppet {
     log.info(PRE, `logout(${force}, ${reason})`)
 
     if (!force) {
-      await this.manager.logout(this.selfId())
+      await this.manager.logout(this.currentUserId)
       reason = 'logout by call logout() method'
     }
     const eventLogoutPayload: payloads.EventLogout = {
-      contactId: this.selfId(),
+      contactId: this.currentUserId,
       data: reason ? reason! : 'unknow reason',
     }
     this.emit('logout', eventLogoutPayload)
@@ -326,14 +326,14 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manage.`)
     }
-    await this.manager.setContactAlias(this.selfId(), contactId, alias || '')
+    await this.manager.setContactAlias(this.currentUserId, contactId, alias || '')
   }
 
   contactAvatar (contactId: string): Promise<FileBox>
   contactAvatar (contactId: string, file: FileBox): Promise<void>
   public async contactAvatar (contactId: string, file?: FileBox): Promise<FileBox | void> {
     if (file) {
-      if (contactId !== this.selfId()) {
+      if (contactId !== this.currentUserId) {
         throw new Error(`can not set avatar for others.`)
       }
       if (!this.manager) {
@@ -367,7 +367,7 @@ export class PuppetPadplus extends Puppet {
     if (!this.manager) {
       throw new Error(`no padplus manager.`)
     }
-    const selfId = this.selfId()
+    const selfId = this.currentUserId
     const contactIds = await this.manager.getContactIdList(selfId)
     return contactIds
   }
@@ -826,7 +826,7 @@ export class PuppetPadplus extends Puppet {
     const msg: PadplusMessagePayload = {
       content: '',
       createTime: new Date().getTime(),
-      fromUserName: this.selfId(),
+      fromUserName: this.currentUserId,
       imgStatus: 0,
       l1MsgType: 0,
       msgId,
@@ -838,7 +838,7 @@ export class PuppetPadplus extends Puppet {
       status: PadplusMessageStatus.One,
       toUserName: to,
       uin: '',
-      wechatUserName: this.selfId(),
+      wechatUserName: this.currentUserId,
     }
     log.silly(PRE, 'generateBaseMsg(%s) %s', to, JSON.stringify(msg))
     this.manager.cachePadplusMessagePayload.set(msgId, msg)
@@ -850,12 +850,12 @@ export class PuppetPadplus extends Puppet {
 
     let msgData: GrpcResponseMessageData
     if (mentionIdList && mentionIdList.length > 0) {
-      msgData = await this.manager.sendMessage(this.selfId(), conversationId, text, PadplusMessageType.Text, mentionIdList.toString())
+      msgData = await this.manager.sendMessage(this.currentUserId, conversationId, text, PadplusMessageType.Text, mentionIdList.toString())
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayTextMsg(msgData.msgId, conversationId, text, mentionIdList)
       }
     } else {
-      msgData = await this.manager.sendMessage(this.selfId(), conversationId, text, PadplusMessageType.Text)
+      msgData = await this.manager.sendMessage(this.currentUserId, conversationId, text, PadplusMessageType.Text)
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayTextMsg(msgData.msgId, conversationId, text)
       }
@@ -864,7 +864,7 @@ export class PuppetPadplus extends Puppet {
       const msgPayload: PadplusMessagePayload = {
         content: text,
         createTime: msgData.timestamp,
-        fromUserName: this.selfId(),
+        fromUserName: this.currentUserId,
         imgStatus: 0,
         l1MsgType: 0,
         msgId: msgData.msgId,
@@ -908,13 +908,13 @@ export class PuppetPadplus extends Puppet {
   public async messageSendVoice (conversationId: string, url: string, fileSize: string): Promise<void | string> {
     log.silly(PRE, `messageSendVoice(${conversationId}, ${url}, ${fileSize})`)
 
-    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.selfId(), conversationId, url, fileSize)
+    const voiceMessageData: GrpcResponseMessageData = await this.manager.sendVoice(this.currentUserId, conversationId, url, fileSize)
 
     if (voiceMessageData.success) {
       const msgPayload: PadplusMessagePayload = {
         content: url,
         createTime: voiceMessageData.timestamp,
-        fromUserName: this.selfId(),
+        fromUserName: this.currentUserId,
         imgStatus: 0,
         l1MsgType: 0,
         msgId: voiceMessageData.msgId,
@@ -943,7 +943,7 @@ export class PuppetPadplus extends Puppet {
         nickName: contact.nickName,
         userName: contact.userName,
       }
-      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.selfId(), conversationId, JSON.stringify(content))
+      const contactData: GrpcResponseMessageData = await this.manager.sendContact(this.currentUserId, conversationId, JSON.stringify(content))
       if (PADPLUS_REPLAY_MESSAGE) {
         this.replayContactMsg(contactData.msgId, conversationId, JSON.stringify(content))
       }
@@ -951,7 +951,7 @@ export class PuppetPadplus extends Puppet {
         const msgPayload: PadplusMessagePayload = {
           content: JSON.stringify(content),
           createTime: contactData.timestamp,
-          fromUserName: this.selfId(),
+          fromUserName: this.currentUserId,
           imgStatus: 0,
           l1MsgType: 0,
           msgId: contactData.msgId,
@@ -1009,7 +1009,7 @@ export class PuppetPadplus extends Puppet {
       case '.jpg':
       case '.jpeg':
       case '.png':
-        const picData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'pic')
+        const picData = await this.manager.sendFile(this.currentUserId, conversationId, fileUrl, file.name, 'pic')
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayImageMsg(picData.msgId, conversationId, fileUrl)
         }
@@ -1017,7 +1017,7 @@ export class PuppetPadplus extends Puppet {
           const msgPayload: PadplusMessagePayload = {
             content: `<msg>${fileUrl}</msg>`,
             createTime: picData.timestamp,
-            fromUserName: this.selfId(),
+            fromUserName: this.currentUserId,
             imgStatus: 0,
             l1MsgType: 0,
             msgId: picData.msgId,
@@ -1036,7 +1036,7 @@ export class PuppetPadplus extends Puppet {
         return picData.msgId
       case 'video/mp4':
       case '.mp4':
-        const videoData = await this.manager.sendVideo(this.selfId(), conversationId, fileUrl)
+        const videoData = await this.manager.sendVideo(this.currentUserId, conversationId, fileUrl)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(videoData.msgId, conversationId, fileUrl)
         }
@@ -1044,7 +1044,7 @@ export class PuppetPadplus extends Puppet {
           const msgPayload: PadplusMessagePayload = {
             content: `<msg>${fileUrl}</msg>`,
             createTime: videoData.timestamp,
-            fromUserName: this.selfId(),
+            fromUserName: this.currentUserId,
             imgStatus: 0,
             l1MsgType: 0,
             msgId: videoData.msgId,
@@ -1064,7 +1064,7 @@ export class PuppetPadplus extends Puppet {
       case 'application/xml':
         throw new Error(`Can not parse the url data, please input a name for FileBox.fromUrl(url, name).`)
       default:
-        const docData = await this.manager.sendFile(this.selfId(), conversationId, fileUrl, file.name, 'doc', fileSize)
+        const docData = await this.manager.sendFile(this.currentUserId, conversationId, fileUrl, file.name, 'doc', fileSize)
         if (PADPLUS_REPLAY_MESSAGE) {
           this.replayAppMsg(docData.msgId, conversationId, fileUrl)
         }
@@ -1072,7 +1072,7 @@ export class PuppetPadplus extends Puppet {
           const msgPayload: PadplusMessagePayload = {
             content: `<msg>${fileUrl}</msg>`,
             createTime: docData.timestamp,
-            fromUserName: this.selfId(),
+            fromUserName: this.currentUserId,
             imgStatus: 0,
             l1MsgType: 0,
             msgId: docData.msgId,
@@ -1127,7 +1127,7 @@ export class PuppetPadplus extends Puppet {
       type: 5,
       url,
     }
-    const urlLinkData = await this.manager.sendUrlLink(this.selfId(), conversationId, JSON.stringify(payload))
+    const urlLinkData = await this.manager.sendUrlLink(this.currentUserId, conversationId, JSON.stringify(payload))
     if (PADPLUS_REPLAY_MESSAGE) {
       this.replayUrlLinkMsg(urlLinkData.msgId, conversationId, JSON.stringify(payload))
     }
@@ -1135,7 +1135,7 @@ export class PuppetPadplus extends Puppet {
       const msgPayload: PadplusMessagePayload = {
         content: JSON.stringify(payload),
         createTime: urlLinkData.timestamp,
-        fromUserName: this.selfId(),
+        fromUserName: this.currentUserId,
         imgStatus: 0,
         l1MsgType: 0,
         msgId: urlLinkData.msgId,
@@ -1173,13 +1173,13 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager`)
     }
     const content = convertMiniProgramPayloadToParams(miniProgramPayload)
-    const miniProgramData = await this.manager.sendMiniProgram(this.selfId(), conversationId, JSON.stringify(content))
+    const miniProgramData = await this.manager.sendMiniProgram(this.currentUserId, conversationId, JSON.stringify(content))
     if (PADPLUS_REPLAY_MESSAGE) {
       this.replayUrlLinkMsg(miniProgramData.msgId, conversationId, JSON.stringify(content))
     }
     if (miniProgramData.success) {
       const source = this.generateMsgSource()
-      const msgPayload = convertMiniProgramPayloadToMessage(this.selfId(), conversationId, source, content, miniProgramData)
+      const msgPayload = convertMiniProgramPayloadToMessage(this.currentUserId, conversationId, source, content, miniProgramData)
       this.manager.cachePadplusMessagePayload.set(miniProgramData.msgId, msgPayload)
     }
 
@@ -1239,7 +1239,7 @@ export class PuppetPadplus extends Puppet {
     const receiverId = payload.roomId || payload.toId
     log.silly(PRE, 'messageRecall(%s, %s)', receiverId, messageId)
 
-    const isSuccess = await this.manager.recallMessage(this.selfId(), receiverId!, messageId)
+    const isSuccess = await this.manager.recallMessage(this.currentUserId, receiverId!, messageId)
     return isSuccess
   }
 
