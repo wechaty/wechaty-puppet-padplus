@@ -992,8 +992,8 @@ export class PuppetPadplus extends Puppet {
       : path.extname(file.name)
 
     let fileUrl = ''
-    if ((file as any).remoteUrl) {
-      fileUrl = (file as any).remoteUrl
+    if ((file as any).remoteUrl || (file as any).url) {
+      fileUrl = (file as any).remoteUrl || (file as any).url
     } else {
       fileUrl = await this.manager.generatorFileUrl(file)
     }

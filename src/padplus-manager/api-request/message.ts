@@ -235,7 +235,7 @@ export class PadplusMessage {
   }
 
   public async uploadFile (fileBox: FileBox): Promise<string> {
-    log.verbose(PRE, `recallMessage`)
+    log.verbose(PRE, `uploadFile`)
     const data = {
       data: await fileBox.toBase64(),
       filename: fileBox.name,
