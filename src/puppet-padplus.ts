@@ -986,6 +986,10 @@ export class PuppetPadplus extends Puppet {
 
   public async messageSendFile (conversationId: string, file: FileBox): Promise<void | string> {
     log.silly(PRE, `messageSendFile(${conversationId})`)
+    await file.ready()
+    const type = file.mediaType && file.mediaType !== 'application/octet-stream' && file.mediaType !== 'application/unknown'
+      ? file.mediaType.replace(/;.*$/, '')
+      : path.extname(file.name)
 
     let fileUrl = ''
     if ((file as any).remoteUrl) {
@@ -995,10 +999,6 @@ export class PuppetPadplus extends Puppet {
     }
     const fileSize = (await file.toBuffer()).length
     log.silly(PRE, `file url : ${fileUrl}`)
-
-    const type = (file.mimeType && file.mimeType !== 'application/octet-stream')
-      ? file.mimeType
-      : path.extname(file.name)
 
     log.silly(PRE, `fileType ${type}`)
     switch (type) {
