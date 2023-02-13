@@ -40,7 +40,7 @@ export function contactRawPayloadParser (
   }
 
   if (!isContactId(rawPayload.userName)) {
-    throw Error('Room Object instead of Contact!')
+    throw Error(`userName: ${rawPayload.userName} is not contact, detail: ${JSON.stringify(rawPayload)}`)
   }
 
   let contactType = types.Contact.Unknown
