@@ -11,7 +11,7 @@ export function roomRawPayloadParser (
     adminIdList  : [],
     avatar       : rawPayload.bigHeadUrl,
     id           : rawPayload.chatroomId,
-    memberIdList : rawPayload.members.map(m => m.UserName) || [],
+    memberIdList : rawPayload.members.map(m => m.userName) || [],
     ownerId      : rawPayload.chatRoomOwner,
     topic        : rawPayload.nickName,
   }
