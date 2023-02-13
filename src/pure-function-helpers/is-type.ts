@@ -16,7 +16,7 @@ export function isContactId (id?: string): boolean {
   if (!id) {
     return false
   }
-  return !isRoomId(id) && !isIMRoomId(id) && !isIMContactId(id)
+  return !isRoomId(id) && !isIMRoomId(id)
 }
 
 export function isIMContactId (id?: string): boolean {
