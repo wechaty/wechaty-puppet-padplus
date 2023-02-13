@@ -7,13 +7,13 @@ export function briefRoomMemberParser (
   input.forEach(brief => {
     const memberPayload: PadplusRoomMemberPayload = {
       bigHeadUrl: '',
-      contactId: brief.UserName,
+      contactId: brief.userName,
       displayName: '',
       inviterId: '',
-      nickName: brief.NickName || '',
+      nickName: brief.nickName || '',
       smallHeadUrl: '',
     }
-    result[brief.UserName] = memberPayload
+    result[brief.userName] = memberPayload
   })
   return result
 }

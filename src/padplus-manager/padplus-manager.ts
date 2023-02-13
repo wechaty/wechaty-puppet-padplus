@@ -53,7 +53,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId, isContactId } from '../pure-function-helpers'
+import { isRoomId, isContactId, isIMContactId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
 import { PuppetCacheStoreOptions } from '@juzi/wechaty-puppet-cache'
@@ -666,7 +666,7 @@ export class PadplusManager extends EventEmitter {
                 if (!roomRawPayload) {
                   throw new Error(`can not find room raw payload from cache by id : ${deleteUserName}`)
                 }
-                roomRawPayload.members = roomRawPayload.members.filter(member => member.UserName !== contactData.userName)
+                roomRawPayload.members = roomRawPayload.members.filter(member => member.userName !== contactData.userName)
                 await this.cacheManager.setRoom(deleteUserName, roomRawPayload)
 
                 const roomMemberRawPayload = await this.cacheManager.getRoomMember(deleteUserName)
@@ -677,8 +677,10 @@ export class PadplusManager extends EventEmitter {
                 await this.cacheManager.setRoomMember(deleteUserName, roomMemberRawPayload)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
-              } else {
-                throw new Error(`the filed is not right.`)
+              } else if (isIMContactId(deleteUserName)) {
+                // throw new Error(`the filed is not right.`)
+                // TODO: im contact deleted event
+                await this.cacheManager.deleteContact(deleteUserName)
               }
             }
           }
