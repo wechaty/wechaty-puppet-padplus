@@ -1503,14 +1503,24 @@ export class PuppetPadplus extends Puppet {
     await this.manager.roomAddMember(roomId, contactId)
   }
 
-  public async roomDel (roomId: string, contactId: string): Promise<void> {
-    log.silly(PRE, `roomDel(${roomId}, ${contactId})`)
-
+  public async roomDel (roomId: string, contactIdList: string | string[]): Promise<void> {
+    log.silly(PRE, `roomDel(${roomId}, ${contactIdList})`)
     const memberIdList = await this.roomMemberList(roomId)
-    if (memberIdList.includes(contactId)) {
-      await this.manager.deleteRoomMember(roomId, contactId)
+    if (Array.isArray(contactIdList)) {
+      for (const contactId of contactIdList) {
+        if (memberIdList.includes(contactId)) {
+          await this.manager.deleteRoomMember(roomId, contactId)
+        } else {
+          log.silly(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+        }
+      }
     } else {
-      log.silly(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+      const contactId = contactIdList[0]
+      if (memberIdList.includes(contactId)) {
+        await this.manager.deleteRoomMember(roomId, contactId)
+      } else {
+        log.silly(PRE, `roomDel() room(${roomId}) has no member contact(${contactId})`)
+      }
     }
   }
 
