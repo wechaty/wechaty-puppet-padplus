@@ -114,6 +114,7 @@ export class PuppetPadplus extends Puppet {
         qrcode: url,
         status,
       }
+      this.__currentUserId = undefined
       this.emit('scan', eventScanPayload)
     })
 
@@ -176,6 +177,7 @@ export class PuppetPadplus extends Puppet {
       contactId: this.currentUserId,
       data: reason ? reason! : 'unknow reason',
     }
+    this.__currentUserId = undefined
     this.emit('logout', eventLogoutPayload)
 
     if (reason !== 'logout in wechaty') {
