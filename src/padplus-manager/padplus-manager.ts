@@ -412,7 +412,7 @@ export class PadplusManager extends EventEmitter {
             const scanData: ScanData = JSON.parse(scanRawData)
             log.info(PRE, `
             =================================================
-            QRCODE_SCAN MSG : ${scanData.msg || '已确认'}
+            QRCODE_SCAN MSG : ${QrcodeStatus[scanData.status] || 'unknown status'}
             =================================================
             `)
             grpcGatewayEmitter.setQrcodeId(scanData.user_name)
