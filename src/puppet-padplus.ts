@@ -173,17 +173,11 @@ export class PuppetPadplus extends Puppet {
       await this.manager.logout(this.currentUserId)
       reason = 'logout by call logout() method'
     }
-    const eventLogoutPayload: payloads.EventLogout = {
-      contactId: this.currentUserId,
-      data: reason ? reason! : 'unknow reason',
-    }
-    this.emit('logout', eventLogoutPayload)
+    await super.logout(reason || 'unknown reason')
 
     if (reason !== 'logout in wechaty') {
-      const eventResetPayload: payloads.EventReset = {
-        data: 'padplus reset',
-      }
-      this.emit('reset', eventResetPayload)
+      await this.onStop()
+      await this.onStart()
     }
   }
 
