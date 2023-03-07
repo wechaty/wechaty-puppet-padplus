@@ -178,7 +178,6 @@ export class PuppetPadplus extends Puppet {
       data: reason ? reason! : 'unknow reason',
     }
     this.emit('logout', eventLogoutPayload)
-    this.__currentUserId = undefined
 
     if (reason !== 'logout in wechaty') {
       const eventResetPayload: payloads.EventReset = {
