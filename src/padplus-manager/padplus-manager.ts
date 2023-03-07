@@ -410,7 +410,7 @@ export class PadplusManager extends EventEmitter {
           if (scanRawData) {
             log.silly(PRE, `QRCODE_SCAN : ${util.inspect(scanRawData)}`)
             const scanData: ScanData = JSON.parse(scanRawData)
-            log.info(PRE, `
+            log.verbose(PRE, `
             =================================================
             QRCODE_SCAN MSG : ${QrcodeStatus[scanData.status] || 'unknown status'}
             =================================================

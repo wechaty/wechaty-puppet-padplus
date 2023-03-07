@@ -167,7 +167,7 @@ export class PuppetPadplus extends Puppet {
    * @param reason
    */
   public async logout (reason?: string, force?: boolean): Promise<void> {
-    log.info(PRE, `logout(${force}, ${reason})`)
+    log.info(PRE, `logout(${reason}, ${force})`)
 
     if (!force) {
       await this.manager.logout(this.currentUserId)
@@ -177,8 +177,8 @@ export class PuppetPadplus extends Puppet {
       contactId: this.currentUserId,
       data: reason ? reason! : 'unknow reason',
     }
-    this.__currentUserId = undefined
     this.emit('logout', eventLogoutPayload)
+    this.__currentUserId = undefined
 
     if (reason !== 'logout in wechaty') {
       const eventResetPayload: payloads.EventReset = {
