@@ -1238,11 +1238,11 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no padplus Room.`)
     }
     await this.padplusRoom.setTopic(roomId, topic)
-    if (this.cacheManager) {
-      await this.cacheManager.deleteRoom(roomId)
-    } else {
-      throw new Error(`no cache manager.`)
-    }
+    // if (this.cacheManager) {
+    //   await this.cacheManager.deleteRoom(roomId)
+    // } else {
+    //   throw new Error(`no cache manager.`)
+    // }
     return new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`set room ${roomId} alias failed since timeout`)), 50 * 1000)
       CallbackPool.Instance.pushRoomTopicCallback(roomId, topic, () => {
