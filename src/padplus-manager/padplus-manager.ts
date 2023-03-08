@@ -1134,7 +1134,7 @@ export class PadplusManager extends EventEmitter {
     }
     await this.padplusContact.setAlias(selfId, contactId, alias)
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('set alias failed since timeout')), 5000)
+      const timeout = setTimeout(() => reject(new Error(`set contact ${contactId} alias failed since timeout`)), 50 * 1000)
       CallbackPool.Instance.pushContactAliasCallback(contactId, alias, () => {
         clearTimeout(timeout)
         resolve()
@@ -1244,7 +1244,7 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no cache manager.`)
     }
     return new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('set alias failed since timeout')), 5000)
+      const timeout = setTimeout(() => reject(new Error(`set room ${roomId} alias failed since timeout`)), 50 * 1000)
       CallbackPool.Instance.pushRoomTopicCallback(roomId, topic, () => {
         clearTimeout(timeout)
         resolve()
