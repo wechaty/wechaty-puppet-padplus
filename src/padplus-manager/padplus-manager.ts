@@ -1173,7 +1173,7 @@ export class PadplusManager extends EventEmitter {
     })
 
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get contact timeout')), 30 * 1000)
+      const timeout = setTimeout(() => reject(new Error(`get contact ${contactId} timeout`)), 30 * 1000)
       CallbackPool.Instance.pushContactCallback(contactId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusContactPayload)
@@ -1308,7 +1308,7 @@ export class PadplusManager extends EventEmitter {
       await this.padplusContact.getContactInfo(roomId)
     })
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('get room timeout')), 30 * 1000)
+      const timeout = setTimeout(() => reject(new Error(`get room ${roomId} timeout`)), 30 * 1000)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)
@@ -1335,7 +1335,7 @@ export class PadplusManager extends EventEmitter {
         await this.padplusRoom.getRoomMembers(uin, roomId)
       })
       return new Promise<PadplusRoomMemberMap>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('get room member failed since timeout')), 5000)
+        const timeout = setTimeout(() => reject(new Error(`get room ${roomId} member failed since timeout`)), 5000)
         CallbackPool.Instance.pushRoomMemberCallback(roomId, (data: PadplusRoomMemberMap) => {
           clearTimeout(timeout)
           resolve(data)
@@ -1497,7 +1497,7 @@ export class PadplusManager extends EventEmitter {
     }
     await this.padplusFriendship.confirmFriendship(encryptUserName, ticket, scene)
     await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('accept friend request timeout.')), 60 * 1000)
+      const timeout = setTimeout(() => reject(new Error(`accept ${contactId} friend request timeout.`)), 60 * 1000)
       CallbackPool.Instance.pushAcceptFriendCallback(contactId, () => {
         clearTimeout(timeout)
         resolve()
