@@ -524,6 +524,9 @@ export class PadplusManager extends EventEmitter {
             if (autoLoginData && autoLoginData.online) {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
+                if (!wechatUser) {
+                  throw new Error(`can not get bot info in redis when try to auto login`)
+                }
                 log.verbose(PRE, `init cache manager`)
                 await CacheManager.init(wechatUser.userName, this.options.cacheOption)
                 this.cacheManager = CacheManager.Instance
