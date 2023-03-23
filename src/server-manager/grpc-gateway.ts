@@ -63,6 +63,13 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
 
 export type GrpcGatewayEvent = 'data' | 'reconnect' | 'grpc-end' | 'grpc-close' | 'heartbeat'
 
+export enum RECONNECT_STATUS {
+  NEED_RECONNECT = 1,
+  INVALID = 2,
+  EXPIRED = 3,
+  DUPLICATED = 4,
+}
+
 export class GrpcGateway extends EventEmitter {
 
   private static _instance?: GrpcGateway = undefined
@@ -128,7 +135,7 @@ export class GrpcGateway extends EventEmitter {
   private timeoutNumber: number
   private startTime: number
   private stream?: grpc.ClientReadableStream<StreamResponse>
-  private reconnectStatus: boolean
+  private reconnectStatus: RECONNECT_STATUS
 
   private constructor (
     private token: string,
@@ -138,7 +145,7 @@ export class GrpcGateway extends EventEmitter {
     this.stopping = false
     this.client = new PadPlusServerClient(this.endpoint, grpc.credentials.createInsecure(), GRPC_LIMITATION)
     this.isAlive = false
-    this.reconnectStatus = true
+    this.reconnectStatus = RECONNECT_STATUS.NEED_RECONNECT
     this.timeoutNumber = 0
     this.startTime = Date.now()
   }
@@ -407,27 +414,33 @@ export class GrpcGateway extends EventEmitter {
       }
     })
     stream.on('end', async () => {
-      if (this.reconnectStatus) {
-        log.error(PRE, `GRPC SERVER END.
-        =====================================================================
-        try to reconnect grpc server, waiting...
-        =====================================================================
-        `)
-        await new Promise(resolve => setTimeout(resolve, 5000))
-        this.isAlive = false
-        if (!this.stopping) {
-          Object.values(this.eventEmitterMap).map(emitter => {
-            emitter.emit('reconnect')
-          })
-        }
-      } else {
-        log.info(PRE, `
-        =====================================================================
-                   DUPLICATE CONNECTED, THIS THREAD WILL EXIT NOW
-        =====================================================================
-        See: https://github.com/wechaty/wechaty-puppet-padplus/issues/169
-        `)
-        process.exit()
+      switch (this.reconnectStatus) {
+        case RECONNECT_STATUS.NEED_RECONNECT:
+          log.error(PRE, `GRPC SERVER END.
+          =====================================================================
+          try to reconnect grpc server, waiting...
+          =====================================================================
+          `)
+          await new Promise(resolve => setTimeout(resolve, 5000))
+          this.isAlive = false
+          if (!this.stopping) {
+            Object.values(this.eventEmitterMap).map(emitter => {
+              emitter.emit('reconnect')
+            })
+          }
+          break
+        case RECONNECT_STATUS.INVALID:
+        case RECONNECT_STATUS.EXPIRED:
+          break
+        case RECONNECT_STATUS.DUPLICATED:
+        default:
+          log.info(PRE, `
+          =====================================================================
+                    DUPLICATE CONNECTED, THIS THREAD WILL EXIT NOW
+          =====================================================================
+          See: https://github.com/wechaty/wechaty-puppet-padplus/issues/169
+          `)
+          process.exit()
       }
     })
     stream.on('close', async () => {
@@ -459,15 +472,15 @@ export class GrpcGateway extends EventEmitter {
         }
       }
       if (message && message === 'Another instance connected, disconnected the current one.') {
-        this.reconnectStatus = false
+        this.reconnectStatus = RECONNECT_STATUS.DUPLICATED
       } else if (message && message === 'EXPIRED_TOKEN') {
         Object.values(this.eventEmitterMap).map(emitter => {
-          this.reconnectStatus = false
+          this.reconnectStatus = RECONNECT_STATUS.EXPIRED
           emitter.emit('EXPIRED_TOKEN')
         })
       } else if (message && message === 'INVALID_TOKEN') {
         Object.values(this.eventEmitterMap).map(emitter => {
-          this.reconnectStatus = false
+          this.reconnectStatus = RECONNECT_STATUS.INVALID
           emitter.emit('INVALID_TOKEN')
         })
       }
