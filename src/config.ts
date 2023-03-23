@@ -18,6 +18,24 @@ export const padplusToken = () => {
   return token
 }
 
+export const NO_USER_INFO_IN_REDIS = `
+
+
+===========================================================================================
+
+      WARNING!!! Something wrong with your memory-card file!
+      Please remove it and restart the bot, then it will be ok.
+      This default path of memory-card file in the root dir of your project,
+      Path like: ${process.cwd()}/your-name-memory-card.json
+
+      MemoryCard文件出现问题，请删除后重启bot，即可正常使用。
+      MemoryCard文件默认在项目根目录下，路径示例：${process.cwd()}/your-name-memory-card.json
+
+===========================================================================================
+
+
+`
+
 export const INVALID_TOKEN_MESSAGE = `
 
 

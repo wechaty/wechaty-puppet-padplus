@@ -3,7 +3,7 @@ import {
   DelayQueueExecutor, ThrottleQueue,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE, NO_USER_INFO_IN_REDIS } from '../config'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
@@ -525,7 +525,7 @@ export class PadplusManager extends EventEmitter {
               if (!this.loginStatus) {
                 const wechatUser = autoLoginData.wechatUser
                 if (!wechatUser) {
-                  throw new Error(`can not get bot info in redis when try to auto login`)
+                  throw new Error(NO_USER_INFO_IN_REDIS)
                 }
                 log.verbose(PRE, `init cache manager`)
                 await CacheManager.init(wechatUser.userName, this.options.cacheOption)
