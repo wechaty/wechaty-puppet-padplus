@@ -431,7 +431,7 @@ export class GrpcGateway extends EventEmitter {
           break
         case RECONNECT_STATUS.INVALID:
         case RECONNECT_STATUS.EXPIRED:
-          break
+          process.exit()
         case RECONNECT_STATUS.DUPLICATED:
         default:
           log.info(PRE, `
