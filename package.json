@@ -67,6 +67,7 @@
     "typescript": "~4.7.4"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@juzi/wechaty-puppet": "^1.0.48",
     "@juzi/wechaty-puppet-cache": "^1.0.0",
     "array-flatten": "^3.0.0",
@@ -79,7 +80,9 @@
     "fs-extra": "^8.1.0",
     "google-protobuf": "^3.6.1",
     "grpc": "^1.22.0",
+    "install": "^0.13.0",
     "lru-cache": "^5.1.1",
+    "npm": "^9.6.2",
     "promise-retry": "^1.1.1",
     "rx-queue": "^0.8.5",
     "state-switch": "^0.9.7",
