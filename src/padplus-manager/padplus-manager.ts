@@ -693,6 +693,10 @@ export class PadplusManager extends EventEmitter {
           if (rawMessageStr) {
             const rawMessage: GrpcMessagePayload = JSON.parse(rawMessageStr)
             const message: PadplusMessagePayload = await this.onProcessMessage(rawMessage)
+            if (isIMContactId(message.fromUserName) || isIMRoomId(message.fromUserName) || isIMRoomId(message.toUserName)) {
+              log.silly(PRE, `receive im message: ${message.msgId}`)
+              return
+            }
             this.emit('message', message)
           }
           break
