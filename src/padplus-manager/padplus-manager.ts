@@ -1158,7 +1158,8 @@ export class PadplusManager extends EventEmitter {
       throw new PadplusError(PadplusErrorType.NO_CACHE, 'contactList()')
     }
 
-    return this.cacheManager.getContactIds()
+    const contactIdList = await this.cacheManager.getContactIds()
+    return contactIdList.filter(id => !isIMContactId(id))
   }
 
   public async getContact (
@@ -1275,7 +1276,8 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new Error(`no cache.`)
     }
-    return this.cacheManager.getRoomIds()
+    const roomIdList = await this.cacheManager.getRoomIds()
+    return roomIdList.filter(id => !isIMRoomId(id))
   }
 
   public async getRoomMemberIdList (
