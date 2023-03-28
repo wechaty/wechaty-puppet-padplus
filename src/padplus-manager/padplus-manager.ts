@@ -53,7 +53,7 @@ import { convertRoomFromGrpc } from '../convert-manager/room-convertor'
 import { CallbackPool } from '../utils/callbackHelper'
 import { PadplusFriendship } from './api-request/friendship'
 import { briefRoomMemberParser, roomMemberParser } from '../pure-function-helpers/room-member-parser'
-import { isRoomId, isContactId, isIMContactId } from '../pure-function-helpers'
+import { isRoomId, isContactId, isIMContactId, isIMRoomId } from '../pure-function-helpers'
 import { EventEmitter } from 'events'
 import { videoPreProcess } from '../pure-function-helpers/video-process'
 import { PuppetCacheStoreOptions } from '@juzi/wechaty-puppet-cache'
@@ -1163,6 +1163,9 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new Error()
     }
+    if (isIMContactId(contactId)) {
+      throw new Error(`getContact(${contactId}) is not supported for IM contact`)
+    }
     const contact = await this.cacheManager.getContact(contactId)
     if (contact) {
       return contact
@@ -1299,6 +1302,9 @@ export class PadplusManager extends EventEmitter {
   public async getRoom (roomId: string): Promise<PadplusRoomPayload | null | undefined> {
     if (!this.cacheManager) {
       throw new Error()
+    }
+    if (isIMRoomId(roomId)) {
+      throw new Error(`getRoom(${roomId}) is not supported for IM room`)
     }
     const room = await this.cacheManager.getRoom(roomId)
     if (room) {
