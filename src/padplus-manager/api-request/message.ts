@@ -1,7 +1,7 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData } from '../../schemas'
+import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData, PadplusGetCDNRequestData } from '../../schemas'
 import { types } from '@juzi/wechaty-puppet'
 import { FileBox } from 'file-box'
 
@@ -191,8 +191,23 @@ export class PadplusMessage {
     }
   }
 
-  public async loadRichMeidaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {
-    log.silly(PRE, `loadRichMeidaData()`)
+  public async getCDNData (data: PadplusGetCDNRequestData): Promise<StreamResponse> {
+    log.silly(PRE, `getCDNData()`)
+
+    const response = await this.requestClient.request({
+      apiType: ApiType.GET_CDN_DATA,
+      data,
+    })
+
+    if (response) {
+      return response
+    } else {
+      throw new Error(`can not get callback result of GET_CDN_DATA`)
+    }
+  }
+
+  public async loadRichMediaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {
+    log.silly(PRE, `loadRichMediaData()`)
 
     const response = await this.requestClient.request({
       apiType: ApiType.GET_MESSAGE_MEDIA,

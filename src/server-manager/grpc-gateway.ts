@@ -38,6 +38,7 @@ const NEED_CALLBACK_API_LIST: ApiType[] = [
   ApiType.INIT,
   ApiType.SEND_MESSAGE,
   ApiType.SEND_FILE,
+  ApiType.GET_CDN_DATA,
   ApiType.GET_MESSAGE_MEDIA,
   ApiType.SEARCH_CONTACT,
   ApiType.ADD_CONTACT,

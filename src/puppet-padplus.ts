@@ -1168,6 +1168,18 @@ export class PuppetPadplus extends Puppet {
       throw new Error(`no manager`)
     }
     const content = convertMiniProgramPayloadToParams(miniProgramPayload)
+    if (
+      !miniProgramPayload.thumbKey
+      || (miniProgramPayload.thumbUrl && miniProgramPayload.thumbUrl.startsWith('http'))
+    ) {
+      const cdnData = await this.manager.getCDNData({
+        toUserName: conversationId,
+        url: miniProgramPayload.thumbUrl!,
+      })
+      content.cdnthumburl = cdnData.fileid
+      content.cdnthumbaeskey = cdnData.aesKey
+      log.silly(PRE, `messageSendMiniProgram(${conversationId}, ${miniProgramPayload}) content: ${JSON.stringify(content)}`)
+    }
     const miniProgramData = await this.manager.sendMiniProgram(this.currentUserId, conversationId, JSON.stringify(content))
     if (PADPLUS_REPLAY_MESSAGE) {
       this.replayUrlLinkMsg(miniProgramData.msgId, conversationId, JSON.stringify(content))

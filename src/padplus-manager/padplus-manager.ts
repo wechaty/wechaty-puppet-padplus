@@ -44,6 +44,8 @@ import {
   TagPayload,
   PadplusRoomInviteEvent,
   LoginDeviceInfo,
+  PadplusGetCDNRequestData,
+  PadplusCDNData,
 } from '../schemas'
 import { convertMessageFromGrpcToPadplus } from '../convert-manager/message-convertor'
 import { CacheManager } from '../server-manager/cache-manager'
@@ -84,7 +86,7 @@ export class PadplusManager extends EventEmitter {
   private readonly state     : StateSwitch
   private requestClient?     : RequestClient
   private padplusUser?       : PadplusUser
-  private padplusMesasge?    : PadplusMessage
+  private padplusMessage?    : PadplusMessage
   private padplusContact?    : PadplusContact
   private padplusRoom?       : PadplusRoom
   private padplusFriendship? : PadplusFriendship
@@ -151,7 +153,7 @@ export class PadplusManager extends EventEmitter {
       delete this.padplusContact
       delete this.padplusFriendship
       delete this.padplusRoom
-      delete this.padplusMesasge
+      delete this.padplusMessage
       delete this.requestClient
 
       await this.start()
@@ -227,7 +229,7 @@ export class PadplusManager extends EventEmitter {
     }
     this.requestClient = new RequestClient(GrpcGateway.Instance, emitter)
     this.padplusUser = new PadplusUser(this.requestClient)
-    this.padplusMesasge = new PadplusMessage(this.requestClient)
+    this.padplusMessage = new PadplusMessage(this.requestClient)
     this.padplusContact = new PadplusContact(this.requestClient)
     this.padplusRoom = new PadplusRoom(this.requestClient)
     this.padplusFriendship = new PadplusFriendship(this.requestClient)
@@ -868,13 +870,29 @@ export class PadplusManager extends EventEmitter {
   /**
    * Message Section
    */
+  public async getCDNData (mediaData: PadplusGetCDNRequestData): Promise<PadplusCDNData> {
+    log.silly(PRE, `getCDNData()`)
+
+    if (!this.padplusMessage) {
+      throw new Error(`no padplus message`)
+    }
+    const data = await this.padplusMessage.getCDNData(mediaData)
+    const cdnStr = data.getData()
+    if (cdnStr) {
+      const cdnData = JSON.parse(cdnStr)
+      return cdnData
+    } else {
+      throw new Error(`can not load media data on manager`)
+    }
+  }
+
   public async loadRichMediaData (mediaData: PadplusRichMediaData): Promise<PadplusMediaData> {
     log.silly(PRE, `loadRichMediaData()`)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    const data = await this.padplusMesasge.loadRichMeidaData(mediaData)
+    const data = await this.padplusMessage.loadRichMediaData(mediaData)
     const mediaStr = data.getData()
     if (mediaStr) {
       const mediaData = JSON.parse(mediaStr)
@@ -887,10 +905,10 @@ export class PadplusManager extends EventEmitter {
   public async sendMessage (selfId: string, receiver: string, text: string, type: PadplusMessageType, mention?: string) {
     log.silly(PRE, `selfId : ${selfId}, receiver : ${receiver}, text : ${text}, type : ${type}`)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, text, type, mention)
+    const messageResponse = await this.padplusMessage.sendMessage(selfId, receiver, text, type, mention)
     if (!messageResponse.msgId) {
       throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
     }
@@ -900,15 +918,15 @@ export class PadplusManager extends EventEmitter {
   public async sendVideo (selfId: string, receiver: string, url: string) {
     log.silly(PRE, `sendVideo(${selfId}, ${receiver}, ${url})`)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
     if (!this.requestClient) {
       throw new Error(`no request client`)
     }
-    const content = await videoPreProcess(this.padplusMesasge, url)
+    const content = await videoPreProcess(this.padplusMessage, url)
 
-    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
+    const messageResponse = await this.padplusMessage.sendMessage(selfId, receiver, JSON.stringify(content), PadplusMessageType.Video)
     if (!messageResponse.msgId) {
       throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
     }
@@ -918,10 +936,10 @@ export class PadplusManager extends EventEmitter {
   public async sendMiniProgram (selfId: string, receiver: string, content: string) {
     log.silly(PRE, `sendMiniProgram(${selfId}, ${receiver}, ${content})`)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    const messageResponse = await this.padplusMesasge.sendMessage(selfId, receiver, content, PadplusMessageType.App)
+    const messageResponse = await this.padplusMessage.sendMessage(selfId, receiver, content, PadplusMessageType.App)
     if (!messageResponse.msgId) {
       throw new Error(`This message send failed, because the response message id is : ${messageResponse.msgId}.`)
     }
@@ -934,10 +952,10 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new PadplusError(PadplusErrorType.NO_CACHE, `sendContact()`)
     }
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendVoice(selfId, receiver, url, fileSize)
+    return this.padplusMessage.sendVoice(selfId, receiver, url, fileSize)
   }
 
   public async sendContact (selfId: string, receiver: string, contentStr: string) {
@@ -946,10 +964,10 @@ export class PadplusManager extends EventEmitter {
     if (!this.cacheManager) {
       throw new PadplusError(PadplusErrorType.NO_CACHE, `sendContact()`)
     }
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendContact(selfId, receiver, contentStr)
+    return this.padplusMessage.sendContact(selfId, receiver, contentStr)
   }
 
   public async addFriend (
@@ -970,30 +988,30 @@ export class PadplusManager extends EventEmitter {
   public async generatorFileUrl (file: FileBox): Promise<string> {
     log.verbose(PRE, 'generatorFileUrl(%s)', file)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.uploadFile(file)
+    return this.padplusMessage.uploadFile(file)
 
   }
 
   public async sendFile (selfId: string, receiverId: string, url: string, fileName: string, subType: string, fileSize?: number) {
     log.verbose(PRE, 'sendFile()')
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendFile(selfId, receiverId, url, fileName, subType, fileSize)
+    return this.padplusMessage.sendFile(selfId, receiverId, url, fileName, subType, fileSize)
 
   }
 
   public async sendUrlLink (selfId: string, receiver: string, content: string) {
     log.verbose(PRE, 'sendUrlLink()')
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
-    return this.padplusMesasge.sendUrlLink(selfId, receiver, content)
+    return this.padplusMessage.sendUrlLink(selfId, receiver, content)
   }
 
   private async onProcessMessage (rawMessage: any): Promise<PadplusMessagePayload> {
@@ -1535,11 +1553,11 @@ export class PadplusManager extends EventEmitter {
   public async recallMessage (selfId: string, receiverId: string, messageId: string): Promise<boolean> {
     log.silly(PRE, `recallMessage(${selfId}, ${receiverId}, ${messageId})`)
 
-    if (!this.padplusMesasge) {
+    if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
 
-    const isSuccess = await this.padplusMesasge.recallMessage(selfId, receiverId, messageId)
+    const isSuccess = await this.padplusMessage.recallMessage(selfId, receiverId, messageId)
     return isSuccess
   }
 
