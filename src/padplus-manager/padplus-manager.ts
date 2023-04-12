@@ -1356,7 +1356,7 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
-    if (!memberMap) {
+    if (typeof memberMap === 'undefined') {
       if (!this.grpcGatewayEmitter) {
         throw new Error(`no grpcGatewayEmitter.`)
       }

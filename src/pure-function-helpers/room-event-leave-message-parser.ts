@@ -37,6 +37,10 @@ const ROOM_LEAVE_BOT_REGEX_LIST = [
   /^(你)被"([^"]+?)"移出群聊/,
 ]
 
+const ROOM_DISMISS_BY_OWNER_REGEX_LIST = [
+  /^群主"([^"]+?)"已解散该群聊/,
+]
+
 export async function roomLeaveEventMessageParser (
   rawPayload: PadplusMessagePayload,
 ): Promise<null | RoomLeaveEvent> {
@@ -86,13 +90,21 @@ export async function roomLeaveEventMessageParser (
     ),
   )
 
-  const matches = matchesForOther || matchesForBot
+  let matchesForDismiss: null | string[] = []
+  ROOM_DISMISS_BY_OWNER_REGEX_LIST.some(
+    re => !!(
+      matchesForDismiss = content.match(re)
+    ),
+  )
+
+  const matches = matchesForOther || matchesForBot || matchesForDismiss
   if (!matches) {
     return null
   }
 
   let leaverId  : string | typeof types.YOU
   let removerId : string | typeof types.YOU
+  let dismiss: boolean | undefined
 
   if (matchesForOther) {
     removerId = types.YOU
@@ -101,11 +113,17 @@ export async function roomLeaveEventMessageParser (
   } else if (matchesForBot) {
     removerId = matchesForBot[2]
     leaverId  = types.YOU
+  } else if (matchesForDismiss) {
+    const removerName = matchesForDismiss[1]
+    removerId = getUserName([linkList], removerName) // maybe removerId is YOU
+    leaverId  = types.YOU
+    dismiss = true
   } else {
     throw new Error('for typescript type checking, will never go here')
   }
 
   const roomLeaveEvent: RoomLeaveEvent = {
+    dismiss,
     leaverIdList  : [leaverId],
     removerId,
     roomId,

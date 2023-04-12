@@ -293,6 +293,15 @@ export class CacheManager {
     await this.cacheRoomMemberRawPayload.delete(roomId)
   }
 
+  public async dismissRoomMember (
+    roomId: string,
+  ): Promise<void> {
+    if (!this.cacheRoomMemberRawPayload) {
+      throw new Error(`${PRE} dismissRoomMember() has no cache.`)
+    }
+    await this.cacheRoomMemberRawPayload.set(roomId, {})
+  }
+
   /**
    * -------------------------------
    * Room Invitation Section

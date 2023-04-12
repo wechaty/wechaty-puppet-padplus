@@ -12,6 +12,7 @@ export interface RoomLeaveEvent {
   removerId    : string | YOU,
   roomId       : string,
   timestamp    : number,  // Unix Timestamp, in seconds
+  dismiss?     : boolean,
 }
 
 export interface RoomTopicEvent {

@@ -1348,7 +1348,6 @@ export class PuppetPadplus extends Puppet {
       let leaverIdList: string[] = []
       if (typeof _leaverIdList[0] === 'symbol') {
         leaverIdList = [ await this.searchSymbolYou(_leaverIdList[0] as any, roomId) ]
-        removerId = await this.searchSymbolYou(removerId, roomId)
       } else {
         leaverIdList = _leaverIdList as string[]
       }
@@ -1356,7 +1355,13 @@ export class PuppetPadplus extends Puppet {
       // Sync room member
       const startTime = Date.now()
       const expireTime = 1 * 60 * 1000
-      let memberList = await this.roomMemberList(roomId)
+      let memberList: string[]
+      if (leaveEvent.dismiss) {
+        await this.manager.cacheManager?.dismissRoomMember(roomId)
+        memberList = []
+      } else {
+        memberList = await this.roomMemberList(roomId)
+      }
       while (leaverIdList.some(c => memberList.includes(c)) && Date.now() - startTime < expireTime) {
         await new Promise(resolve => setTimeout(resolve, 1000))
         memberList = await this.roomMemberList(roomId)
