@@ -49,6 +49,8 @@ const ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_EN = [
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_ZH = [
   /^"([^"]+?)"邀请你加入了群聊，群聊参与人还有：(.+)/,
+  /^"([^"]+?)"邀请你加入了群聊/,
+  /^"([^"]+?)"邀请你和"(.+?)"加入了群聊/,
 ]
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_EN = [
