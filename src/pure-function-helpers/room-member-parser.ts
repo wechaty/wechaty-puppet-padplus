@@ -27,7 +27,7 @@ export function roomMemberParser (
       bigHeadUrl: member.HeadImgUrl,
       contactId: member.UserName,
       displayName: member.DisplayName,
-      inviterId: '',
+      inviterId: member.InvitedBy,
       nickName: member.NickName,
       smallHeadUrl: member.HeadImgUrl,
     }

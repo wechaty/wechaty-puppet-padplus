@@ -1256,7 +1256,10 @@ export class PuppetPadplus extends Puppet {
    *
    */
 
-  public async dirtyLocalPayload (type: types.Payload, id: string) {
+  public async dirtyPayload (
+    type : types.Payload,
+    id   : string,
+  ) {
     switch (type) {
       case types.Payload.Contact:
         await this.manager.cacheManager?.deleteContact(id)
@@ -1275,7 +1278,7 @@ export class PuppetPadplus extends Puppet {
         break
 
       default:
-        log.info(PRE, `dirtyLocalPayload() Received unknown payload type.`)
+        log.info(PRE, `dirtyPayload() Received unknown payload type.`)
         break
     }
   }
@@ -1308,8 +1311,8 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.dirtyLocalPayload(types.Payload.Room, roomId)
-      await this.dirtyLocalPayload(types.Payload.RoomMember, roomId)
+      await this.dirtyPayload(types.Payload.Room, roomId)
+      await this.dirtyPayload(types.Payload.RoomMember, roomId)
 
       // Sync room member
       const startTime = Date.now()
@@ -1410,7 +1413,7 @@ export class PuppetPadplus extends Puppet {
       }
 
       // Set Cache Dirty
-      await this.dirtyLocalPayload(types.Payload.Room, roomId)
+      await this.dirtyPayload(types.Payload.Room, roomId)
 
       const eventRoomTopicPayload: payloads.EventRoomTopic = {
         changerId,
