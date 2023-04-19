@@ -1555,8 +1555,11 @@ export class PuppetPadplus extends Puppet {
     log.silly(PRE, `roomTopic(${roomId}, ${topic})`)
 
     if (typeof topic === 'undefined') {
-      const room = await this.roomPayload(roomId)
-      return room && (room.topic || '')
+      const room = await this.manager.getRoom(roomId)
+      if (room) {
+        return room.nickName
+      }
+      return ''
     }
     if (!this.manager) {
       throw new Error(`no manager.`)
