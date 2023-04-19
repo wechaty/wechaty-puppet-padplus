@@ -435,11 +435,18 @@ export class PadplusManager extends EventEmitter {
 
               case QrcodeStatus.Canceled:
               case QrcodeStatus.Expired:
-                const uin = grpcGatewayEmitter.getUIN()
-                const wxid = grpcGatewayEmitter.getUserName()
-                const data = {
-                  uin,
-                  wxid,
+                let data: {uin: string, wxid: string}
+                if (this.memory) {
+                  const slot = await this.memory!.get(MEMORY_SLOT_NAME)
+                  data = {
+                    uin: slot.uin,
+                    wxid: slot.userName,
+                  }
+                } else {
+                  data = {
+                    uin: grpcGatewayEmitter.getUIN(),
+                    wxid: grpcGatewayEmitter.getUserName(),
+                  }
                 }
 
                 if (scanData.status === QrcodeStatus.Expired) {
