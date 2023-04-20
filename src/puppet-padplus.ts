@@ -1260,6 +1260,7 @@ export class PuppetPadplus extends Puppet {
     type : types.Payload,
     id   : string,
   ) {
+    super.dirtyPayload(type, id)
     switch (type) {
       case types.Payload.Contact:
         await this.manager.cacheManager?.deleteContact(id)
