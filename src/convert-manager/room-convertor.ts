@@ -3,19 +3,19 @@ import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomPayload } from '.
 
 export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload => {
   const roomPayload: PadplusRoomPayload = {
-    alias          : room.Alias,
-    bigHeadUrl     : room.BigHeadImgUrl,
-    chatRoomOwner  : room.ChatRoomOwner,
-    chatroomId     : room.UserName,
-    chatroomVersion: room.ChatroomVersion,
-    contactType    : room.ContactType,
-    memberCount    : JSON.parse(room.ExtInfo).length,
-    members        : JSON.parse(room.ExtInfo),
-    nickName       : room.NickName,
-    smallHeadUrl   : room.SmallHeadImgUrl,
-    stranger       : room.EncryptUsername,
-    tagList     : room.LabelLists,
-    ticket         : room.Ticket,
+    alias          : room?.Alias || '',
+    bigHeadUrl     : room?.BigHeadImgUrl || '',
+    chatRoomOwner  : room?.ChatRoomOwner || '',
+    chatroomId     : room?.UserName || '',
+    chatroomVersion: room?.ChatroomVersion || 0,
+    contactType    : room?.ContactType || 0,
+    memberCount    : JSON.parse(room?.ExtInfo || '[]').length,
+    members        : JSON.parse(room?.ExtInfo || '[]'),
+    nickName       : room?.NickName || '',
+    smallHeadUrl   : room?.SmallHeadImgUrl || '',
+    stranger       : room?.EncryptUsername || '',
+    tagList     : room?.LabelLists || '',
+    ticket         : room?.Ticket || '',
   }
   return roomPayload
 }

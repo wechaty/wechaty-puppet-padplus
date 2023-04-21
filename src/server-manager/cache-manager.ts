@@ -278,6 +278,10 @@ export class CacheManager {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
     const map: PuppetCacheRoomMemberPayloadMap = {}
+    if (Object.keys(payload).length === 0) {
+      await this.cacheRoomMemberRawPayload.set(roomId, map)
+      return
+    }
     for (const memberId of Object.keys(payload)) {
       map[memberId] = padplusToCacheRoomMemberPayload(payload[memberId])
     }

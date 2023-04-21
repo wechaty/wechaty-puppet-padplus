@@ -650,6 +650,11 @@ export class PadplusManager extends EventEmitter {
             } else if (isRoomId(_data.UserName)) {
               const roomData: GrpcRoomPayload = _data
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
+              if (Object.keys(roomData).length === 1) {
+                log.silly(PRE, `the bot has already left this room: ${_data.UserName}`)
+                CallbackPool.Instance.resolveRoomCallBack(_data.UserName, roomPayload)
+                return
+              }
               if (this.cacheManager) {
                 const roomMembers = briefRoomMemberParser(roomPayload.members)
                 const _roomMembers = await this.cacheManager.getRoomMember(roomPayload.chatroomId)
@@ -738,12 +743,26 @@ export class PadplusManager extends EventEmitter {
             }
             const roomMemberList: GrpcRoomMemberList = JSON.parse(roomMembersStr)
             const roomId = roomMemberList.roomId
-            const membersStr = roomMemberList.membersJson
-            const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
             if (!this.cacheManager) {
               throw new Error(`no manager`)
             }
             const oldMembers = await this.cacheManager.getRoomMember(roomId)
+            if (typeof roomMemberList.membersJson === 'undefined') {
+              const userName = this.memorySlot.userName
+              log.silly(PRE, `the bot has already left this room: ${roomId} botId: ${userName}`)
+              let members = {}
+              if (oldMembers) {
+                delete oldMembers[userName]
+                await this.cacheManager.setRoomMember(roomId, oldMembers)
+                members = oldMembers
+              } else {
+                await this.cacheManager.setRoomMember(roomId, members)
+              }
+              CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
+              return
+            }
+            const membersStr = roomMemberList.membersJson
+            const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
             if (oldMembers) {
               const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
               eventRoomLeavePayload && eventRoomLeavePayload.map(event => this.emit('room-leave', event))
