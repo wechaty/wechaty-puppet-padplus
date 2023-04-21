@@ -5,7 +5,7 @@ import { ApiTypeDic } from '../../utils/util'
 
 // Expire time for api call data that persist in the pool
 // Number of seconds
-const EXPIRE_TIME = 10
+const EXPIRE_TIME = 0.5
 
 const DEDUPE_API = [
   ApiType.GET_CONTACT,
