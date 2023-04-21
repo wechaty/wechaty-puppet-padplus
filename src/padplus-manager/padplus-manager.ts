@@ -652,6 +652,7 @@ export class PadplusManager extends EventEmitter {
               const roomPayload: PadplusRoomPayload = convertRoomFromGrpc(roomData)
               if (Object.keys(roomData).length === 1) {
                 log.silly(PRE, `the bot has already left this room: ${_data.UserName}`)
+                roomPayload.chatRoomOwner = this.memorySlot.userName // FIXME: set fake room owner
                 CallbackPool.Instance.resolveRoomCallBack(_data.UserName, roomPayload)
                 return
               }
@@ -679,19 +680,27 @@ export class PadplusManager extends EventEmitter {
             const deleteUserName = contactData.field
             if (this.cacheManager) {
               if (isRoomId(deleteUserName)) {
+                const botId = contactData.userName
                 const roomRawPayload = await this.cacheManager.getRoom(deleteUserName)
                 if (!roomRawPayload) {
                   throw new Error(`can not find room raw payload from cache by id : ${deleteUserName}`)
                 }
-                roomRawPayload.members = roomRawPayload.members.filter(member => member.userName !== contactData.userName)
+                roomRawPayload.members = roomRawPayload.members.filter(member => member.userName !== botId)
                 await this.cacheManager.setRoom(deleteUserName, roomRawPayload)
 
                 const roomMemberRawPayload = await this.cacheManager.getRoomMember(deleteUserName)
                 if (!roomMemberRawPayload) {
                   throw new Error(`can not find room member raw payload from cache by id : ${deleteUserName}`)
                 }
-                delete roomMemberRawPayload[contactData.userName]
+                delete roomMemberRawPayload[botId]
                 await this.cacheManager.setRoomMember(deleteUserName, roomMemberRawPayload)
+                const eventRoomLeavePayload: payloads.EventRoomLeave = {
+                  removeeIdList : [botId],
+                  removerId: botId,
+                  roomId: deleteUserName,
+                  timestamp: Date.now(),
+                }
+                this.emit('room-leave', eventRoomLeavePayload)
               } else if (isContactId(deleteUserName)) {
                 await this.cacheManager.deleteContact(deleteUserName)
               } else if (isIMContactId(deleteUserName)) {
