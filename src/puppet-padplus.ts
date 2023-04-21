@@ -1494,7 +1494,11 @@ export class PuppetPadplus extends Puppet {
     const room = await this.roomRawPayload(roomId)
     if (room) {
       const avatarUrl = room.bigHeadUrl || room.smallHeadUrl
-      return FileBox.fromUrl(avatarUrl, `${roomId}_avatar_${Date.now()}.png`)
+      if (avatarUrl) {
+        return FileBox.fromUrl(avatarUrl, `${roomId}_avatar_${Date.now()}.png`)
+      } else {
+        throw new Error(`Can not get room avatar due to this room: ${roomId} does not exist.`)
+      }
     } else {
       throw new Error(`Can not load room info by roomId : ${roomId}`)
     }
