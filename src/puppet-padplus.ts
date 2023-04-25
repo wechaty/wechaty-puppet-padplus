@@ -1352,6 +1352,13 @@ export class PuppetPadplus extends Puppet {
       let leaverIdList: string[] = []
       if (typeof _leaverIdList[0] === 'symbol') {
         leaverIdList = [ await this.searchSymbolYou(_leaverIdList[0] as any, roomId) ]
+        if (typeof leaveEvent.dismiss === 'undefined') {
+          const members = await this.manager.getRoomMembers(roomId)
+          const findRemover = Object.values(members).find(m => m.nickName === removerId || m.displayName === removerId)
+          if (findRemover) {
+            removerId = findRemover.contactId
+          }
+        }
       } else {
         leaverIdList = _leaverIdList as string[]
       }
