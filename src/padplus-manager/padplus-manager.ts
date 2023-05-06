@@ -765,6 +765,8 @@ export class PadplusManager extends EventEmitter {
                 await this.cacheManager.setRoomMember(roomId, oldMembers)
                 members = oldMembers
               } else {
+                // 最开始不存在的群聊 membersJson 为 undefined，此时将其roomMember设置为空对象。
+                // 目前存在一种情况：长时间不说话的群聊 membersJson 也为 undefined
                 await this.cacheManager.setRoomMember(roomId, members)
               }
               CallbackPool.Instance.resolveRoomMemberCallback(roomId, members)
@@ -1391,7 +1393,7 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
-    if (typeof memberMap === 'undefined') {
+    if (typeof memberMap === 'undefined' || Object.keys(memberMap).length === 0) {
       if (!this.grpcGatewayEmitter) {
         throw new Error(`no grpcGatewayEmitter.`)
       }
