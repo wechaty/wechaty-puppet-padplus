@@ -774,6 +774,19 @@ export class PadplusManager extends EventEmitter {
             }
             const membersStr = roomMemberList.membersJson
             const membersList: GrpcRoomMemberPayload[] = JSON.parse(membersStr)
+
+            // No update to the group member cache when a notification of individual group member information change is received.
+            if (membersList.length === 1) {
+              if (!this.grpcGatewayEmitter) {
+                throw new Error(`no grpcGatewayEmitter.`)
+              }
+              const uin = this.grpcGatewayEmitter.getUIN()
+              if (!this.padplusRoom) {
+                throw new Error(`no padplus Room.`)
+              }
+              await this.padplusRoom.getRoomMembers(uin, roomId)
+              return
+            }
             if (oldMembers) {
               const eventRoomLeavePayload = await this.generateLeaveEvent(membersList, oldMembers, roomId)
               eventRoomLeavePayload && eventRoomLeavePayload.map(event => this.emit('room-leave', event))
