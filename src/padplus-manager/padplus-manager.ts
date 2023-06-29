@@ -3,7 +3,7 @@ import {
   DelayQueueExecutor, ThrottleQueue,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE, NO_USER_INFO_IN_REDIS } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE, NO_USER_INFO_IN_REDIS, SYNC_CONTACT_TIMEOUT, SYNC_ROOM_TIMEOUT, SYNC_MEMBER_TIMEOUT } from '../config'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
@@ -765,7 +765,7 @@ export class PadplusManager extends EventEmitter {
                 await this.cacheManager.setRoomMember(roomId, oldMembers)
                 members = oldMembers
               } else {
-                // 最开始不存在的群聊 membersJson 为 undefined，此时将其roomMember设置为空对象。
+                // 最开始不存在的群聊 membersJson 为 undefined，此时将其 roomMember 设置为空对象。
                 // 目前存在一种情况：长时间不说话的群聊 membersJson 也为 undefined
                 await this.cacheManager.setRoomMember(roomId, members)
               }
@@ -926,6 +926,7 @@ export class PadplusManager extends EventEmitter {
     if (!this.padplusMessage) {
       throw new Error(`no padplus message`)
     }
+    // TODO: get/save cdn result in cache
     const data = await this.padplusMessage.getCDNData(mediaData)
     const cdnStr = data.getData()
     if (cdnStr) {
@@ -1252,7 +1253,7 @@ export class PadplusManager extends EventEmitter {
     })
 
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error(`get contact ${contactId} timeout`)), 30 * 1000)
+      const timeout = setTimeout(() => reject(new Error(`get contact ${contactId} timeout`)), SYNC_CONTACT_TIMEOUT)
       CallbackPool.Instance.pushContactCallback(contactId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusContactPayload)
@@ -1391,7 +1392,7 @@ export class PadplusManager extends EventEmitter {
       await this.padplusContact.getContactInfo(roomId)
     })
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error(`get room ${roomId} timeout`)), 30 * 1000)
+      const timeout = setTimeout(() => reject(new Error(`get room ${roomId} timeout`)), SYNC_ROOM_TIMEOUT)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)
@@ -1418,7 +1419,7 @@ export class PadplusManager extends EventEmitter {
         await this.padplusRoom.getRoomMembers(uin, roomId)
       })
       return new Promise<PadplusRoomMemberMap>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error(`get room ${roomId} member failed since timeout`)), 5000)
+        const timeout = setTimeout(() => reject(new Error(`get room ${roomId} member failed since timeout`)), SYNC_MEMBER_TIMEOUT)
         CallbackPool.Instance.pushRoomMemberCallback(roomId, (data: PadplusRoomMemberMap) => {
           clearTimeout(timeout)
           resolve(data)

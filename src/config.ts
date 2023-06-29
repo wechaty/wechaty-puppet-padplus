@@ -68,6 +68,9 @@ export const EXPIRED_TOKEN_MESSAGE = `
 
 `
 
+const SECOND = 1000
+const MINUTE = 60 * SECOND
+
 export const PADPLUS_REPLAY_MESSAGE = process.env.PADPLUS_REPLAY_MESSAGE === 'true'
 
 /**
@@ -76,14 +79,19 @@ export const PADPLUS_REPLAY_MESSAGE = process.env.PADPLUS_REPLAY_MESSAGE === 'tr
 const WECHATY_PUPPET_PADPLUS_ENDPOINT_ENV_VAR = 'WECHATY_PUPPET_PADPLUS_ENDPOINT'
 export const GRPC_ENDPOINT = process.env[WECHATY_PUPPET_PADPLUS_ENDPOINT_ENV_VAR]  || 'beijing.padplus.juzibot.com:50052'
 
-export const MESSAGE_CACHE_AGE = 1000 * 60 * 60
-export const MESSAGE_CACHE_MAX = 1000
+export const MESSAGE_CACHE_AGE = 60 * MINUTE
+export const MESSAGE_CACHE_MAX = SECOND
 
-export const WAIT_FOR_READY_TIME = 1000 * 60 * 10
+export const WAIT_FOR_READY_TIME = 10 * MINUTE
 
-export const COMPACT_CACHE_FIRST_START = 1000 * 60 * 15
+export const COMPACT_CACHE_FIRST_START = 15 * MINUTE
 
-export const COMPACT_CACHE_INTERVAL = 1000 * 60 * 60
+export const COMPACT_CACHE_INTERVAL = 60 * MINUTE
+
+// sync data timeout in minute
+export const SYNC_CONTACT_TIMEOUT = (Number(process.env.SYNC_CONTACT_TIMEOUT) || 2) * MINUTE
+export const SYNC_ROOM_TIMEOUT = (Number(process.env.SYNC_ROOM_TIMEOUT) || 2) * MINUTE
+export const SYNC_MEMBER_TIMEOUT = (Number(process.env.SYNC_MEMBER_TIMEOUT) || 2) * MINUTE
 
 const logLevel = process.env.PADPLUS_LOG || process.env.WECHATY_LOG
 if (logLevel) {
