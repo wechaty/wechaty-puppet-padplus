@@ -1330,6 +1330,7 @@ export class PuppetPadplus extends Puppet {
         roomId,
         timestamp,
       }
+      log.silly(PRE, `emit room-join event : ${util.inspect(eventRoomJoinPayload)}`)
       this.emit('room-join', eventRoomJoinPayload)
     }
   }
@@ -1353,11 +1354,19 @@ export class PuppetPadplus extends Puppet {
       if (typeof _leaverIdList[0] === 'symbol') {
         leaverIdList = [ await this.searchSymbolYou(_leaverIdList[0] as any, roomId) ]
         if (typeof leaveEvent.dismiss === 'undefined') {
+          // 被群主踢出群聊，群主可能有群昵称和好友备注，都需要进行筛选
           const members = await this.manager.getRoomMembers(roomId)
-          const findRemover = Object.values(members).find(m => m.nickName === removerId || m.displayName === removerId)
-          if (findRemover) {
-            removerId = findRemover.contactId
-          }
+          Object.values(members).map(async member => {
+            if (removerId === member.nickName || removerId === member.displayName) {
+              removerId = member.contactId
+            } else {
+              const contactInfo = await this.manager.getContact(member.contactId)
+              const alias = contactInfo?.remark
+              if (removerId === alias) {
+                removerId = member.contactId
+              }
+            }
+          })
         }
       } else {
         leaverIdList = _leaverIdList as string[]
