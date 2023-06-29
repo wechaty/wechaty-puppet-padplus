@@ -1,11 +1,7 @@
 import { DelayQueueExecutor } from 'rx-queue'
-import { log } from '../../config'
+import { EXPIRE_TIME, log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { ApiTypeDic } from '../../utils/util'
-
-// Expire time for api call data that persist in the pool
-// Number of seconds
-const EXPIRE_TIME = 0.5
 
 const DEDUPE_API = [
   ApiType.GET_CONTACT,
@@ -45,7 +41,7 @@ export class DedupeApi {
 
   constructor () {
     this.pool = {}
-    this.cleaner = setInterval(this.cleanData, EXPIRE_TIME * 1000)
+    this.cleaner = setInterval(this.cleanData, EXPIRE_TIME)
     this.apiQueue = new DelayQueueExecutor(200)
   }
 
@@ -67,7 +63,7 @@ export class DedupeApi {
     }
     const existCall = this.pool[key]
     const now = new Date().getTime()
-    if (existCall && now - existCall.timestamp < EXPIRE_TIME * 1000) {
+    if (existCall && now - existCall.timestamp < EXPIRE_TIME) {
       if (existCall.returned) {
         log.silly(PRE, `dedupeApi(${ApiType[apiName]}) dedupe api call with existing results.`)
         return existCall.result
@@ -129,7 +125,7 @@ export class DedupeApi {
     for (const key in this.pool) {
       if (this.pool.hasOwnProperty(key)) {
         const apiCache = this.pool[key]
-        if (apiCache.timestamp - now > EXPIRE_TIME * 1000) {
+        if (apiCache.timestamp - now > EXPIRE_TIME) {
           delete this.pool[key]
         }
       }

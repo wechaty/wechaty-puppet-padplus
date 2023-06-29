@@ -93,6 +93,10 @@ export const SYNC_CONTACT_TIMEOUT = (Number(process.env.SYNC_CONTACT_TIMEOUT) ||
 export const SYNC_ROOM_TIMEOUT = (Number(process.env.SYNC_ROOM_TIMEOUT) || 2) * MINUTE
 export const SYNC_MEMBER_TIMEOUT = (Number(process.env.SYNC_MEMBER_TIMEOUT) || 2) * MINUTE
 
+// Expire time for api call data that persist in the pool
+// Number of seconds
+export const EXPIRE_TIME = (Number(process.env.EXPIRE_TIME) || 1) * SECOND
+
 const logLevel = process.env.PADPLUS_LOG || process.env.WECHATY_LOG
 if (logLevel) {
   log.level(logLevel.toLowerCase() as any)
