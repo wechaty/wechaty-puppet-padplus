@@ -777,14 +777,7 @@ export class PadplusManager extends EventEmitter {
 
             // No update to the group member cache when a notification of individual group member information change is received.
             if (membersList.length === 1) {
-              if (!this.grpcGatewayEmitter) {
-                throw new Error(`no grpcGatewayEmitter.`)
-              }
-              const uin = this.grpcGatewayEmitter.getUIN()
-              if (!this.padplusRoom) {
-                throw new Error(`no padplus Room.`)
-              }
-              await this.padplusRoom.getRoomMembers(uin, roomId)
+              log.warn(`only one member left in this room: ${roomId}`)
               return
             }
             if (oldMembers) {
