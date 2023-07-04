@@ -56,7 +56,7 @@ export class DedupeApi {
       log.silly(PRE, `dedupe() no need to dedupe api ${ApiTypeDic[apiName]}.`)
       return func(apiName, uin, params)
     }
-    log.silly(PRE, `dedupeApi(${ApiType[apiName]}, ${uin}, ${params ? JSON.stringify(params) : ''})`)
+    log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}, ${uin}, ${params ? JSON.stringify(params) : ''})`)
     const key = this.getKey(apiName, uin, params)
     if (forceCall) {
       delete this.pool[key]
@@ -65,10 +65,10 @@ export class DedupeApi {
     const now = new Date().getTime()
     if (existCall && now - existCall.timestamp < EXPIRE_TIME) {
       if (existCall.returned) {
-        log.silly(PRE, `dedupeApi(${ApiType[apiName]}) dedupe api call with existing results.`)
+        log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}) dedupe api call with existing results.`)
         return existCall.result
       } else {
-        log.silly(PRE, `dedupeApi(${ApiType[apiName]}) dedupe api call with pending listener.`)
+        log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}) dedupe api call with pending listener.`)
         return new Promise((resolve, reject) => {
           existCall.listener.push({
             reject,
@@ -77,7 +77,7 @@ export class DedupeApi {
         })
       }
     } else {
-      log.silly(PRE, `dedupeApi(${ApiType[apiName]}) dedupe api call missed, call the external service.`)
+      log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}) dedupe api call missed, call the external service.`)
       this.pool[key] = {
         listener: [],
         returned: false,
@@ -87,7 +87,7 @@ export class DedupeApi {
       try {
         result = await this.apiQueue.execute(() => func(apiName, uin, params))
       } catch (e) {
-        log.silly(PRE, `dedupeApi(${ApiType[apiName]}) failed from external service, reject ${this.pool[key].listener.length} duplicate api calls.`)
+        log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}) failed from external service, reject ${this.pool[key].listener.length} duplicate api calls.`)
         this.pool[key].listener.map(api => {
           api.reject(e)
         })
@@ -97,7 +97,7 @@ export class DedupeApi {
 
       this.pool[key].result = result
       this.pool[key].returned = true
-      log.silly(PRE, `dedupeApi(${ApiType[apiName]}) got results from external service, resolve ${this.pool[key].listener.length} duplicate api calls.`)
+      log.silly(PRE, `dedupeApi(${this.getApiTypeKey(apiName)}) got results from external service, resolve ${this.pool[key].listener.length} duplicate api calls.`)
       this.pool[key].listener.map(api => {
         api.resolve(result)
       })
@@ -134,6 +134,12 @@ export class DedupeApi {
 
   private getKey (apiName: ApiType, uin: string, params?: any) {
     return `${apiName}-${uin}-${params ? JSON.stringify(params) : ''}`
+  }
+
+  private getApiTypeKey (apiType: number): string | undefined {
+    const keys = Object.keys(ApiType).filter(key => isNaN(Number(key)))
+    const apiTypeKey = keys.find(key => ApiType[key as keyof typeof ApiType] === apiType)
+    return apiTypeKey || undefined
   }
 
 }
