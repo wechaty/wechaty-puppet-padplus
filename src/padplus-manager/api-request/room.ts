@@ -62,6 +62,11 @@ export class PadplusRoom {
     })
   }
 
+  /**
+   * 服务端会清除member的redis数据
+   * @param uin 账号uin
+   * @param roomId 群聊ID
+   */
   public getRoomMembers = async (uin: string, roomId: string): Promise<void> => {
     log.verbose(PRE, `getRoomMembers(${uin}, ${roomId})`)
 

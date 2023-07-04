@@ -4,7 +4,7 @@ import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { ApiTypeDic } from '../../utils/util'
 
 const DEDUPE_API = [
-  ApiType.GET_CONTACT,
+  // ApiType.GET_CONTACT,
   ApiType.GET_ROOM_MEMBER,
 ]
 

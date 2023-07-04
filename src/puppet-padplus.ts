@@ -1356,6 +1356,7 @@ export class PuppetPadplus extends Puppet {
         if (typeof leaveEvent.dismiss === 'undefined') {
           // 被群主踢出群聊，群主可能有群昵称和好友备注，都需要进行筛选
           const members = await this.manager.getRoomMembers(roomId)
+          log.silly(`onRoomLeaveEvent(${message.msgId}) members: ${JSON.stringify(members)} removerId: ${removerId}`)
           Object.values(members).map(async member => {
             if (removerId === member.nickName || removerId === member.displayName) {
               removerId = member.contactId

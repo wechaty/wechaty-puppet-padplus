@@ -3,7 +3,7 @@ import {
   DelayQueueExecutor, ThrottleQueue,
 }                             from 'rx-queue'
 import { StateSwitch }        from 'state-switch'
-import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE, NO_USER_INFO_IN_REDIS, SYNC_CONTACT_TIMEOUT, SYNC_ROOM_TIMEOUT, SYNC_MEMBER_TIMEOUT } from '../config'
+import { log, GRPC_ENDPOINT, MESSAGE_CACHE_MAX, MESSAGE_CACHE_AGE, WAIT_FOR_READY_TIME, INVALID_TOKEN_MESSAGE, EXPIRED_TOKEN_MESSAGE, NO_USER_INFO_IN_REDIS, SYNC_CONTACT_TIMEOUT, SYNC_ROOM_TIMEOUT, SYNC_MEMBER_TIMEOUT, MEMBER_DELAY_INTERVAL } from '../config'
 import LRU from 'lru-cache'
 
 import { GrpcGateway } from '../server-manager/grpc-gateway'
@@ -105,7 +105,6 @@ export class PadplusManager extends EventEmitter {
     readyEmitted: boolean,
   }
   private resetThrottleQueue    : ThrottleQueue
-  private getContactQueue       : DelayQueueExecutor
   private getRoomMemberQueue    : DelayQueueExecutor
   constructor (
     public options: ManagerOptions,
@@ -140,8 +139,7 @@ export class PadplusManager extends EventEmitter {
       userName: '',
     }
 
-    this.getContactQueue = new DelayQueueExecutor(200)
-    this.getRoomMemberQueue = new DelayQueueExecutor(500)
+    this.getRoomMemberQueue = new DelayQueueExecutor(MEMBER_DELAY_INTERVAL)
     this.resetThrottleQueue = new ThrottleQueue<string>(5000)
     this.resetThrottleQueue.subscribe(async reason => {
       log.info(PRE, 'ready to restart due to receive event: %s', reason)
@@ -744,7 +742,7 @@ export class PadplusManager extends EventEmitter {
             CallbackPool.Instance.removeCallback(roomQrcodeTraceId)
           }
           break
-        case ResponseType.ROOM_MEMBER_LIST :
+        case ResponseType.ROOM_MEMBER_LIST:
           const roomMembersStr = data.getData()
           if (roomMembersStr) {
             if (!this.cacheManager) {
@@ -756,6 +754,7 @@ export class PadplusManager extends EventEmitter {
               throw new Error(`no manager`)
             }
             const oldMembers = await this.cacheManager.getRoomMember(roomId)
+            // 已经退出群聊，或者被踢出群聊，将群成员缓存更新为空对象
             if (typeof roomMemberList.membersJson === 'undefined') {
               const userName = this.memorySlot.userName
               log.silly(PRE, `the bot has already left this room: ${roomId} botId: ${userName}`)
@@ -1227,31 +1226,32 @@ export class PadplusManager extends EventEmitter {
   public async getContact (
     contactId: string
   ): Promise<PadplusContactPayload | null | undefined> {
-    if (!this.cacheManager) {
-      throw new Error()
-    }
     if (isIMContactId(contactId)) {
       throw new Error(`getContact(${contactId}) is not supported for IM contact`)
     }
+
+    if (!this.cacheManager) {
+      throw new Error('no cache manager')
+    }
+
     const contact = await this.cacheManager.getContact(contactId)
     if (contact) {
       return contact
     }
 
-    await this.getContactQueue.execute(async () => {
-      if (!this.padplusContact) {
-        throw new Error(`no padplusContact`)
-      }
-      await this.padplusContact.getContactInfo(contactId)
-    })
-
-    return new Promise((resolve, reject) => {
+    if (!this.padplusContact) {
+      throw new Error(`no padplusContact`)
+    }
+    const promise = new Promise<PadplusContactPayload>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`get contact ${contactId} timeout`)), SYNC_CONTACT_TIMEOUT)
       CallbackPool.Instance.pushContactCallback(contactId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusContactPayload)
       })
     })
+    await this.padplusContact.getContactInfo(contactId)
+
+    return promise
   }
 
   public async getContactPayload (
@@ -1368,29 +1368,28 @@ export class PadplusManager extends EventEmitter {
   }
 
   public async getRoom (roomId: string): Promise<PadplusRoomPayload | null | undefined> {
-    if (!this.cacheManager) {
-      throw new Error()
-    }
     if (isIMRoomId(roomId)) {
       throw new Error(`getRoom(${roomId}) is not supported for IM room`)
+    }
+    if (!this.cacheManager) {
+      throw new Error('no cache manager')
     }
     const room = await this.cacheManager.getRoom(roomId)
     if (room) {
       return room
     }
-    await this.getContactQueue.execute(async () => {
-      if (!this.padplusContact) {
-        throw new Error(`no padplusContact`)
-      }
-      await this.padplusContact.getContactInfo(roomId)
-    })
-    return new Promise((resolve, reject) => {
+    if (!this.padplusContact) {
+      throw new Error('no padplusContact')
+    }
+    const promise = new Promise<PadplusRoomPayload>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`get room ${roomId} timeout`)), SYNC_ROOM_TIMEOUT)
       CallbackPool.Instance.pushContactCallback(roomId, (data) => {
         clearTimeout(timeout)
         resolve(data as PadplusRoomPayload)
       })
     })
+    await this.padplusContact.getContactInfo(roomId)
+    return promise
   }
 
   public async getRoomMembers (
@@ -1400,7 +1399,9 @@ export class PadplusManager extends EventEmitter {
       throw new Error(`no cache.`)
     }
     const memberMap = await this.cacheManager.getRoomMember(roomId)
-    if (typeof memberMap === 'undefined' || Object.keys(memberMap).length === 0) {
+    // 当群成员数量为0的情况下，是否该直接返回？
+    // if (typeof memberMap === 'undefined' || Object.keys(memberMap).length === 0) {
+    if (typeof memberMap === 'undefined') {
       if (!this.grpcGatewayEmitter) {
         throw new Error(`no grpcGatewayEmitter.`)
       }
