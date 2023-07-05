@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { PuppetCacheRoomPayload } from 'wechaty-puppet-cache'
+import { PuppetCacheRoomPayload } from '@juzi/wechaty-puppet-cache'
 import { PadplusRoomPayload } from '../schemas'
 
 import { cacheToPadplusRoomPayload, padplusToCacheRoomPayload } from './room-cache-mapper'
@@ -20,14 +20,14 @@ test('room-cache-mapper', async t => {
     contactType    : 2,
     memberCount    : 3,
     members        : [{
-      NickName              : 'NickName',
-      UserName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }, {
-      NickName              : 'NickName',
-      UserName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }, {
-      NickName              : 'NickName',
-      UserName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }],
     nickName       : 'nickName',
     smallHeadUrl   : 'smallHeadUrl',
@@ -48,18 +48,18 @@ test('room-cache-mapper', async t => {
     members        : [{
       avatar                : undefined,
       inviteBy              : undefined,
-      nickName              : 'NickName',
-      userName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }, {
       avatar                : undefined,
       inviteBy              : undefined,
-      nickName              : 'NickName',
-      userName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }, {
       avatar                : undefined,
       inviteBy              : undefined,
-      nickName              : 'NickName',
-      userName              : 'UserName',
+      nickName              : 'nickName',
+      userName              : 'userName',
     }],
     nickName       : 'nickName',
     smallHeadUrl   : 'smallHeadUrl',

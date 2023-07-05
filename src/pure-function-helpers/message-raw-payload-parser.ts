@@ -1,7 +1,4 @@
-import {
-  MessagePayload,
-  MessageType,
-}                         from 'wechaty-puppet'
+import { payloads, types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -26,7 +23,7 @@ const PRE = 'messageRawPayloadParser'
 
 export async function messageRawPayloadParser (
   rawPayload: PadplusMessagePayload,
-): Promise<MessagePayload> {
+): Promise<payloads.Message> {
 
   /**
    * 0. Set Message Type
@@ -41,26 +38,26 @@ export async function messageRawPayloadParser (
   } as {
     id        : string,
     timestamp : number,
-    type      : MessageType,
+    type      : types.Message,
     filename? : string,
     url?      : string,
   }
 
-  if (type === MessageType.Image
-      || type === MessageType.Audio
-      || type === MessageType.Video
-      || type === MessageType.Attachment
+  if (type === types.Message.Image
+      || type === types.Message.Audio
+      || type === types.Message.Video
+      || type === types.Message.Attachment
   ) {
     payloadBase.filename = messageFileName(rawPayload) || undefined
   }
 
-  if (type === MessageType.Emoticon) {
+  if (type === types.Message.Emoticon) {
     payloadBase.url = rawPayload.url
   }
 
-  let fromId: undefined | string
+  let talkerId: undefined | string
   let roomId: undefined | string
-  let toId:   undefined | string
+  let listenerId:   undefined | string
 
   let text:   undefined | string
 
@@ -86,12 +83,12 @@ export async function messageRawPayloadParser (
    */
   if (isContactId(rawPayload.toUserName)) {
 
-    toId = rawPayload.toUserName
+    listenerId = rawPayload.toUserName
 
   } else {
     // TODO: if the message @someone, the toId should set to the mentioned contact id(?)
 
-    toId = undefined
+    listenerId = undefined
 
   }
 
@@ -100,19 +97,19 @@ export async function messageRawPayloadParser (
    */
   if (isContactId(rawPayload.fromUserName)) {
 
-    fromId = rawPayload.fromUserName
+    talkerId = rawPayload.fromUserName
 
   } else {
     const parts = rawPayload.content.split(':\n')
     if (parts && parts.length > 1) {
       if (isContactId(parts[0])) {
 
-        fromId = parts[0]
+        talkerId = parts[0]
 
       }
     } else {
 
-      fromId = undefined
+      talkerId = undefined
 
     }
   }
@@ -133,7 +130,7 @@ export async function messageRawPayloadParser (
 
   }
 
-  if (type === MessageType.Recalled) {
+  if (type === types.Message.Recalled) {
 
     const recalledPayload = await recalledPayloadParser(rawPayload)
     const pattern = [
@@ -150,18 +147,18 @@ export async function messageRawPayloadParser (
       if (isRecalled || isRecalledSelf) {
         text = recalledPayload.newMsgId
         if (isRecalledSelf) {
-          fromId = rawPayload.toUserName
+          talkerId = rawPayload.toUserName
           if (isRoomId(rawPayload.fromUserName)) {
             roomId = rawPayload.fromUserName
           } else if (isContactId(rawPayload.fromUserName)) {
-            toId = rawPayload.fromUserName
+            listenerId = rawPayload.fromUserName
           }
         }
       } else {
-        payloadBase.type = MessageType.Unknown
+        payloadBase.type = types.Message.Unknown
       }
     } else {
-      payloadBase.type = MessageType.Unknown
+      payloadBase.type = types.Message.Unknown
     }
 
   }
@@ -169,13 +166,13 @@ export async function messageRawPayloadParser (
   /**
    * 5.1 Validate Room & From ID
    */
-  if (!roomId && !fromId) {
-    throw Error('empty roomId and empty fromId!')
+  if (!roomId && !talkerId) {
+    throw Error('empty roomId and empty talkerId!')
   }
   /**
    * 5.1 Validate Room & To ID
    */
-  if (!roomId && !toId) {
+  if (!roomId && !listenerId) {
     throw Error('empty roomId and empty toId!')
   }
 
@@ -196,27 +193,27 @@ export async function messageRawPayloadParser (
     text = await quotePayloadParser(rawPayload)
   }
 
-  let payload: MessagePayload
+  let payload: payloads.Message
 
   // Two branch is the same code.
   // Only for making TypeScript happy
-  if (fromId && toId) {
+  if (talkerId && listenerId) {
     payload = {
       ...payloadBase,
-      fromId,
+      listenerId: listenerId!,
       mentionIdList,
-      roomId,
+      roomId: roomId!,
+      talkerId,
       text,
-      toId,
     }
   } else if (roomId) {
     payload = {
       ...payloadBase,
-      fromId,
+      listenerId: listenerId!,
       mentionIdList,
       roomId,
+      talkerId: talkerId!,
       text,
-      toId,
     }
   } else {
     throw new Error('neither toId nor roomId')
@@ -225,47 +222,47 @@ export async function messageRawPayloadParser (
   /**
    * 6. Set app payload type
    */
-  if (type === MessageType.Attachment) {
+  if (type === types.Message.Attachment) {
     const appPayload = await appMessageParser(rawPayload)
     if (appPayload) {
       switch (appPayload.type) {
         case WechatAppMessageType.Text:
-          payload.type = MessageType.Text
+          payload.type = types.Message.Text
           payload.text = appPayload.title
           payload.filename = undefined
           break
         case WechatAppMessageType.Url:
-          payload.type = MessageType.Url
+          payload.type = types.Message.Url
           break
         case WechatAppMessageType.Attach:
-          payload.type = MessageType.Attachment
+          payload.type = types.Message.Attachment
           payload.filename = appPayload.title
           break
         case WechatAppMessageType.ChatHistory:
-          payload.type = MessageType.ChatHistory
+          payload.type = types.Message.ChatHistory
           break
         case WechatAppMessageType.MiniProgram:
         case WechatAppMessageType.MiniProgramApp:
-          payload.type = MessageType.MiniProgram
+          payload.type = types.Message.MiniProgram
           break
         case WechatAppMessageType.RedEnvelopes:
-          payload.type = MessageType.RedEnvelope
+          payload.type = types.Message.RedEnvelope
           break
         case WechatAppMessageType.Transfers:
-          payload.type = MessageType.Transfer
+          payload.type = types.Message.Transfer
           break
         case WechatAppMessageType.RealtimeShareLocation:
-          payload.type = MessageType.Location
+          payload.type = types.Message.Location
           break
         case WechatAppMessageType.GroupNote:
-          payload.type = MessageType.GroupNote
+          payload.type = types.Message.GroupNote
           payload.text = appPayload.title
           break
         case WechatAppMessageType.QuoteMessage:
-          payload.type = MessageType.Text
+          payload.type = types.Message.Text
           break
         default:
-          payload.type = MessageType.Unknown
+          payload.type = types.Message.Unknown
           break
       }
     }

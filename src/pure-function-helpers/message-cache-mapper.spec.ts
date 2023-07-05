@@ -5,7 +5,7 @@
 
 import test  from 'blue-tape'
 
-import { PuppetCacheMessagePayload, PuppetCacheMessageType } from 'wechaty-puppet-cache'
+import { PuppetCacheMessagePayload, PuppetCacheMessageType } from '@juzi/wechaty-puppet-cache'
 import { PadplusMessagePayload, PadplusMessageType } from '../schemas'
 
 import { cacheToPadplusMessagePayload, padplusToCacheMessagePayload } from './message-cache-mapper'

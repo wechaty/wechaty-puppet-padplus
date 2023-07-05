@@ -1,5 +1,5 @@
 /* eslint camelcase: 0 */
-import { ContactGender } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   ContactOperationBitVal,
@@ -66,7 +66,7 @@ export interface GrpcSelfInfoPayload {
   signature: string,                       // "",
   userName: string,                        // "lylezhuifeng", -> unique id
   nickName: string,                        // "高原ོ",
-  sex: ContactGender,                      // 1,
+  sex: types.ContactGender,                      // 1,
   province: string,                        // "Beijing",
   city: string,                            // "",
   bindEmail: string,                       // "lylezhuifeng@qq.com",

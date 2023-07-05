@@ -1,6 +1,4 @@
-import {
-  ContactGender,
-} from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 export interface PadplusContactPayload {
   alias            : string,
@@ -12,7 +10,7 @@ export interface PadplusContactPayload {
   nickName         : string,                     // "梦君君", Contact: 用户昵称， Room: 群昵称
   province         : string,                     // "Beijing",
   remark           : string,                     // "女儿",
-  sex              : ContactGender,
+  sex              : types.ContactGender,
   signature        : string,                     // "且行且珍惜",
   smallHeadUrl     : string,
   stranger         : string,                     // 用户v1码，从未加过好友则为空 "v1_0468f2cd3f0efe7ca2589d57c3f9ba952a3789e41b6e78ee00ed53d1e6096b88@stranger"

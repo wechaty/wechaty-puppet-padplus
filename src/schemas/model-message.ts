@@ -5,6 +5,11 @@ import {
   WechatAppMessageType,
 } from './padplus-enums'
 
+export interface PadplusGetCDNRequestData {
+  url: string,
+  toUserName: string,
+}
+
 export interface PadplusRichMediaData {
   content: string,
   msgType: number,
@@ -158,6 +163,13 @@ export interface PadplusUrlLink {
   thumbnailUrl? : string,
   title         : string,
   url           : string,
+}
+
+export interface PadplusCDNData {
+  url: string,
+  toUserName: string,
+  fileid: string,
+  aesKey: string,
 }
 
 export interface PadplusMediaData {

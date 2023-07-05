@@ -9,8 +9,8 @@ export interface PadplusRoomMemberPayload {
 }
 
 export interface PadplusMemberBrief {
-  UserName : string,
-  NickName?: string,
+  userName : string,
+  nickName?: string,
 }
 
 export interface GrpcRoomMemberPayload {

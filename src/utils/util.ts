@@ -120,6 +120,12 @@ export default function checkNumber (phone: string): boolean {
 
 }
 
+export const sleep = async (milliseconds?: number) => {
+  if (milliseconds) {
+    await new Promise<void>(resolve => setTimeout(resolve, milliseconds))
+  }
+}
+
 export const ApiTypeDic = {
   [ApiType.ACCEPT_CONTACT]: 'ACCEPT_CONTACT',
   [ApiType.ACCEPT_ROOM_INVITATION]: 'ACCEPT_ROOM_INVITATION',
@@ -133,6 +139,7 @@ export const ApiTypeDic = {
   [ApiType.DELETE_TAG]: 'DELETE_TAG',
   [ApiType.GET_ALL_TAG]: 'GET_ALL_TAG',
   [ApiType.GET_CONTACT]: 'GET_CONTACT',
+  [ApiType.GET_CDN_DATA]: 'GET_CDN_DATA',
   [ApiType.GET_CONTACT_SELF_INFO]: 'GET_CONTACT_SELF_INFO',
   [ApiType.GET_CONTACT_SELF_QRCODE]: 'GET_CONTACT_SELF_QRCODE',
   [ApiType.GET_MESSAGE_MEDIA]: 'GET_MESSAGE_MEDIA',
@@ -183,6 +190,7 @@ export const ResponseTypeDic = {
   [ResponseType.MESSAGE_RECEIVE]: 'MESSAGE_RECEIVE',
   [ResponseType.STATUS_NOTIFY]: 'STATUS_NOTIFY',
   [ResponseType.MESSAGE_MEDIA_SRC]: 'MESSAGE_MEDIA_SRC',
+  [ResponseType.CDN_DATA_RSP]: 'CDN_DATA_RSP',
   [ResponseType.MESSAGE_REVOKE]: 'MESSAGE_REVOKE',
   [ResponseType.FILE_UPLOADED]: 'FILE_UPLOADED',
   [ResponseType.TAG_LIST]: 'TAG_LIST',

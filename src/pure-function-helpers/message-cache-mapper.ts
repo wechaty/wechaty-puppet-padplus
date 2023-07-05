@@ -1,4 +1,4 @@
-import { PuppetCacheMessagePayload, PuppetCacheMessageType } from 'wechaty-puppet-cache'
+import { PuppetCacheMessagePayload, PuppetCacheMessageType } from '@juzi/wechaty-puppet-cache'
 import { PadplusMessagePayload, PadplusMessageType } from '../schemas'
 
 export function cacheToPadplusMessagePayload (

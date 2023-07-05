@@ -5,9 +5,7 @@
 
 import test  from 'blue-tape'
 
-import {
-  YOU,
-}                               from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload, RoomTopicEvent,
@@ -65,7 +63,7 @@ test('roomTopicEventMessageParser() ZH-other-modify-topic', async t => {
     wechatUserName: 'wxid_zovb9ol86m7l22',
   }
   const EXPECTED_EVENT: RoomTopicEvent = {
-    changerId: YOU,
+    changerId: types.YOU,
     roomId: '18295482296@chatroom',
     timestamp: 1568208437265,
     topic: '命名了',

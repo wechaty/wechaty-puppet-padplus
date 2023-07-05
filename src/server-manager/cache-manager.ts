@@ -11,7 +11,7 @@ import { PuppetCache,
   PuppetCacheFriendshipPayload,
   PuppetCacheRoomMemberPayloadMap,
   PuppetCacheStoreOptions,
-} from 'wechaty-puppet-cache'
+} from '@juzi/wechaty-puppet-cache'
 
 import { log } from '../config'
 import {
@@ -21,7 +21,7 @@ import {
   PadplusRoomMemberMap,
   PadplusMessagePayload,
 } from '../schemas'
-import { FriendshipPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 import { cacheToPadplusMessagePayload,
   padplusToCacheMessagePayload,
   padplusToCacheContactPayload,
@@ -278,6 +278,10 @@ export class CacheManager {
       throw new Error(`${PRE} setRoomMember() has no cache.`)
     }
     const map: PuppetCacheRoomMemberPayloadMap = {}
+    if (Object.keys(payload).length === 0) {
+      await this.cacheRoomMemberRawPayload.set(roomId, map)
+      return
+    }
     for (const memberId of Object.keys(payload)) {
       map[memberId] = padplusToCacheRoomMemberPayload(payload[memberId])
     }
@@ -291,6 +295,15 @@ export class CacheManager {
       throw new Error(`${PRE} deleteRoomMember() has no cache.`)
     }
     await this.cacheRoomMemberRawPayload.delete(roomId)
+  }
+
+  public async dismissRoomMember (
+    roomId: string,
+  ): Promise<void> {
+    if (!this.cacheRoomMemberRawPayload) {
+      throw new Error(`${PRE} dismissRoomMember() has no cache.`)
+    }
+    await this.cacheRoomMemberRawPayload.set(roomId, {})
   }
 
   /**
@@ -343,7 +356,7 @@ export class CacheManager {
 
   public async setFriendshipRawPayload (
     id: string,
-    payload: FriendshipPayload,
+    payload: payloads.Friendship,
   ) {
     if (!this.cacheFriendshipRawPayload) {
       throw new Error(`${PRE} setFriendshipRawPayload() has no cache.`)

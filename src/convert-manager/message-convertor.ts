@@ -5,7 +5,7 @@ import {
   GrpcMessagePayload,
   WechatAppMessageType,
 } from '../schemas'
-import { MiniProgramPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 
 export async function convertMessageFromGrpcToPadplus (rawMessage: GrpcMessagePayload): Promise<PadplusMessagePayload> {
   const messagePayload: PadplusMessagePayload = {
@@ -34,7 +34,7 @@ export async function convertMessageFromGrpcToPadplus (rawMessage: GrpcMessagePa
   return messagePayload
 }
 
-export function convertMiniProgramPayloadToParams (miniProgramPayload: MiniProgramPayload): MiniProgramParamsPayload {
+export function convertMiniProgramPayloadToParams (miniProgramPayload: payloads.MiniProgram): MiniProgramParamsPayload {
   const content: MiniProgramParamsPayload = {
     aeskey: miniProgramPayload.thumbKey || '',
     appid: miniProgramPayload.appid || '',

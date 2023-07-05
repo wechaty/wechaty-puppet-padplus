@@ -6,8 +6,6 @@ import {
   PadplusMessagePayload,
 }                       from '../schemas'
 
-import { log } from '../config'
-
 import { isPayload } from './is-type'
 
 export async function appMessageParser (rawPayload: PadplusMessagePayload): Promise<PadplusAppMessagePayload | null> {
@@ -80,7 +78,6 @@ export async function appMessageParser (rawPayload: PadplusMessagePayload): Prom
       url,
     }
   } catch (e) {
-    log.verbose(e.stack)
     return null
   }
 }

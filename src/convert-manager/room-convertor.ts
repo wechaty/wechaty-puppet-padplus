@@ -1,27 +1,27 @@
-import { RoomMemberPayload } from 'wechaty-puppet'
+import { payloads } from '@juzi/wechaty-puppet'
 import { PadplusRoomPayload, PadplusRoomMemberPayload, GrpcRoomPayload } from '../schemas'
 
 export const convertRoomFromGrpc = (room: GrpcRoomPayload): PadplusRoomPayload => {
   const roomPayload: PadplusRoomPayload = {
-    alias          : room.Alias,
-    bigHeadUrl     : room.BigHeadImgUrl,
-    chatRoomOwner  : room.ChatRoomOwner,
-    chatroomId     : room.UserName,
-    chatroomVersion: room.ChatroomVersion,
-    contactType    : room.ContactType,
-    memberCount    : JSON.parse(room.ExtInfo).length,
-    members        : JSON.parse(room.ExtInfo),
-    nickName       : room.NickName,
-    smallHeadUrl   : room.SmallHeadImgUrl,
-    stranger       : room.EncryptUsername,
-    tagList     : room.LabelLists,
-    ticket         : room.Ticket,
+    alias          : room?.Alias || '',
+    bigHeadUrl     : room?.BigHeadImgUrl || '',
+    chatRoomOwner  : room?.ChatRoomOwner || '',
+    chatroomId     : room?.UserName || '',
+    chatroomVersion: room?.ChatroomVersion || 0,
+    contactType    : room?.ContactType || 0,
+    memberCount    : JSON.parse(room?.ExtInfo || '[]').length,
+    members        : JSON.parse(room?.ExtInfo || '[]'),
+    nickName       : room?.NickName || '',
+    smallHeadUrl   : room?.SmallHeadImgUrl || '',
+    stranger       : room?.EncryptUsername || '',
+    tagList     : room?.LabelLists || '',
+    ticket         : room?.Ticket || '',
   }
   return roomPayload
 }
 
-export const convertToPuppetRoomMember = (input: PadplusRoomMemberPayload): RoomMemberPayload => {
-  const resut: RoomMemberPayload = {
+export const convertToPuppetRoomMember = (input: PadplusRoomMemberPayload): payloads.RoomMember => {
+  const resut: payloads.RoomMember = {
     avatar     : input.smallHeadUrl,
     id         : input.contactId,
     inviterId  : input.inviterId,   // 'wxid_7708837087612',

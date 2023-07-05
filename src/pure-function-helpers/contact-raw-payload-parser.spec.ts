@@ -5,11 +5,7 @@
 
 import test  from 'blue-tape'
 
-import {
-  ContactGender,
-  ContactPayload,
-  ContactType,
-}                       from 'wechaty-puppet'
+import { payloads, types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusContactPayload,
@@ -79,41 +75,41 @@ test('contactRawPayloadParser', async t => {
     verifyFlag           : 0,
   }
 
-  const EXPECTED_CONTACT_PAYLOAD_PERSONAL: ContactPayload = {
+  const EXPECTED_CONTACT_PAYLOAD_PERSONAL: payloads.Contact = {
     alias     : '',
     avatar    : 'http://wx.qlogo.cn/mmhead/KDLS0fhbCTJ0H7wsWRiaeMdibHvaeoZw1jQScfCqfVaPM/132',
     city      : 'Haidian',
     friend    : true,
-    gender    : ContactGender.Male,
+    gender    : types.ContactGender.Male,
     id        : 'lylezhuifeng',
     name      : '高原ོ',
     phone     : [],
     province  : 'Beijing',
     signature : '',
-    type      : ContactType.Individual,
+    type      : types.Contact.Individual,
     weixin    : 'lylezhuifeng',
   }
 
-  const EXPECTED_CONTACT_PAYLOAD_OFFICIAL: ContactPayload = {
+  const EXPECTED_CONTACT_PAYLOAD_OFFICIAL: payloads.Contact = {
     alias     : '',
     avatar    : 'http://wx.qlogo.cn/mmhead/ver_1/icxUZE0qz1c1HubRfXHscMA1PialA7q3OEIWiaRtUjYmpj2EDFhTNGwlicUFe1NQR67gVGgjhILV1ZTsZ1qO3XTMehhH1k6icF1adbaibUMJXbMWk/132',
     city      : 'Fengtai',
     friend    : true,
-    gender    : ContactGender.Female,
+    gender    : types.ContactGender.Female,
     id        : 'wxid_v7j3e9kna9l912',
     name      : '李青青',
     phone     : [],
     province  : 'Beijing',
     signature : '',
-    type      : ContactType.Individual,
+    type      : types.Contact.Individual,
     weixin    : 'wxid_v7j3e9kna9l912',
   }
 
   const resultPersonal = contactRawPayloadParser(PADPLUS_CONTACT_PAYLOAD_PERSONAL)
-  t.deepEqual(resultPersonal, EXPECTED_CONTACT_PAYLOAD_PERSONAL, 'should parse ContactPayload for male account payload')
+  t.deepEqual(resultPersonal, EXPECTED_CONTACT_PAYLOAD_PERSONAL, 'should parse payloads.Contact for male account payload')
 
   const resultOfficial = contactRawPayloadParser(PADPLUS_CONTACT_PAYLOAD_OFFICIAL)
-  t.deepEqual(resultOfficial, EXPECTED_CONTACT_PAYLOAD_OFFICIAL, 'should parse ContactPayload for female account payload')
+  t.deepEqual(resultOfficial, EXPECTED_CONTACT_PAYLOAD_OFFICIAL, 'should parse payloads.Contact for female account payload')
 
   t.throws(() => contactRawPayloadParser({} as any), 'should throw exception for invalid object')
   t.throws(() => contactRawPayloadParser(undefined as any), 'should throw exception for undifined')

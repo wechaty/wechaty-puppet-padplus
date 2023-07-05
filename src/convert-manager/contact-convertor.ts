@@ -1,4 +1,4 @@
-import { ContactGender, ContactType } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 import { PadplusContactPayload, GrpcContactPayload, TagNewOrListResponse, TagNewOrListGrpcResponse, GetContactSelfInfoGrpcResponse, GrpcSearchContact } from '../schemas'
 
 export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSync?: boolean): PadplusContactPayload => {
@@ -12,7 +12,7 @@ export const convertFromGrpcContact = (contactPayload: GrpcContactPayload, isSyn
     nickName         : contactPayload.NickName,
     province         : contactPayload.Province,
     remark           : contactPayload.RemarkName,
-    sex              : contactPayload.Sex as ContactGender,
+    sex              : contactPayload.Sex as types.ContactGender,
     signature        : contactPayload.Signature,
     smallHeadUrl     : contactPayload.SmallHeadImgUrl,
     stranger         : contactPayload.EncryptUsername,
@@ -48,7 +48,7 @@ export const convertFromGrpcContactSelf = (contactPayload: GetContactSelfInfoGrp
     nickName         : contactPayload.nickName,
     province         : contactPayload.province,
     remark           : '',
-    sex              : contactPayload.sex as ContactGender,
+    sex              : contactPayload.sex as types.ContactGender,
     signature        : contactPayload.signature,
     smallHeadUrl     : contactPayload.smallHeadImg,
     stranger         : '',
@@ -65,13 +65,13 @@ export const convertSearchContactToContact = (searchContact: GrpcSearchContact, 
     alias: isNumber ? '' : searchContact.searchId,
     bigHeadUrl: searchContact.avatar,
     city: '',
-    contactFlag: ContactType.Unknown,
+    contactFlag: types.Contact.Unknown,
     contactType: 0,
     country: '',
     nickName: searchContact.nickName,
     province: '',
     remark: '',
-    sex: ContactGender.Unknown,
+    sex: types.ContactGender.Unknown,
     signature: '',
     smallHeadUrl: searchContact.avatar,
     stranger: searchContact.v1,

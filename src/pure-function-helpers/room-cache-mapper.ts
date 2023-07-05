@@ -1,4 +1,4 @@
-import { PuppetCacheRoomPayload, PuppetMemberBrief } from 'wechaty-puppet-cache'
+import { PuppetCacheRoomPayload, PuppetMemberBrief } from '@juzi/wechaty-puppet-cache'
 import { PadplusRoomPayload, PadplusMemberBrief } from '../schemas'
 
 export function cacheToPadplusRoomPayload (
@@ -54,28 +54,28 @@ export function cacheToPadplusMemberBriefPayload (
   if (!cachePayload.userName) {
     if ((cachePayload as any).UserName) {
       return {
-        NickName                   : (cachePayload as any).NickName as string,
-        UserName                   : (cachePayload as any).UserName as string,
+        nickName                   : (cachePayload as any).nickName as string,
+        userName                   : (cachePayload as any).userName as string,
       }
     }
     throw Error('cannot get userName from cache payload: ' + JSON.stringify(cachePayload))
   }
   return {
-    NickName                   : cachePayload.nickName,
-    UserName                   : cachePayload.userName,
+    nickName                   : cachePayload.nickName,
+    userName                   : cachePayload.userName,
   } as PadplusMemberBrief
 }
 
 export function padplusToCacheMemberBriefPayload (
   padplusPayload: PadplusMemberBrief,
 ): PuppetMemberBrief {
-  if (!padplusPayload.UserName) {
+  if (!padplusPayload.userName) {
     throw Error('cannot get UserName from padplus payload: ' + JSON.stringify(padplusPayload))
   }
   return {
     avatar                     : undefined,
     inviteBy                   : undefined,
-    nickName                   : padplusPayload.NickName,
-    userName                   : padplusPayload.UserName,
+    nickName                   : padplusPayload.nickName,
+    userName                   : padplusPayload.userName,
   } as PuppetMemberBrief
 }

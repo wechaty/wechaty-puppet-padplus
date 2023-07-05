@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { xmlToJson } from './xml-to-json'
 
-import { YOU } from 'wechaty-puppet'
+import { types } from '@juzi/wechaty-puppet'
 
 import {
   PadplusMessagePayload,
@@ -49,6 +49,8 @@ const ROOM_JOIN_BOT_INVITE_OTHER_REGEX_LIST_EN = [
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_ZH = [
   /^"([^"]+?)"邀请你加入了群聊，群聊参与人还有：(.+)/,
+  /^"([^"]+?)"邀请你加入了群聊/,
+  /^"([^"]+?)"邀请你和"(.+?)"加入了群聊/,
 ]
 
 const ROOM_JOIN_OTHER_INVITE_BOT_REGEX_LIST_EN = [
@@ -171,7 +173,7 @@ export async function roomJoinEventMessageParser (
      */
     const other = matches[1]
     const inviteeIdList = getUserName(linkList, other)
-    const inviterId: string | YOU = YOU
+    const inviterId: string | typeof types.YOU = types.YOU
     const joinEvent: RoomJoinEvent = {
       inviteeIdList: checkString(inviteeIdList),
       inviterId,
@@ -188,7 +190,7 @@ export async function roomJoinEventMessageParser (
     // /^"([^"]+?)"邀请你和"(.+?)"加入了群聊/,
     const _inviterName = matches[1]
     const inviterId = getUserName(linkList, _inviterName)
-    let inviteeIdList: Array<string | YOU> = [ YOU ]
+    const inviteeIdList: Array<string | typeof types.YOU> = [ types.YOU ]
 
     const joinEvent: RoomJoinEvent = {
       inviteeIdList,

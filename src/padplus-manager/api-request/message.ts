@@ -1,9 +1,9 @@
 import { log } from '../../config'
 import { RequestClient } from './request'
 import { ApiType, StreamResponse } from '../../server-manager/proto-ts/PadPlusServer_pb'
-import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData } from '../../schemas'
-import { WechatAppMessageType } from 'wechaty-puppet/dist/src/schemas/message'
-import { FileBox } from 'wechaty-puppet'
+import { PadplusMessageType, PadplusRichMediaData, GrpcResponseMessageData, PadplusRecallData, PadplusUploadFileData, PadplusGetCDNRequestData } from '../../schemas'
+import { types } from '@juzi/wechaty-puppet'
+import { FileBox } from 'file-box'
 
 const PRE = 'PadplusMessage'
 
@@ -122,7 +122,7 @@ export class PadplusMessage {
         url,
       }
       data = {
-        appMsgType: WechatAppMessageType.Attach,
+        appMsgType: types.Message.Attachment,
         content: JSON.stringify(content),
         fileName,
         fromUserName: selfId,
@@ -191,8 +191,23 @@ export class PadplusMessage {
     }
   }
 
-  public async loadRichMeidaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {
-    log.silly(PRE, `loadRichMeidaData()`)
+  public async getCDNData (data: PadplusGetCDNRequestData): Promise<StreamResponse> {
+    log.silly(PRE, `getCDNData()`)
+
+    const response = await this.requestClient.request({
+      apiType: ApiType.GET_CDN_DATA,
+      data,
+    })
+
+    if (response) {
+      return response
+    } else {
+      throw new Error(`can not get callback result of GET_CDN_DATA`)
+    }
+  }
+
+  public async loadRichMediaData (mediaData: PadplusRichMediaData): Promise<StreamResponse> {
+    log.silly(PRE, `loadRichMediaData()`)
 
     const response = await this.requestClient.request({
       apiType: ApiType.GET_MESSAGE_MEDIA,
@@ -235,7 +250,7 @@ export class PadplusMessage {
   }
 
   public async uploadFile (fileBox: FileBox): Promise<string> {
-    log.verbose(PRE, `recallMessage`)
+    log.verbose(PRE, `uploadFile`)
     const data = {
       data: await fileBox.toBase64(),
       filename: fileBox.name,
