@@ -3,9 +3,9 @@ import { EXPIRE_TIME, log } from '../../config'
 import { ApiType } from '../../server-manager/proto-ts/PadPlusServer_pb'
 import { ApiTypeDic } from '../../utils/util'
 
-const DEDUPE_API = [
+const DEDUPE_API: ApiType[] = [
   // ApiType.GET_CONTACT,
-  ApiType.GET_ROOM_MEMBER,
+  // ApiType.GET_ROOM_MEMBER,
 ]
 
 interface ApiCall {
