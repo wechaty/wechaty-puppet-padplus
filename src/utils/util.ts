@@ -120,6 +120,12 @@ export default function checkNumber (phone: string): boolean {
 
 }
 
+export const sleep = async (milliseconds?: number) => {
+  if (milliseconds) {
+    await new Promise<void>(resolve => setTimeout(resolve, milliseconds))
+  }
+}
+
 export const ApiTypeDic = {
   [ApiType.ACCEPT_CONTACT]: 'ACCEPT_CONTACT',
   [ApiType.ACCEPT_ROOM_INVITATION]: 'ACCEPT_ROOM_INVITATION',
